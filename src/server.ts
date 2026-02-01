@@ -126,8 +126,8 @@ async function generateLlmsTxt(): Promise<string> {
 
   let output = `# ${siteConfig.name}\n\n> ${siteConfig.description}\n\n## Pages\n\n`;
   for (const page of pages) {
-    const url = `${siteConfig.url}/${page.slug}`;
-    output += `- [${page.title}](${url}): ${page.description}\n`;
+    const mdFile = page.slug === "" ? "index.md" : `${page.slug}.md`;
+    output += `- [${page.title}](/${mdFile}): ${page.description}\n`;
   }
 
   return output;
