@@ -4,10 +4,13 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "bun run dev:css & bun --hot src/server.ts",
+    "dev": "concurrently -k -n css,client,server -c blue,magenta,green \"bun run dev:css\" \"bun run dev:client\" \"bun run dev:server\"",
     "dev:css": "bunx @tailwindcss/cli -i src/styles/globals.css -o public/styles.css --watch",
+    "dev:client": "bunx vite build --watch",
+    "dev:server": "bun --hot src/server.ts",
     "build:css": "bunx @tailwindcss/cli -i src/styles/globals.css -o dist/styles.css --minify",
-    "build": "bun run build:css && bun scripts/build.tsx",
+    "build:client": "bunx vite build",
+    "build": "bun run build:css && bun run build:client && bun scripts/build.tsx",
     "preview": "bunx serve dist",
     "start": "bun src/server.ts"
   },
@@ -17,6 +20,7 @@
     "@types/bun": "latest",
     "@types/react": "^19.2.10",
     "@types/react-dom": "^19.2.3",
+    "concurrently": "^9.2.1",
     "postcss": "^8.5.6",
     "tailwindcss": "^4.1.18"
   },
@@ -25,9 +29,14 @@
   },
   "dependencies": {
     "@phosphor-icons/react": "^2.1.10",
+    "@radix-ui/react-dialog": "^1.1.15",
+    "@radix-ui/react-separator": "^1.1.8",
+    "@radix-ui/react-slot": "^1.2.4",
+    "@radix-ui/react-tooltip": "^1.2.8",
     "@vitejs/plugin-react": "^5.1.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "lucide-react": "^0.563.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "tailwind-merge": "^3.4.0",

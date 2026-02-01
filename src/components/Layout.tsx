@@ -4,12 +4,14 @@ interface LayoutProps {
   title?: string;
   children: ReactNode;
   cssPath?: string;
+  clientScriptPath?: string;
 }
 
 export function Layout({
   title = "Markdown Site",
   children,
   cssPath = "/styles.css",
+  clientScriptPath = "/client.js",
 }: LayoutProps) {
   return (
     <html lang="en">
@@ -29,8 +31,15 @@ export function Layout({
         />
         <link rel="stylesheet" href={cssPath} />
       </head>
-      <body className="bg-background text-foreground font-mono max-w-3xl mx-auto p-8 leading-relaxed">
-        <main>{children}</main>
+      <body className="bg-background text-foreground font-mono">
+        {/* React will mount here */}
+        <div id="root" />
+        {/* Server-rendered content for initial display and SEO */}
+        <div id="content" className="max-w-3xl mx-auto p-8 leading-relaxed">
+          {children}
+        </div>
+        {/* Client-side React bundle */}
+        <script type="module" src={clientScriptPath} />
       </body>
     </html>
   );
