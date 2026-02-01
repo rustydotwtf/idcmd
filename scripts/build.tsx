@@ -2,15 +2,15 @@ import { renderToString } from "react-dom/server";
 import { Layout } from "../src/components/Layout";
 import { Glob } from "bun";
 
-// Find all markdown files in content/
-const glob = new Glob("**/*.md");
+// Find all content.md files in content/<slug>/ directories
+const glob = new Glob("*/content.md");
 const contentFiles: string[] = [];
 
 for await (const file of glob.scan("content")) {
   contentFiles.push(`content/${file}`);
 }
 
-console.log(`Found ${contentFiles.length} markdown files`);
+console.log(`Found ${contentFiles.length} content pages`);
 
 // Extract title from markdown (first h1)
 function extractTitle(markdown: string): string | undefined {
@@ -33,10 +33,10 @@ for (const file of contentFiles) {
   )}`;
 
   // Determine output path
-  // content/index.md -> dist/index.html
-  // content/about.md -> dist/about/index.html
-  // content/blog/post.md -> dist/blog/post/index.html
-  const slug = file.replace("content/", "").replace(".md", "");
+  // content/index/content.md -> dist/index.html
+  // content/about/content.md -> dist/about/index.html
+  // content/blog/post/content.md -> dist/blog/post/index.html
+  const slug = file.replace("content/", "").replace("/content.md", "");
 
   let outPath: string;
   if (slug === "index") {

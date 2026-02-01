@@ -69,7 +69,7 @@ async function serveStaticFile(pathname: string): Promise<Response | null> {
 }
 
 async function getMarkdownFile(slug: string): Promise<string | null> {
-  const filePath = `${CONTENT_DIR}/${slug}.md`;
+  const filePath = `${CONTENT_DIR}/${slug}/content.md`;
   const file = Bun.file(filePath);
 
   if (await file.exists()) {
@@ -105,16 +105,16 @@ function extractDescription(markdown: string): string {
 
 async function generateLlmsTxt(): Promise<string> {
   const siteConfig = await Bun.file("site.json").json();
-  const glob = new Bun.Glob("**/*.md");
+  const glob = new Bun.Glob("*/content.md");
 
   const pages: { slug: string; title: string; description: string }[] = [];
 
   for await (const file of glob.scan(CONTENT_DIR)) {
     const markdown = await Bun.file(`${CONTENT_DIR}/${file}`).text();
-    const title = extractTitle(markdown) || file.replace(".md", "");
+    const slug = file.replace("/content.md", "");
+    const title = extractTitle(markdown) || slug;
     const description = extractDescription(markdown);
-    const slug = file.replace(".md", "").replace("index", "");
-    pages.push({ slug, title, description });
+    pages.push({ slug: slug === "index" ? "" : slug, title, description });
   }
 
   // Sort: index first, then alphabetically
@@ -126,7 +126,7 @@ async function generateLlmsTxt(): Promise<string> {
 
   let output = `# ${siteConfig.name}\n\n> ${siteConfig.description}\n\n## Pages\n\n`;
   for (const page of pages) {
-    const mdFile = page.slug === "" ? "index.md" : `${page.slug}.md`;
+    const mdFile = page.slug === "" ? "index/content.md" : `${page.slug}/content.md`;
     output += `- [${page.title}](/${mdFile}): ${page.description}\n`;
   }
 
@@ -161,9 +161,18 @@ const server = Bun.serve({
       return staticResponse;
     }
 
-    // Handle raw markdown requests (e.g., /about.md)
+    // Handle raw markdown requests
+    // Supports both /about.md and /about/content.md formats
     if (path.endsWith(".md")) {
-      const slug = path.slice(1, -3); // Remove leading "/" and trailing ".md"
+      let slug: string;
+      if (path.endsWith("/content.md")) {
+        // /about/content.md -> about
+        slug = path.slice(1, -11);
+      } else {
+        // /about.md -> about
+        slug = path.slice(1, -3);
+      }
+
       const markdown = await getMarkdownFile(slug);
 
       if (!markdown) {
