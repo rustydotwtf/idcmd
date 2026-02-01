@@ -1,12 +1,50 @@
 import { render } from "./render.tsx";
 
 const CONTENT_DIR = "./content";
+const PUBLIC_DIR = "./public";
 
 // Cache headers for Vercel CDN
 const cacheHeaders = {
   "Content-Type": "text/html; charset=utf-8",
   "Cache-Control": "s-maxage=60, stale-while-revalidate=3600",
 };
+
+const staticCacheHeaders = {
+  "Cache-Control": "public, max-age=31536000, immutable",
+};
+
+// MIME types for static files
+const mimeTypes: Record<string, string> = {
+  ".css": "text/css",
+  ".js": "application/javascript",
+  ".json": "application/json",
+  ".png": "image/png",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".gif": "image/gif",
+  ".svg": "image/svg+xml",
+  ".ico": "image/x-icon",
+  ".woff": "font/woff",
+  ".woff2": "font/woff2",
+};
+
+async function serveStaticFile(pathname: string): Promise<Response | null> {
+  const filePath = `${PUBLIC_DIR}${pathname}`;
+  const file = Bun.file(filePath);
+
+  if (await file.exists()) {
+    const ext = pathname.substring(pathname.lastIndexOf("."));
+    const contentType = mimeTypes[ext] || "application/octet-stream";
+
+    return new Response(file, {
+      headers: {
+        "Content-Type": contentType,
+        ...staticCacheHeaders,
+      },
+    });
+  }
+  return null;
+}
 
 async function getMarkdownFile(slug: string): Promise<string | null> {
   const filePath = `${CONTENT_DIR}/${slug}.md`;
@@ -29,6 +67,12 @@ const server = Bun.serve({
   async fetch(req) {
     const url = new URL(req.url);
     let path = url.pathname;
+
+    // Try to serve static files first
+    const staticResponse = await serveStaticFile(path);
+    if (staticResponse) {
+      return staticResponse;
+    }
 
     // Handle root path
     if (path === "/") {
