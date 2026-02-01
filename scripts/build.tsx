@@ -1,6 +1,7 @@
 import { renderToString } from "react-dom/server";
 import { Layout } from "../src/components/Layout";
 import { Glob } from "bun";
+import { createHighlighter, type Highlighter } from "shiki";
 
 // Find all content.md files in content/<slug>/ directories
 const glob = new Glob("*/content.md");
@@ -18,17 +19,80 @@ function extractTitle(markdown: string): string | undefined {
   return match?.[1];
 }
 
+// Initialize shiki highlighter
+const highlighter: Highlighter = await createHighlighter({
+  themes: ["github-dark", "github-light"],
+  langs: [
+    "javascript",
+    "typescript",
+    "jsx",
+    "tsx",
+    "json",
+    "html",
+    "css",
+    "markdown",
+    "bash",
+    "shell",
+    "python",
+    "rust",
+    "go",
+    "sql",
+    "yaml",
+    "toml",
+  ],
+});
+
+// Highlight code blocks in HTML using shiki
+function highlightCodeBlocks(html: string): string {
+  const codeBlockRegex =
+    /<pre><code class="language-(\w+)">([\s\S]*?)<\/code><\/pre>/g;
+
+  const matches = [...html.matchAll(codeBlockRegex)];
+
+  let result = html;
+  for (const match of matches) {
+    const fullMatch = match[0];
+    const lang = match[1] ?? "plaintext";
+    const encodedCode = match[2] ?? "";
+
+    const code = encodedCode
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&amp;/g, "&")
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'");
+
+    const loadedLangs = highlighter.getLoadedLanguages();
+    const effectiveLang = loadedLangs.includes(lang) ? lang : "plaintext";
+
+    const highlighted = highlighter.codeToHtml(code, {
+      lang: effectiveLang as string,
+      themes: {
+        light: "github-light",
+        dark: "github-dark",
+      },
+    });
+
+    result = result.replace(fullMatch, highlighted);
+  }
+
+  return result;
+}
+
 // Ensure dist directory exists
 await Bun.write("dist/.gitkeep", "");
 
 for (const file of contentFiles) {
   const markdown = await Bun.file(file).text();
-  const content = Bun.markdown.react(markdown);
   const title = extractTitle(markdown);
+
+  // Convert markdown to HTML and apply syntax highlighting
+  let contentHtml = Bun.markdown.html(markdown);
+  contentHtml = highlightCodeBlocks(contentHtml);
 
   const html = `<!DOCTYPE html>${renderToString(
     <Layout title={title} cssPath="/styles.css">
-      {content}
+      <div dangerouslySetInnerHTML={{ __html: contentHtml }} />
     </Layout>
   )}`;
 

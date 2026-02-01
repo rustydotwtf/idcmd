@@ -1,6 +1,14 @@
 import { render } from "./render.tsx";
 import { watch } from "fs";
 
+interface SiteConfig {
+  name: string;
+  description: string;
+  search?: {
+    scope?: "full" | "title" | "title_and_description";
+  };
+}
+
 const CONTENT_DIR = "./content";
 const PUBLIC_DIR = "./public";
 const isDev = process.env.NODE_ENV !== "production";
@@ -104,7 +112,7 @@ function extractDescription(markdown: string): string {
 }
 
 async function generateLlmsTxt(): Promise<string> {
-  const siteConfig = await Bun.file("site.json").json();
+  const siteConfig = Bun.JSONC.parse(await Bun.file("site.jsonc").text()) as SiteConfig;
   const glob = new Bun.Glob("*/content.md");
 
   const pages: { slug: string; title: string; description: string }[] = [];
@@ -153,6 +161,50 @@ const server = Bun.serve({
       return new Response(llmsTxt, {
         headers: { "Content-Type": "text/plain; charset=utf-8", ...staticCacheHeaders },
       });
+    }
+
+    // Handle /api/search
+    if (path === "/api/search") {
+      const query = url.searchParams.get("q")?.toLowerCase();
+      if (!query) {
+        return new Response(JSON.stringify({ error: "Missing query parameter 'q'" }), {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+
+      return new Response(
+        async function* () {
+          const glob = new Bun.Glob("*/content.md");
+          const siteConfig = Bun.JSONC.parse(await Bun.file("site.jsonc").text()) as SiteConfig;
+          const scope = siteConfig.search?.scope ?? "full";
+
+          for await (const file of glob.scan(CONTENT_DIR)) {
+            const markdown = await Bun.file(`${CONTENT_DIR}/${file}`).text();
+            const slug = file.replace("/content.md", "");
+
+            // Determine searchable content based on scope
+            let searchContent: string;
+            if (scope === "title") {
+              searchContent = extractTitle(markdown) ?? "";
+            } else if (scope === "title_and_description") {
+              searchContent = `${extractTitle(markdown) ?? ""} ${extractDescription(markdown)}`;
+            } else {
+              searchContent = markdown;
+            }
+
+            if (searchContent.toLowerCase().includes(query)) {
+              const result = {
+                slug: slug === "index" ? "/" : `/${slug}`,
+                title: extractTitle(markdown) ?? slug,
+                description: extractDescription(markdown),
+              };
+              yield JSON.stringify(result) + "\n";
+            }
+          }
+        },
+        { headers: { "Content-Type": "application/jsonl" } },
+      );
     }
 
     // Try to serve static files first
@@ -209,7 +261,7 @@ const server = Bun.serve({
     }
 
     const title = extractTitle(markdown);
-    const html = render(markdown, title, isDev);
+    const html = await render(markdown, title, isDev);
 
     return new Response(html, {
       status: 200,

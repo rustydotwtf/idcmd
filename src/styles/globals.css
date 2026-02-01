@@ -155,10 +155,30 @@
   code {
     @apply bg-muted px-1.5 py-0.5 text-sm;
   }
-  pre {
+  /* Shiki code blocks with dual themes */
+  pre.shiki {
+    @apply p-4 overflow-x-auto my-4 rounded-md text-sm;
+  }
+  pre.shiki code {
+    @apply bg-transparent p-0;
+  }
+  /* Default to light theme colors */
+  pre.shiki,
+  pre.shiki span {
+    color: var(--shiki-light);
+    background-color: var(--shiki-light-bg);
+  }
+  /* Dark mode: use dark theme colors */
+  .dark pre.shiki,
+  .dark pre.shiki span {
+    color: var(--shiki-dark);
+    background-color: var(--shiki-dark-bg);
+  }
+  /* Fallback for non-shiki pre blocks */
+  pre:not(.shiki) {
     @apply bg-foreground text-background p-4 overflow-x-auto my-4;
   }
-  pre code {
+  pre:not(.shiki) code {
     @apply bg-transparent p-0;
   }
   blockquote {
