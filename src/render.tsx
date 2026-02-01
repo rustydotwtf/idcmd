@@ -97,8 +97,18 @@ export async function render(
   title?: string,
   isDev = false
 ): Promise<string> {
-  // Convert markdown to HTML string
-  let contentHtml = Bun.markdown.html(markdown);
+  // Convert markdown to HTML string with GFM extensions
+  let contentHtml = Bun.markdown.html(markdown, {
+    tables: true,  // Enable GFM tables
+    strikethrough: true,  // Enable GFM strikethrough
+    tasklists: true,  // Enable GFM task lists
+    hardSoftBreaks: true,  // Enable soft line breaks as hard line breaks
+    wikiLinks: true,  // Enable wiki-style links
+    underline: true,  // Enable underline syntax
+    latexMath: true,  // Enable LaTeX math
+    headings: true,  // Enable heading IDs and autolink headings
+    autolinks: true, // Enable URL, WWW, and email autolinks
+  });
 
   // Apply syntax highlighting to code blocks
   contentHtml = await highlightCodeBlocks(contentHtml);

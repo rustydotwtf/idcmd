@@ -27,3 +27,13 @@ const html = renderToString(<Layout>{content}</Layout>);
 
 - [About page](/about)
 - [Bun documentation](https://bun.sh)
+
+## Markdown Stress Tests
+
+These pages test various markdown parsing scenarios:
+
+- [Basic Markdown Features](/test-basics) - Headers, lists, blockquotes, links, formatting
+- [Code Blocks](/test-code) - All 16 supported Shiki languages with syntax highlighting
+- [Tables](/test-tables) - Various table configurations, alignments, and edge cases
+- [Edge Cases](/test-edge-cases) - Unicode, emoji, special characters, HTML, and unusual scenarios
+- [Performance Test](/test-performance) - Large document with 500+ lines of content

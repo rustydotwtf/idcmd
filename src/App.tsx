@@ -1,4 +1,4 @@
-import { Home, Info } from "lucide-react";
+import { Home, Info, FlaskConical, Code, Table, AlertTriangle, Gauge } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -23,6 +23,14 @@ const navItems = [
   { title: "About", href: "/about", icon: Info },
 ];
 
+const testItems = [
+  { title: "Basic Markdown", href: "/test-basics", icon: FlaskConical },
+  { title: "Code Blocks", href: "/test-code", icon: Code },
+  { title: "Tables", href: "/test-tables", icon: Table },
+  { title: "Edge Cases", href: "/test-edge-cases", icon: AlertTriangle },
+  { title: "Performance", href: "/test-performance", icon: Gauge },
+];
+
 export function App({ contentHtml }: AppProps) {
   const currentPath = typeof window !== "undefined" ? window.location.pathname : "/";
 
@@ -40,6 +48,23 @@ export function App({ contentHtml }: AppProps) {
             <SidebarGroupContent>
               <SidebarMenu>
                 {navItems.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild isActive={currentPath === item.href}>
+                      <a href={item.href}>
+                        <item.icon />
+                        <span>{item.title}</span>
+                      </a>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+          <SidebarGroup>
+            <SidebarGroupLabel>Stress Tests</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {testItems.map((item) => (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild isActive={currentPath === item.href}>
                       <a href={item.href}>

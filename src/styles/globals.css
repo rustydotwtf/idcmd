@@ -129,6 +129,8 @@
 /* Typography for markdown content - scoped to .prose or #content */
 .prose,
 #content {
+  @apply overflow-x-hidden max-w-full;
+  overflow-wrap: anywhere;
   h1,
   h2,
   h3,
@@ -157,7 +159,7 @@
   }
   /* Shiki code blocks with dual themes */
   pre.shiki {
-    @apply p-4 overflow-x-auto my-4 rounded-md text-sm;
+    @apply p-4 overflow-x-auto my-4 rounded-lg text-sm border border-border shadow-sm max-w-3xl;
   }
   pre.shiki code {
     @apply bg-transparent p-0;
@@ -176,7 +178,7 @@
   }
   /* Fallback for non-shiki pre blocks */
   pre:not(.shiki) {
-    @apply bg-foreground text-background p-4 overflow-x-auto my-4;
+    @apply bg-foreground text-background p-4 overflow-x-auto my-4 rounded-lg border border-border shadow-sm max-w-3xl;
   }
   pre:not(.shiki) code {
     @apply bg-transparent p-0;
@@ -196,5 +198,19 @@
   }
   ol {
     @apply list-decimal;
+  }
+  /* Tables */
+  table {
+    @apply my-4 border-collapse max-w-full overflow-x-auto block;
+  }
+  th,
+  td {
+    @apply border border-border px-3 py-2 text-left;
+  }
+  th {
+    @apply bg-muted font-semibold;
+  }
+  tr:hover {
+    @apply bg-muted/50;
   }
 }
