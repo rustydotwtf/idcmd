@@ -13,7 +13,7 @@ This is a minimal **Bun + React SSR** site that renders markdown files.
 
 1. Request comes in to `/about`
 2. Server looks for `content/about.md`
-3. Markdown is parsed and rendered with React
+3. Markdown is parsed and rendered with React!!!!
 4. HTML is returned with cache headers
 
 ## Example code
