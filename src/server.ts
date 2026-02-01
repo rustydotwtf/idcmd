@@ -83,6 +83,56 @@ function extractTitle(markdown: string): string | undefined {
   return match?.[1];
 }
 
+function extractDescription(markdown: string): string {
+  // Skip the title line, find first non-empty paragraph
+  const lines = markdown.split("\n");
+  let foundTitle = false;
+  let description = "";
+
+  for (const line of lines) {
+    if (line.startsWith("# ")) {
+      foundTitle = true;
+      continue;
+    }
+    if (foundTitle && line.trim() && !line.startsWith("#")) {
+      description = line.trim();
+      break;
+    }
+  }
+
+  return description || "No description available.";
+}
+
+async function generateLlmsTxt(): Promise<string> {
+  const siteConfig = await Bun.file("site.json").json();
+  const glob = new Bun.Glob("**/*.md");
+
+  const pages: { slug: string; title: string; description: string }[] = [];
+
+  for await (const file of glob.scan(CONTENT_DIR)) {
+    const markdown = await Bun.file(`${CONTENT_DIR}/${file}`).text();
+    const title = extractTitle(markdown) || file.replace(".md", "");
+    const description = extractDescription(markdown);
+    const slug = file.replace(".md", "").replace("index", "");
+    pages.push({ slug, title, description });
+  }
+
+  // Sort: index first, then alphabetically
+  pages.sort((a, b) => {
+    if (a.slug === "") return -1;
+    if (b.slug === "") return 1;
+    return a.title.localeCompare(b.title);
+  });
+
+  let output = `# ${siteConfig.name}\n\n> ${siteConfig.description}\n\n## Pages\n\n`;
+  for (const page of pages) {
+    const url = `${siteConfig.url}/${page.slug}`;
+    output += `- [${page.title}](${url}): ${page.description}\n`;
+  }
+
+  return output;
+}
+
 const server = Bun.serve({
   port: process.env.PORT || 4000,
 
@@ -97,10 +147,39 @@ const server = Bun.serve({
       return new Response("WebSocket upgrade failed", { status: 400 });
     }
 
+    // Handle /llms.txt
+    if (path === "/llms.txt") {
+      const llmsTxt = await generateLlmsTxt();
+      return new Response(llmsTxt, {
+        headers: { "Content-Type": "text/plain; charset=utf-8", ...staticCacheHeaders },
+      });
+    }
+
     // Try to serve static files first
     const staticResponse = await serveStaticFile(path);
     if (staticResponse) {
       return staticResponse;
+    }
+
+    // Handle raw markdown requests (e.g., /about.md)
+    if (path.endsWith(".md")) {
+      const slug = path.slice(1, -3); // Remove leading "/" and trailing ".md"
+      const markdown = await getMarkdownFile(slug);
+
+      if (!markdown) {
+        return new Response("Not Found", {
+          status: 404,
+          headers: { "Content-Type": "text/plain" },
+        });
+      }
+
+      return new Response(markdown, {
+        status: 200,
+        headers: {
+          "Content-Type": "text/markdown; charset=utf-8",
+          ...staticCacheHeaders,
+        },
+      });
     }
 
     // Handle root path
