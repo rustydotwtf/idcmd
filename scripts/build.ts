@@ -1,5 +1,4 @@
-import { renderToString } from "react-dom/server";
-import { Layout } from "../src/components/Layout";
+import { renderLayout } from "../src/Layout.tsx";
 import { Glob } from "bun";
 import { createHighlighter, type Highlighter } from "shiki";
 
@@ -87,20 +86,31 @@ for (const file of contentFiles) {
   const title = extractTitle(markdown);
 
   // Convert markdown to HTML and apply syntax highlighting
-  let contentHtml = Bun.markdown.html(markdown);
+  let contentHtml = Bun.markdown.html(markdown, {
+    tables: true,
+    strikethrough: true,
+    tasklists: true,
+    hardSoftBreaks: true,
+    wikiLinks: true,
+    underline: true,
+    latexMath: true,
+    headings: true,
+    autolinks: true,
+  });
   contentHtml = highlightCodeBlocks(contentHtml);
 
-  const html = `<!DOCTYPE html>${renderToString(
-    <Layout title={title} cssPath="/styles.css">
-      <div dangerouslySetInnerHTML={{ __html: contentHtml }} />
-    </Layout>
-  )}`;
-
-  // Determine output path
-  // content/index/content.md -> dist/index.html
-  // content/about/content.md -> dist/about/index.html
-  // content/blog/post/content.md -> dist/blog/post/index.html
+  // Determine output path and current path for navigation
+  // content/index/content.md -> dist/index.html, path: /
+  // content/about/content.md -> dist/about/index.html, path: /about
   const slug = file.replace("content/", "").replace("/content.md", "");
+  const currentPath = slug === "index" ? "/" : `/${slug}`;
+
+  const html = renderLayout({
+    title,
+    content: contentHtml,
+    cssPath: "/styles.css",
+    currentPath,
+  });
 
   let outPath: string;
   if (slug === "index") {

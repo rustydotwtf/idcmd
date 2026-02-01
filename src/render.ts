@@ -1,5 +1,4 @@
-import { renderToString } from "react-dom/server";
-import { Layout } from "./components/Layout.tsx";
+import { renderLayout } from "./Layout.tsx";
 import { createHighlighter, type Highlighter } from "shiki";
 
 const liveReloadScript = `
@@ -95,32 +94,36 @@ async function highlightCodeBlocks(html: string): Promise<string> {
 export async function render(
   markdown: string,
   title?: string,
-  isDev = false
+  isDev = false,
+  currentPath = "/"
 ): Promise<string> {
   // Convert markdown to HTML string with GFM extensions
   let contentHtml = Bun.markdown.html(markdown, {
-    tables: true,  // Enable GFM tables
-    strikethrough: true,  // Enable GFM strikethrough
-    tasklists: true,  // Enable GFM task lists
-    hardSoftBreaks: true,  // Enable soft line breaks as hard line breaks
-    wikiLinks: true,  // Enable wiki-style links
-    underline: true,  // Enable underline syntax
-    latexMath: true,  // Enable LaTeX math
-    headings: true,  // Enable heading IDs and autolink headings
-    autolinks: true, // Enable URL, WWW, and email autolinks
+    tables: true,
+    strikethrough: true,
+    tasklists: true,
+    hardSoftBreaks: true,
+    wikiLinks: true,
+    underline: true,
+    latexMath: true,
+    headings: true,
+    autolinks: true,
   });
 
   // Apply syntax highlighting to code blocks
   contentHtml = await highlightCodeBlocks(contentHtml);
 
-  // Wrap in Layout using dangerouslySetInnerHTML for the content
-  const html = renderToString(
-    <Layout title={title}>
-      <div dangerouslySetInnerHTML={{ __html: contentHtml }} />
-    </Layout>
-  );
+  // Render with static layout
+  let html = renderLayout({
+    title,
+    content: contentHtml,
+    currentPath,
+  });
 
-  const devScript = isDev ? liveReloadScript : "";
+  // Add live reload script for dev mode
+  if (isDev) {
+    html = html.replace("</body>", `${liveReloadScript}</body>`);
+  }
 
-  return `<!DOCTYPE html>${html}${devScript}`;
+  return html;
 }

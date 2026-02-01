@@ -1,4 +1,4 @@
-import { render } from "./render.tsx";
+import { render } from "./render.ts";
 import { watch } from "fs";
 
 interface SiteConfig {
@@ -261,7 +261,8 @@ const server = Bun.serve({
     }
 
     const title = extractTitle(markdown);
-    const html = await render(markdown, title, isDev);
+    const currentPath = path === "/index" ? "/" : path;
+    const html = await render(markdown, title, isDev, currentPath);
 
     return new Response(html, {
       status: 200,
