@@ -1,11 +1,11 @@
+import { createHighlighter } from 'shiki';
+import type { Highlighter } from 'shiki';
+
+import { parseFrontmatter, extractTitleFromContent } from './frontmatter';
+import type { PageMeta } from './frontmatter';
 import { renderLayout } from "./Layout.tsx";
-import { createHighlighter, type Highlighter } from "shiki";
-import {
-  parseFrontmatter,
-  extractTitleFromContent,
-  type PageMeta,
-} from "./frontmatter";
-import { discoverNavigation, type NavGroup } from "./navigation";
+import { discoverNavigation } from './navigation';
+import type { NavGroup } from './navigation';
 
 const liveReloadScript = `
 <script>
@@ -31,7 +31,6 @@ let highlighterPromise: Promise<Highlighter> | null = null;
 async function getHighlighter(): Promise<Highlighter> {
   if (!highlighterPromise) {
     highlighterPromise = createHighlighter({
-      themes: ["github-dark", "github-light"],
       langs: [
         "javascript",
         "typescript",
@@ -50,6 +49,7 @@ async function getHighlighter(): Promise<Highlighter> {
         "yaml",
         "toml",
       ],
+      themes: ["github-dark", "github-light"],
     });
   }
   return highlighterPromise;
@@ -73,11 +73,11 @@ export async function highlightCodeBlocks(html: string): Promise<string> {
 
     // Decode HTML entities
     const code = encodedCode
-      .replace(/&lt;/g, "<")
-      .replace(/&gt;/g, ">")
-      .replace(/&amp;/g, "&")
-      .replace(/&quot;/g, '"')
-      .replace(/&#39;/g, "'");
+      .replaceAll(/&lt;/g, "<")
+      .replaceAll(/&gt;/g, ">")
+      .replaceAll(/&amp;/g, "&")
+      .replaceAll(/&quot;/g, '"')
+      .replaceAll(/&#39;/g, "'");
 
     // Check if language is loaded, fallback to plaintext
     const loadedLangs = highlighter.getLoadedLanguages();
@@ -86,8 +86,8 @@ export async function highlightCodeBlocks(html: string): Promise<string> {
     const highlighted = highlighter.codeToHtml(code, {
       lang: effectiveLang as string,
       themes: {
-        light: "github-light",
         dark: "github-dark",
+        light: "github-light",
       },
     });
 
@@ -134,15 +134,15 @@ export async function render(
 
   // Convert markdown to HTML string with GFM extensions
   let contentHtml = Bun.markdown.html(content, {
-    tables: true,
-    strikethrough: true,
-    tasklists: true,
-    hardSoftBreaks: true,
-    wikiLinks: true,
-    underline: true,
-    latexMath: true,
-    headings: true,
     autolinks: true,
+    hardSoftBreaks: true,
+    headings: true,
+    latexMath: true,
+    strikethrough: true,
+    tables: true,
+    tasklists: true,
+    underline: true,
+    wikiLinks: true,
   });
 
   // Apply syntax highlighting to code blocks
@@ -150,10 +150,10 @@ export async function render(
 
   // Render with static layout
   let html = renderLayout({
-    title,
     content: contentHtml,
     currentPath,
     navigation,
+    title,
   });
 
   // Add live reload script for dev mode

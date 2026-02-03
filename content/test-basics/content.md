@@ -14,21 +14,26 @@ This page tests all core markdown features.
 ## Header Levels
 
 # Heading Level 1
+
 ## Heading Level 2
+
 ### Heading Level 3
+
 #### Heading Level 4
+
 ##### Heading Level 5
+
 ###### Heading Level 6
 
 ---
 
 ## Text Formatting
 
-This is **bold text** and this is __also bold__.
+This is **bold text** and this is **also bold**.
 
-This is *italic text* and this is _also italic_.
+This is _italic text_ and this is _also italic_.
 
-This is ***bold and italic*** and this is ___also bold and italic___.
+This is **_bold and italic_** and this is **_also bold and italic_**.
 
 This is ~~strikethrough text~~.
 
@@ -48,11 +53,11 @@ Using three hyphens:
 
 Using three asterisks:
 
-***
+---
 
 Using three underscores:
 
-___
+---
 
 ---
 
@@ -65,8 +70,8 @@ ___
 * Alternative syntax item 1
 * Alternative syntax item 2
 
-+ Plus syntax item 1
-+ Plus syntax item 2
+- Plus syntax item 1
+- Plus syntax item 2
 
 ### Deeply Nested Unordered List
 
@@ -141,10 +146,14 @@ ___
 ### Nested Blockquotes
 
 > Level 1 blockquote
->> Level 2 nested blockquote
->>> Level 3 deeply nested blockquote
->>>> Level 4 very deeply nested
->>>>> Level 5 extremely nested
+>
+> > Level 2 nested blockquote
+> >
+> > > Level 3 deeply nested blockquote
+> > >
+> > > > Level 4 very deeply nested
+> > > >
+> > > > > Level 5 extremely nested
 
 ### Blockquotes with Other Elements
 
@@ -160,7 +169,7 @@ ___
 > const x = 42;
 > ```
 >
-> > Nested quote with **bold** and *italic* text.
+> > Nested quote with **bold** and _italic_ text.
 
 ---
 
@@ -277,6 +286,7 @@ Here is a sentence with a footnote[^1].
 Another sentence with another footnote[^note].
 
 [^1]: This is the first footnote.
+
 [^note]: This is a named footnote with more content.
 
 ---

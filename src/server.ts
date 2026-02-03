@@ -1,5 +1,6 @@
+import { watch } from "node:fs";
+
 import { render, parseFrontmatter, extractTitleFromContent } from "./render.ts";
-import { watch } from "fs";
 
 interface SiteConfig {
   name: string;
@@ -15,7 +16,10 @@ const PUBLIC_DIR = "./public";
 const isDev = process.env.NODE_ENV !== "production";
 
 // Live reload WebSocket clients
-const liveReloadClients = new Set<{ send: (msg: string) => void; close: () => void }>();
+const liveReloadClients = new Set<{
+  send: (msg: string) => void;
+  close: () => void;
+}>();
 
 // Watch content directory for changes in dev mode
 if (isDev) {
@@ -36,8 +40,10 @@ if (isDev) {
 
 // Cache headers for Vercel CDN
 const cacheHeaders = {
+  "Cache-Control": isDev
+    ? "no-cache"
+    : "s-maxage=60, stale-while-revalidate=3600",
   "Content-Type": "text/html; charset=utf-8",
-  "Cache-Control": isDev ? "no-cache" : "s-maxage=60, stale-while-revalidate=3600",
 };
 
 const staticCacheHeaders = {
@@ -47,14 +53,14 @@ const staticCacheHeaders = {
 // MIME types for static files
 const mimeTypes: Record<string, string> = {
   ".css": "text/css",
+  ".gif": "image/gif",
+  ".ico": "image/x-icon",
+  ".jpeg": "image/jpeg",
+  ".jpg": "image/jpeg",
   ".js": "application/javascript",
   ".json": "application/json",
   ".png": "image/png",
-  ".jpg": "image/jpeg",
-  ".jpeg": "image/jpeg",
-  ".gif": "image/gif",
   ".svg": "image/svg+xml",
-  ".ico": "image/x-icon",
   ".woff": "font/woff",
   ".woff2": "font/woff2",
 };
@@ -64,7 +70,7 @@ async function serveStaticFile(pathname: string): Promise<Response | null> {
   const file = Bun.file(filePath);
 
   if (await file.exists()) {
-    const ext = pathname.substring(pathname.lastIndexOf("."));
+    const ext = pathname.slice(pathname.lastIndexOf("."));
     const contentType = mimeTypes[ext] || "application/octet-stream";
 
     return new Response(file, {
@@ -114,7 +120,9 @@ function extractDescription(markdown: string): string {
 }
 
 async function generateLlmsTxt(): Promise<string> {
-  const siteConfig = Bun.JSONC.parse(await Bun.file("site.jsonc").text()) as SiteConfig;
+  const siteConfig = Bun.JSONC.parse(
+    await Bun.file("site.jsonc").text()
+  ) as SiteConfig;
   const glob = new Bun.Glob("*/content.md");
 
   const pages: { slug: string; title: string; description: string }[] = [];
@@ -124,19 +132,20 @@ async function generateLlmsTxt(): Promise<string> {
     const slug = file.replace("/content.md", "");
     const title = extractTitle(markdown) || slug;
     const description = extractDescription(markdown);
-    pages.push({ slug: slug === "index" ? "" : slug, title, description });
+    pages.push({ description, slug: slug === "index" ? "" : slug, title });
   }
 
   // Sort: index first, then alphabetically
   pages.sort((a, b) => {
-    if (a.slug === "") return -1;
-    if (b.slug === "") return 1;
+    if (a.slug === "") {return -1;}
+    if (b.slug === "") {return 1;}
     return a.title.localeCompare(b.title);
   });
 
   let output = `# ${siteConfig.name}\n\n> ${siteConfig.description}\n\n## Pages\n\n`;
   for (const page of pages) {
-    const mdFile = page.slug === "" ? "index/content.md" : `${page.slug}/content.md`;
+    const mdFile =
+      page.slug === "" ? "index/content.md" : `${page.slug}/content.md`;
     output += `- [${page.title}](/${mdFile}): ${page.description}\n`;
   }
 
@@ -144,8 +153,6 @@ async function generateLlmsTxt(): Promise<string> {
 }
 
 const server = Bun.serve({
-  port: process.env.PORT || 4000,
-
   async fetch(req, server) {
     const url = new URL(req.url);
     let path = url.pathname;
@@ -161,7 +168,10 @@ const server = Bun.serve({
     if (path === "/llms.txt") {
       const llmsTxt = await generateLlmsTxt();
       return new Response(llmsTxt, {
-        headers: { "Content-Type": "text/plain; charset=utf-8", ...staticCacheHeaders },
+        headers: {
+          "Content-Type": "text/plain; charset=utf-8",
+          ...staticCacheHeaders,
+        },
       });
     }
 
@@ -169,16 +179,21 @@ const server = Bun.serve({
     if (path === "/api/search") {
       const query = url.searchParams.get("q")?.toLowerCase();
       if (!query) {
-        return new Response(JSON.stringify({ error: "Missing query parameter 'q'" }), {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
-        });
+        return new Response(
+          JSON.stringify({ error: "Missing query parameter 'q'" }),
+          {
+            status: 400,
+            headers: { "Content-Type": "application/json" },
+          }
+        );
       }
 
       return new Response(
         async function* () {
           const glob = new Bun.Glob("*/content.md");
-          const siteConfig = Bun.JSONC.parse(await Bun.file("site.jsonc").text()) as SiteConfig;
+          const siteConfig = Bun.JSONC.parse(
+            await Bun.file("site.jsonc").text()
+          ) as SiteConfig;
           const scope = siteConfig.search?.scope ?? "full";
 
           for await (const file of glob.scan(CONTENT_DIR)) {
@@ -205,7 +220,7 @@ const server = Bun.serve({
             }
           }
         },
-        { headers: { "Content-Type": "application/jsonl" } },
+        { headers: { "Content-Type": "application/jsonl" } }
       );
     }
 
@@ -271,6 +286,8 @@ const server = Bun.serve({
     });
   },
 
+  port: process.env.PORT || 4000,
+
   websocket: {
     open(ws) {
       liveReloadClients.add(ws);
@@ -288,5 +305,7 @@ const server = Bun.serve({
 
 console.log(`Server running at http://localhost:${server.port}`);
 if (isDev) {
-  console.log("Live reload enabled - editing .md files will refresh the browser");
+  console.log(
+    "Live reload enabled - editing .md files will refresh the browser"
+  );
 }

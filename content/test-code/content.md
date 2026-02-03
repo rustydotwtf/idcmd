@@ -57,8 +57,8 @@ const newObj = { ...oldObj, newProp: value };
 const message = `Hello, ${name}! You are ${age} years old.`;
 
 // Array methods
-const doubled = numbers.map(n => n * 2);
-const evens = numbers.filter(n => n % 2 === 0);
+const doubled = numbers.map((n) => n * 2);
+const evens = numbers.filter((n) => n % 2 === 0);
 const sum = numbers.reduce((acc, n) => acc + n, 0);
 ```
 
@@ -138,7 +138,7 @@ type Result = IsString<"hello">; // true
 
 ```jsx
 // React JSX component
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from "react";
 
 function UserProfile({ userId, onUpdate }) {
   const [user, setUser] = useState(null);
@@ -150,7 +150,7 @@ function UserProfile({ userId, onUpdate }) {
       try {
         setLoading(true);
         const response = await fetch(`/api/users/${userId}`);
-        if (!response.ok) throw new Error('Failed to fetch user');
+        if (!response.ok) throw new Error("Failed to fetch user");
         const data = await response.json();
         setUser(data);
       } catch (err) {
@@ -162,10 +162,13 @@ function UserProfile({ userId, onUpdate }) {
     fetchUser();
   }, [userId]);
 
-  const handleSubmit = useCallback((e) => {
-    e.preventDefault();
-    onUpdate(user);
-  }, [user, onUpdate]);
+  const handleSubmit = useCallback(
+    (e) => {
+      e.preventDefault();
+      onUpdate(user);
+    },
+    [user, onUpdate]
+  );
 
   if (loading) return <div className="spinner">Loading...</div>;
   if (error) return <div className="error">Error: {error}</div>;
@@ -177,14 +180,14 @@ function UserProfile({ userId, onUpdate }) {
       <h1>{user.name}</h1>
       <p className="email">{user.email}</p>
       <form onSubmit={handleSubmit}>
-        <input 
-          type="text" 
-          value={user.name} 
+        <input
+          type="text"
+          value={user.name}
           onChange={(e) => setUser({ ...user, name: e.target.value })}
         />
         <button type="submit">Save</button>
       </form>
-      {user.posts.map(post => (
+      {user.posts.map((post) => (
         <article key={post.id}>
           <h2>{post.title}</h2>
           <p>{post.excerpt}</p>
@@ -203,7 +206,7 @@ export default UserProfile;
 
 ```tsx
 // TypeScript React component
-import React, { useState, useEffect, FC, ChangeEvent, FormEvent } from 'react';
+import React, { useState, useEffect, FC, ChangeEvent, FormEvent } from "react";
 
 interface Post {
   id: number;
@@ -232,25 +235,25 @@ const UserProfile: FC<UserProfileProps> = ({ userId, onUpdate, className }) => {
 
   useEffect(() => {
     const controller = new AbortController();
-    
+
     async function fetchUser(): Promise<void> {
       try {
         setLoading(true);
         const response = await fetch(`/api/users/${userId}`, {
           signal: controller.signal,
         });
-        if (!response.ok) throw new Error('Failed to fetch user');
+        if (!response.ok) throw new Error("Failed to fetch user");
         const data: User = await response.json();
         setUser(data);
       } catch (err) {
-        if (err instanceof Error && err.name !== 'AbortError') {
+        if (err instanceof Error && err.name !== "AbortError") {
           setError(err.message);
         }
       } finally {
         setLoading(false);
       }
     }
-    
+
     fetchUser();
     return () => controller.abort();
   }, [userId]);
@@ -273,12 +276,14 @@ const UserProfile: FC<UserProfileProps> = ({ userId, onUpdate, className }) => {
   if (!user) return <EmptyState />;
 
   return (
-    <div className={`user-profile ${className ?? ''}`}>
+    <div className={`user-profile ${className ?? ""}`}>
       <Avatar src={user.avatar} alt={user.name} size="large" />
       <h1>{user.name}</h1>
       <form onSubmit={handleSubmit}>
         <input type="text" value={user.name} onChange={handleNameChange} />
-        <Button type="submit" variant="primary">Save</Button>
+        <Button type="submit" variant="primary">
+          Save
+        </Button>
       </form>
     </div>
   );
@@ -342,58 +347,61 @@ export default UserProfile;
 ```html
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="A sample HTML page for testing">
-  <title>HTML Stress Test</title>
-  <link rel="stylesheet" href="/styles/main.css">
-  <script type="module" src="/scripts/app.js"></script>
-  <style>
-    body {
-      font-family: system-ui, sans-serif;
-      line-height: 1.6;
-    }
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 2rem;
-    }
-  </style>
-</head>
-<body>
-  <header class="site-header">
-    <nav aria-label="Main navigation">
-      <ul>
-        <li><a href="/">Home</a></li>
-        <li><a href="/about">About</a></li>
-        <li><a href="/contact">Contact</a></li>
-      </ul>
-    </nav>
-  </header>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="A sample HTML page for testing" />
+    <title>HTML Stress Test</title>
+    <link rel="stylesheet" href="/styles/main.css" />
+    <script type="module" src="/scripts/app.js"></script>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        line-height: 1.6;
+      }
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="site-header">
+      <nav aria-label="Main navigation">
+        <ul>
+          <li><a href="/">Home</a></li>
+          <li><a href="/about">About</a></li>
+          <li><a href="/contact">Contact</a></li>
+        </ul>
+      </nav>
+    </header>
 
-  <main id="main-content">
-    <article>
-      <h1>Welcome to Our Site</h1>
-      <p>This is a paragraph with <strong>bold</strong> and <em>italic</em> text.</p>
-      
-      <figure>
-        <img src="/images/hero.jpg" alt="Hero image" loading="lazy">
-        <figcaption>A beautiful hero image</figcaption>
-      </figure>
+    <main id="main-content">
+      <article>
+        <h1>Welcome to Our Site</h1>
+        <p>
+          This is a paragraph with <strong>bold</strong> and
+          <em>italic</em> text.
+        </p>
 
-      <form action="/submit" method="POST">
-        <label for="email">Email:</label>
-        <input type="email" id="email" name="email" required>
-        <button type="submit">Subscribe</button>
-      </form>
-    </article>
-  </main>
+        <figure>
+          <img src="/images/hero.jpg" alt="Hero image" loading="lazy" />
+          <figcaption>A beautiful hero image</figcaption>
+        </figure>
 
-  <footer>
-    <p>&copy; 2024 My Company. All rights reserved.</p>
-  </footer>
-</body>
+        <form action="/submit" method="POST">
+          <label for="email">Email:</label>
+          <input type="email" id="email" name="email" required />
+          <button type="submit">Subscribe</button>
+        </form>
+      </article>
+    </main>
+
+    <footer>
+      <p>&copy; 2024 My Company. All rights reserved.</p>
+    </footer>
+  </body>
 </html>
 ```
 
@@ -494,7 +502,7 @@ body {
 ```markdown
 # Sample Markdown
 
-This is **bold** and *italic* text.
+This is **bold** and _italic_ text.
 
 ## Lists
 
@@ -521,7 +529,7 @@ const x = 42;
 > Blockquote text
 
 | Header 1 | Header 2 |
-|----------|----------|
+| -------- | -------- |
 | Cell 1   | Cell 2   |
 ```
 
@@ -550,7 +558,7 @@ cleanup() {
 build() {
   log "Building $PROJECT_NAME..."
   mkdir -p "$BUILD_DIR"
-  
+
   # Loop through source files
   for file in src/*.ts; do
     if [[ -f "$file" ]]; then
@@ -661,11 +669,11 @@ class User:
 
 class Repository(ABC, Generic[T]):
     """Abstract base class for repositories."""
-    
+
     @abstractmethod
     async def find_by_id(self, id: int) -> Optional[T]:
         pass
-    
+
     @abstractmethod
     async def save(self, entity: T) -> T:
         pass
@@ -674,10 +682,10 @@ class Repository(ABC, Generic[T]):
 class UserRepository(Repository[User]):
     def __init__(self):
         self._users: Dict[int, User] = {}
-    
+
     async def find_by_id(self, id: int) -> Optional[User]:
         return self._users.get(id)
-    
+
     async def save(self, user: User) -> User:
         self._users[user.id] = user
         return user
@@ -697,7 +705,7 @@ async def fetch_users(urls: List[str]) -> List[dict]:
         # Simulated async HTTP request
         await asyncio.sleep(0.1)
         return {"url": url, "data": "sample"}
-    
+
     tasks = [fetch_one(url) for url in urls]
     return await asyncio.gather(*tasks)
 
@@ -707,7 +715,7 @@ class DatabaseConnection:
     def __enter__(self):
         print("Opening connection")
         return self
-    
+
     def __exit__(self, exc_type, exc_val, exc_tb):
         print("Closing connection")
         return False
@@ -722,13 +730,13 @@ def generate_squares(n: int):
 if __name__ == "__main__":
     # List comprehension
     squares = [x**2 for x in range(10)]
-    
+
     # Dictionary comprehension
     square_dict = {x: x**2 for x in range(10)}
-    
+
     # Lambda and filter
     evens = list(filter(lambda x: x % 2 == 0, range(20)))
-    
+
     # Main async execution
     asyncio.run(fetch_users(["http://example.com/1", "http://example.com/2"]))
 ```
@@ -819,7 +827,7 @@ async fn handle_connection(
 async fn main() {
     let cache: Cache<String, i32> = Cache::new(300);
     cache.set("key".to_string(), 42);
-    
+
     if let Some(value) = cache.get(&"key".to_string()) {
         println!("Found: {}", value);
     }
@@ -873,7 +881,7 @@ func NewInMemoryUserRepository() *InMemoryUserRepository {
 func (r *InMemoryUserRepository) FindByID(ctx context.Context, id int) (*User, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-	
+
 	if user, ok := r.users[id]; ok {
 		return user, nil
 	}
@@ -883,7 +891,7 @@ func (r *InMemoryUserRepository) FindByID(ctx context.Context, id int) (*User, e
 func (r *InMemoryUserRepository) Save(ctx context.Context, user *User) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	
+
 	r.users[user.ID] = user
 	return nil
 }
@@ -892,7 +900,7 @@ func (r *InMemoryUserRepository) Save(ctx context.Context, user *User) error {
 func processItems(items []int, workers int) []int {
 	jobs := make(chan int, len(items))
 	results := make(chan int, len(items))
-	
+
 	// Start workers
 	var wg sync.WaitGroup
 	for i := 0; i < workers; i++ {
@@ -904,19 +912,19 @@ func processItems(items []int, workers int) []int {
 			}
 		}()
 	}
-	
+
 	// Send jobs
 	for _, item := range items {
 		jobs <- item
 	}
 	close(jobs)
-	
+
 	// Wait and collect
 	go func() {
 		wg.Wait()
 		close(results)
 	}()
-	
+
 	var output []int
 	for result := range results {
 		output = append(output, result)
@@ -927,24 +935,24 @@ func processItems(items []int, workers int) []int {
 func main() {
 	repo := NewInMemoryUserRepository()
 	ctx := context.Background()
-	
+
 	user := &User{
 		ID:        1,
 		Name:      "John Doe",
 		Email:     "john@example.com",
 		CreatedAt: time.Now(),
 	}
-	
+
 	if err := repo.Save(ctx, user); err != nil {
 		log.Fatalf("failed to save user: %v", err)
 	}
-	
+
 	// HTTP handler
 	http.HandleFunc("/users", func(w http.ResponseWriter, r *http.Request) {
 		users, _ := repo.FindAll(ctx)
 		json.NewEncoder(w).Encode(users)
 	})
-	
+
 	log.Println("Server starting on :8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
@@ -994,7 +1002,7 @@ CREATE INDEX idx_posts_created_at ON posts(created_at DESC);
 
 -- Complex query with CTEs, joins, and aggregations
 WITH active_authors AS (
-    SELECT 
+    SELECT
         u.id,
         u.name,
         COUNT(p.id) AS post_count
@@ -1004,7 +1012,7 @@ WITH active_authors AS (
     HAVING COUNT(p.id) > 0
 ),
 popular_tags AS (
-    SELECT 
+    SELECT
         t.id,
         t.name,
         COUNT(pt.post_id) AS usage_count
@@ -1014,7 +1022,7 @@ popular_tags AS (
     ORDER BY usage_count DESC
     LIMIT 10
 )
-SELECT 
+SELECT
     aa.name AS author_name,
     aa.post_count,
     p.title,
@@ -1220,7 +1228,7 @@ Here are some inline code edge cases:
     function indented() {
       return "This is an indented code block";
     }
-    
+
     const result = indented();
     console.log(result);
 
@@ -1286,27 +1294,67 @@ class VeryLongClass implements VeryLongInterface {
   property18 = new WeakSet<object>();
   property19 = Promise.resolve();
   property20 = () => {};
-  
-  method1() { return this.property1; }
-  method2() { return this.property2; }
-  method3() { return this.property3; }
-  method4() { return this.property4; }
-  method5() { return this.property5; }
-  method6() { return this.property6; }
-  method7() { return this.property7; }
-  method8() { return this.property8; }
-  method9() { return this.property9; }
-  method10() { return this.property10; }
-  method11() { return this.property11; }
-  method12() { return this.property12; }
-  method13() { return this.property13; }
-  method14() { return this.property14; }
-  method15() { return this.property15; }
-  method16() { return this.property16; }
-  method17() { return this.property17; }
-  method18() { return this.property18; }
-  method19() { return this.property19; }
-  method20() { return this.property20; }
+
+  method1() {
+    return this.property1;
+  }
+  method2() {
+    return this.property2;
+  }
+  method3() {
+    return this.property3;
+  }
+  method4() {
+    return this.property4;
+  }
+  method5() {
+    return this.property5;
+  }
+  method6() {
+    return this.property6;
+  }
+  method7() {
+    return this.property7;
+  }
+  method8() {
+    return this.property8;
+  }
+  method9() {
+    return this.property9;
+  }
+  method10() {
+    return this.property10;
+  }
+  method11() {
+    return this.property11;
+  }
+  method12() {
+    return this.property12;
+  }
+  method13() {
+    return this.property13;
+  }
+  method14() {
+    return this.property14;
+  }
+  method15() {
+    return this.property15;
+  }
+  method16() {
+    return this.property16;
+  }
+  method17() {
+    return this.property17;
+  }
+  method18() {
+    return this.property18;
+  }
+  method19() {
+    return this.property19;
+  }
+  method20() {
+    return this.property20;
+  }
 }
 // Line 85
 // Line 86

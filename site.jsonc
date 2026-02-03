@@ -6,12 +6,12 @@
   // Pages are assigned to groups via frontmatter: group: "main"
   "groups": [
     { "id": "main", "label": "Navigation", "order": 1 },
-    { "id": "tests", "label": "Stress Tests", "order": 2 }
+    { "id": "tests", "label": "Stress Tests", "order": 2 },
   ],
 
   // Search configuration
   "search": {
     // What to search: "full" | "title" | "title_and_description"
-    "scope": "full"
-  }
+    "scope": "full",
+  },
 }

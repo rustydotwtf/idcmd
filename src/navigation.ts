@@ -49,7 +49,7 @@ async function loadSiteConfig(): Promise<SiteConfig> {
     const text = await file.text();
     return Bun.JSONC.parse(text) as SiteConfig;
   }
-  return { name: "Markdown Site", description: "" };
+  return { description: "", name: "Markdown Site" };
 }
 
 /**
@@ -131,18 +131,18 @@ export async function discoverNavigation(): Promise<NavGroup[]> {
   for (const group of configGroups) {
     groupsMap.set(group.id, {
       id: group.id,
+      items: [],
       label: group.label,
       order: group.order,
-      items: [],
     });
   }
 
   // Default group for pages without a group specified
   const defaultGroup: NavGroup = {
     id: "_default",
+    items: [],
     label: "Pages",
     order: 999,
-    items: [],
   };
 
   // Scan all content folders
@@ -157,8 +157,7 @@ export async function discoverNavigation(): Promise<NavGroup[]> {
     }
 
     // Determine title
-    const title =
-      frontmatter.title ?? extractTitleFromContent(content) ?? slug;
+    const title = frontmatter.title ?? extractTitleFromContent(content) ?? slug;
 
     // Determine href
     const href = slug === "index" ? "/" : `/${slug}`;
@@ -168,10 +167,10 @@ export async function discoverNavigation(): Promise<NavGroup[]> {
     const iconSvg = await resolveIcon(slug, iconName);
 
     const navItem: NavItem = {
-      title,
       href,
       iconSvg,
       order: frontmatter.order ?? 100,
+      title,
     };
 
     // Add to appropriate group
@@ -183,9 +182,9 @@ export async function discoverNavigation(): Promise<NavGroup[]> {
       if (!groupsMap.has(groupId)) {
         groupsMap.set(groupId, {
           id: groupId,
+          items: [],
           label: groupId.charAt(0).toUpperCase() + groupId.slice(1),
           order: 100,
-          items: [],
         });
       }
       groupsMap.get(groupId)!.items.push(navItem);
@@ -203,7 +202,7 @@ export async function discoverNavigation(): Promise<NavGroup[]> {
   // Convert to array, sort groups by order, and sort items within each group
   const groups = [...groupsMap.values()]
     .filter((g) => g.items.length > 0)
-    .sort((a, b) => a.order - b.order);
+    .toSorted((a, b) => a.order - b.order);
 
   for (const group of groups) {
     group.items.sort((a, b) => a.order - b.order);

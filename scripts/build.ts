@@ -1,9 +1,7 @@
-import { renderLayout } from "../src/Layout.tsx";
 import { Glob } from "bun";
-import {
-  parseFrontmatter,
-  extractTitleFromContent,
-} from "../src/frontmatter";
+
+import { parseFrontmatter, extractTitleFromContent } from "../src/frontmatter";
+import { renderLayout } from "../src/Layout.tsx";
 import { discoverNavigation } from "../src/navigation";
 import { highlightCodeBlocks } from "../src/render";
 
@@ -38,15 +36,15 @@ for (const file of contentFiles) {
 
   // Convert markdown to HTML and apply syntax highlighting
   let contentHtml = Bun.markdown.html(content, {
-    tables: true,
-    strikethrough: true,
-    tasklists: true,
-    hardSoftBreaks: true,
-    wikiLinks: true,
-    underline: true,
-    latexMath: true,
-    headings: true,
     autolinks: true,
+    hardSoftBreaks: true,
+    headings: true,
+    latexMath: true,
+    strikethrough: true,
+    tables: true,
+    tasklists: true,
+    underline: true,
+    wikiLinks: true,
   });
   contentHtml = await highlightCodeBlocks(contentHtml);
 
@@ -57,11 +55,11 @@ for (const file of contentFiles) {
   const currentPath = slug === "index" ? "/" : `/${slug}`;
 
   const html = renderLayout({
-    title,
     content: contentHtml,
     cssPath: "/styles.css",
     currentPath,
     navigation,
+    title,
   });
 
   let outPath: string;

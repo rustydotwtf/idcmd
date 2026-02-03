@@ -42,13 +42,13 @@ Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed 
 
 ### 1.4 Definitions
 
-| Term | Definition |
-|------|------------|
-| API | Application Programming Interface |
-| CLI | Command Line Interface |
-| SSR | Server-Side Rendering |
-| SSG | Static Site Generation |
-| CDN | Content Delivery Network |
+| Term | Definition                        |
+| ---- | --------------------------------- |
+| API  | Application Programming Interface |
+| CLI  | Command Line Interface            |
+| SSR  | Server-Side Rendering             |
+| SSG  | Static Site Generation            |
+| CDN  | Content Delivery Network          |
 
 ### 1.5 Background
 
@@ -120,23 +120,23 @@ State is managed at multiple levels:
 application:
   name: my-service
   version: 1.0.0
-  
+
 server:
   port: 8080
   host: 0.0.0.0
   timeout: 30s
-  
+
 database:
   host: localhost
   port: 5432
   name: mydb
   pool_size: 20
-  
+
 cache:
   enabled: true
   ttl: 3600
   max_size: 1000
-  
+
 logging:
   level: info
   format: json
@@ -252,8 +252,8 @@ interface Tag {
   name: string;
 }
 
-type UserRole = 'admin' | 'editor' | 'user';
-type ContentStatus = 'draft' | 'review' | 'published' | 'archived';
+type UserRole = "admin" | "editor" | "user";
+type ContentStatus = "draft" | "review" | "published" | "archived";
 ```
 
 ### 3.4 Service Implementation
@@ -285,28 +285,28 @@ class ContentService {
   async create(userId: string, data: CreateContentDto): Promise<Content> {
     // Validate user exists
     const user = await this.userRepo.findById(userId);
-    if (!user) throw new NotFoundError('User not found');
+    if (!user) throw new NotFoundError("User not found");
 
     // Create content
     const content = await this.contentRepo.create({
       ...data,
       userId,
-      status: 'draft',
+      status: "draft",
     });
 
     // Index for search
-    await this.search.index('content', content);
+    await this.search.index("content", content);
 
     return content;
   }
 
   async publish(id: string, userId: string): Promise<Content> {
     const content = await this.getById(id);
-    if (!content) throw new NotFoundError('Content not found');
-    if (content.userId !== userId) throw new ForbiddenError('Access denied');
+    if (!content) throw new NotFoundError("Content not found");
+    if (content.userId !== userId) throw new ForbiddenError("Access denied");
 
     const updated = await this.contentRepo.update(id, {
-      status: 'published',
+      status: "published",
       publishedAt: new Date(),
     });
 
@@ -314,7 +314,7 @@ class ContentService {
     await this.cache.delete(`content:${id}`);
 
     // Update search index
-    await this.search.update('content', updated);
+    await this.search.update("content", updated);
 
     return updated;
   }
@@ -337,25 +337,28 @@ class AppError extends Error {
 
 class NotFoundError extends AppError {
   constructor(message: string) {
-    super(message, 404, 'NOT_FOUND');
+    super(message, 404, "NOT_FOUND");
   }
 }
 
 class ValidationError extends AppError {
-  constructor(message: string, public readonly errors: FieldError[]) {
-    super(message, 400, 'VALIDATION_ERROR');
+  constructor(
+    message: string,
+    public readonly errors: FieldError[]
+  ) {
+    super(message, 400, "VALIDATION_ERROR");
   }
 }
 
 class ForbiddenError extends AppError {
   constructor(message: string) {
-    super(message, 403, 'FORBIDDEN');
+    super(message, 403, "FORBIDDEN");
   }
 }
 
 class UnauthorizedError extends AppError {
   constructor(message: string) {
-    super(message, 401, 'UNAUTHORIZED');
+    super(message, 401, "UNAUTHORIZED");
   }
 }
 ```
@@ -366,13 +369,13 @@ class UnauthorizedError extends AppError {
 
 ### 4.1 Caching Strategies
 
-| Strategy | Description | Use Case |
-|----------|-------------|----------|
-| **Cache-Aside** | Application manages cache population | General purpose |
-| **Read-Through** | Cache loads data on miss | Frequently read data |
-| **Write-Through** | Write to cache and database | Data consistency |
-| **Write-Behind** | Async write to database | High write throughput |
-| **Refresh-Ahead** | Proactive cache refresh | Predictable access patterns |
+| Strategy          | Description                          | Use Case                    |
+| ----------------- | ------------------------------------ | --------------------------- |
+| **Cache-Aside**   | Application manages cache population | General purpose             |
+| **Read-Through**  | Cache loads data on miss             | Frequently read data        |
+| **Write-Through** | Write to cache and database          | Data consistency            |
+| **Write-Behind**  | Async write to database              | High write throughput       |
+| **Refresh-Ahead** | Proactive cache refresh              | Predictable access patterns |
 
 ### 4.2 Load Balancing
 
@@ -414,7 +417,7 @@ class ContentAggregate {
   private state: ContentState;
 
   constructor(id: string, events: Event[]) {
-    this.state = { id, title: '', body: '', status: 'draft' };
+    this.state = { id, title: "", body: "", status: "draft" };
     for (const event of events) {
       this.apply(event);
     }
@@ -422,15 +425,15 @@ class ContentAggregate {
 
   private apply(event: Event): void {
     switch (event.type) {
-      case 'ContentCreated':
+      case "ContentCreated":
         this.state.title = event.data.title;
         this.state.body = event.data.body;
         break;
-      case 'ContentUpdated':
+      case "ContentUpdated":
         Object.assign(this.state, event.data);
         break;
-      case 'ContentPublished':
-        this.state.status = 'published';
+      case "ContentPublished":
+        this.state.status = "published";
         this.state.publishedAt = event.timestamp;
         break;
     }
@@ -447,12 +450,14 @@ class ContentAggregate {
 > Command Query Responsibility Segregation (CQRS) separates read and write operations into different models. This allows for independent scaling and optimization of each side.
 
 **Commands** (Write Side):
+
 - CreateUser
 - UpdateContent
 - PublishContent
 - DeleteTag
 
 **Queries** (Read Side):
+
 - GetUserById
 - ListContentByUser
 - SearchContent
@@ -614,15 +619,15 @@ Authorization: Bearer <token>
 
 ### 5.5 Error Responses
 
-| Status Code | Error Code | Description |
-|-------------|------------|-------------|
-| 400 | VALIDATION_ERROR | Invalid request data |
-| 401 | UNAUTHORIZED | Authentication required |
-| 403 | FORBIDDEN | Insufficient permissions |
-| 404 | NOT_FOUND | Resource not found |
-| 409 | CONFLICT | Resource conflict |
-| 429 | RATE_LIMITED | Too many requests |
-| 500 | INTERNAL_ERROR | Server error |
+| Status Code | Error Code       | Description              |
+| ----------- | ---------------- | ------------------------ |
+| 400         | VALIDATION_ERROR | Invalid request data     |
+| 401         | UNAUTHORIZED     | Authentication required  |
+| 403         | FORBIDDEN        | Insufficient permissions |
+| 404         | NOT_FOUND        | Resource not found       |
+| 409         | CONFLICT         | Resource conflict        |
+| 429         | RATE_LIMITED     | Too many requests        |
+| 500         | INTERNAL_ERROR   | Server error             |
 
 ---
 
@@ -693,11 +698,13 @@ git push origin main
 **Symptom**: `ECONNREFUSED` error when connecting to database
 
 **Causes**:
+
 - Database server is not running
 - Incorrect connection parameters
 - Firewall blocking connection
 
 **Solutions**:
+
 1. Verify database server is running
 2. Check connection string
 3. Review firewall rules
@@ -707,11 +714,13 @@ git push origin main
 **Symptom**: `JavaScript heap out of memory` error
 
 **Causes**:
+
 - Memory leak in application
 - Large data processing
 - Insufficient system memory
 
 **Solutions**:
+
 1. Profile memory usage
 2. Implement streaming for large data
 3. Increase Node.js heap size: `--max-old-space-size=4096`
@@ -721,11 +730,13 @@ git push origin main
 **Symptom**: Database queries taking too long
 
 **Causes**:
+
 - Missing indexes
 - Inefficient query design
 - Large result sets
 
 **Solutions**:
+
 1. Analyze query execution plan
 2. Add appropriate indexes
 3. Implement pagination
@@ -746,17 +757,17 @@ DEBUG= npm start
 ### 7.3 Health Checks
 
 ```typescript
-app.get('/health', async (req, res) => {
+app.get("/health", async (req, res) => {
   const checks = {
     database: await checkDatabase(),
     cache: await checkCache(),
     search: await checkSearch(),
   };
 
-  const healthy = Object.values(checks).every(c => c.status === 'healthy');
+  const healthy = Object.values(checks).every((c) => c.status === "healthy");
 
   res.status(healthy ? 200 : 503).json({
-    status: healthy ? 'healthy' : 'unhealthy',
+    status: healthy ? "healthy" : "unhealthy",
     timestamp: new Date().toISOString(),
     checks,
   });
@@ -777,14 +788,14 @@ TRACE - Very detailed tracing
 
 ### 7.5 Metrics to Monitor
 
-| Metric | Description | Alert Threshold |
-|--------|-------------|-----------------|
-| Response Time (p95) | 95th percentile latency | > 500ms |
-| Error Rate | Percentage of 5xx errors | > 1% |
-| CPU Usage | Server CPU utilization | > 80% |
-| Memory Usage | Server memory utilization | > 85% |
-| Disk I/O | Disk read/write operations | > 90% capacity |
-| Connection Pool | Active database connections | > 80% of max |
+| Metric              | Description                 | Alert Threshold |
+| ------------------- | --------------------------- | --------------- |
+| Response Time (p95) | 95th percentile latency     | > 500ms         |
+| Error Rate          | Percentage of 5xx errors    | > 1%            |
+| CPU Usage           | Server CPU utilization      | > 80%           |
+| Memory Usage        | Server memory utilization   | > 85%           |
+| Disk I/O            | Disk read/write operations  | > 90% capacity  |
+| Connection Pool     | Active database connections | > 80% of max    |
 
 ---
 
@@ -797,7 +808,7 @@ TRACE - Very detailed tracing
 SELECT * FROM content WHERE body LIKE '%keyword%';
 
 -- After: Using full-text search index
-SELECT * FROM content 
+SELECT * FROM content
 WHERE to_tsvector('english', body) @@ to_tsquery('keyword');
 
 -- Before: N+1 query problem
@@ -805,7 +816,7 @@ SELECT * FROM content WHERE user_id = 1;
 -- Then for each content: SELECT * FROM tags WHERE content_id = ?;
 
 -- After: Single query with JOIN
-SELECT c.*, t.* 
+SELECT c.*, t.*
 FROM content c
 LEFT JOIN content_tags ct ON c.id = ct.content_id
 LEFT JOIN tags t ON ct.tag_id = t.id
@@ -845,7 +856,7 @@ class CacheService {
 ```typescript
 const pool = new Pool({
   host: process.env.DB_HOST,
-  port: parseInt(process.env.DB_PORT || '5432'),
+  port: parseInt(process.env.DB_PORT || "5432"),
   database: process.env.DB_NAME,
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
@@ -859,28 +870,30 @@ const pool = new Pool({
 ### 8.4 Compression
 
 ```typescript
-import compression from 'compression';
+import compression from "compression";
 
-app.use(compression({
-  filter: (req, res) => {
-    if (req.headers['x-no-compression']) {
-      return false;
-    }
-    return compression.filter(req, res);
-  },
-  level: 6,
-  threshold: 1024,
-}));
+app.use(
+  compression({
+    filter: (req, res) => {
+      if (req.headers["x-no-compression"]) {
+        return false;
+      }
+      return compression.filter(req, res);
+    },
+    level: 6,
+    threshold: 1024,
+  })
+);
 ```
 
 ### 8.5 Lazy Loading
 
 ```typescript
 // Lazy load modules
-const heavyModule = await import('./heavy-module');
+const heavyModule = await import("./heavy-module");
 
 // Lazy load components (React)
-const LazyComponent = React.lazy(() => import('./HeavyComponent'));
+const LazyComponent = React.lazy(() => import("./HeavyComponent"));
 
 // Lazy load data
 const [data, setData] = useState(null);
@@ -908,17 +921,17 @@ useEffect(() => {
 function authorize(requiredRole: UserRole) {
   return (req: Request, res: Response, next: NextFunction) => {
     const user = req.user;
-    
+
     if (!user) {
-      return res.status(401).json({ error: 'Unauthorized' });
+      return res.status(401).json({ error: "Unauthorized" });
     }
-    
+
     const roleHierarchy = { admin: 3, editor: 2, user: 1 };
-    
+
     if (roleHierarchy[user.role] < roleHierarchy[requiredRole]) {
-      return res.status(403).json({ error: 'Forbidden' });
+      return res.status(403).json({ error: "Forbidden" });
     }
-    
+
     next();
   };
 }
@@ -927,13 +940,13 @@ function authorize(requiredRole: UserRole) {
 ### 9.3 Input Validation
 
 ```typescript
-import { z } from 'zod';
+import { z } from "zod";
 
 const createUserSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8).max(128),
   name: z.string().min(1).max(100),
-  role: z.enum(['admin', 'editor', 'user']).optional(),
+  role: z.enum(["admin", "editor", "user"]).optional(),
 });
 
 function validateInput<T>(schema: z.Schema<T>) {
@@ -944,7 +957,7 @@ function validateInput<T>(schema: z.Schema<T>) {
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({
-          error: 'Validation error',
+          error: "Validation error",
           details: error.errors,
         });
       }
@@ -961,14 +974,14 @@ function validateInput<T>(schema: z.Schema<T>) {
 const query = `SELECT * FROM users WHERE email = '${email}'`;
 
 // GOOD: Parameterized query
-const query = 'SELECT * FROM users WHERE email = $1';
+const query = "SELECT * FROM users WHERE email = $1";
 const result = await pool.query(query, [email]);
 ```
 
 ### 9.5 XSS Prevention
 
 ```typescript
-import DOMPurify from 'dompurify';
+import DOMPurify from "dompurify";
 
 // Sanitize HTML content
 const sanitized = DOMPurify.sanitize(userInput);
@@ -976,50 +989,52 @@ const sanitized = DOMPurify.sanitize(userInput);
 // Escape HTML entities
 function escapeHtml(text: string): string {
   const map: Record<string, string> = {
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#039;',
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#039;",
   };
-  return text.replace(/[&<>"']/g, m => map[m]);
+  return text.replace(/[&<>"']/g, (m) => map[m]);
 }
 ```
 
 ### 9.6 CSRF Protection
 
 ```typescript
-import csrf from 'csurf';
+import csrf from "csurf";
 
 const csrfProtection = csrf({ cookie: true });
 
 app.use(csrfProtection);
 
-app.get('/form', (req, res) => {
-  res.render('form', { csrfToken: req.csrfToken() });
+app.get("/form", (req, res) => {
+  res.render("form", { csrfToken: req.csrfToken() });
 });
 ```
 
 ### 9.7 Security Headers
 
 ```typescript
-import helmet from 'helmet';
+import helmet from "helmet";
 
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      imgSrc: ["'self'", 'data:', 'https:'],
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", "data:", "https:"],
+      },
     },
-  },
-  hsts: {
-    maxAge: 31536000,
-    includeSubDomains: true,
-    preload: true,
-  },
-}));
+    hsts: {
+      maxAge: 31536000,
+      includeSubDomains: true,
+      preload: true,
+    },
+  })
+);
 ```
 
 ---
@@ -1082,7 +1097,7 @@ CMD ["node", "dist/index.js"]
 ```
 
 ```yaml
-version: '3.8'
+version: "3.8"
 
 services:
   app:
@@ -1177,28 +1192,28 @@ Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor i
 
 ## Appendix B: Large Data Table
 
-| ID | Name | Email | Role | Status | Created | Updated | Score | Level | Region |
-|----|------|-------|------|--------|---------|---------|-------|-------|--------|
-| 1 | Alice Johnson | alice@example.com | Admin | Active | 2024-01-01 | 2024-01-15 | 95 | 10 | US-East |
-| 2 | Bob Smith | bob@example.com | User | Active | 2024-01-02 | 2024-01-14 | 82 | 8 | US-West |
-| 3 | Carol White | carol@example.com | Editor | Active | 2024-01-03 | 2024-01-13 | 78 | 7 | EU-West |
-| 4 | David Brown | david@example.com | User | Inactive | 2024-01-04 | 2024-01-12 | 65 | 5 | EU-East |
-| 5 | Eve Davis | eve@example.com | Admin | Active | 2024-01-05 | 2024-01-11 | 91 | 9 | APAC |
-| 6 | Frank Miller | frank@example.com | User | Active | 2024-01-06 | 2024-01-10 | 73 | 6 | US-East |
-| 7 | Grace Wilson | grace@example.com | Editor | Active | 2024-01-07 | 2024-01-09 | 88 | 8 | US-West |
-| 8 | Henry Moore | henry@example.com | User | Pending | 2024-01-08 | 2024-01-08 | 45 | 3 | EU-West |
-| 9 | Iris Taylor | iris@example.com | User | Active | 2024-01-09 | 2024-01-15 | 67 | 5 | EU-East |
-| 10 | Jack Anderson | jack@example.com | Admin | Active | 2024-01-10 | 2024-01-14 | 99 | 10 | APAC |
-| 11 | Karen Thomas | karen@example.com | User | Active | 2024-01-11 | 2024-01-13 | 71 | 6 | US-East |
-| 12 | Leo Jackson | leo@example.com | Editor | Inactive | 2024-01-12 | 2024-01-12 | 58 | 4 | US-West |
-| 13 | Maria Garcia | maria@example.com | User | Active | 2024-01-13 | 2024-01-15 | 84 | 8 | EU-West |
-| 14 | Nathan Lee | nathan@example.com | User | Active | 2024-01-14 | 2024-01-14 | 76 | 7 | EU-East |
-| 15 | Olivia Martin | olivia@example.com | Admin | Active | 2024-01-15 | 2024-01-15 | 93 | 9 | APAC |
-| 16 | Peter Clark | peter@example.com | User | Pending | 2024-01-01 | 2024-01-10 | 42 | 3 | US-East |
-| 17 | Quinn Lewis | quinn@example.com | Editor | Active | 2024-01-02 | 2024-01-11 | 79 | 7 | US-West |
-| 18 | Rachel Hall | rachel@example.com | User | Active | 2024-01-03 | 2024-01-12 | 86 | 8 | EU-West |
-| 19 | Samuel Young | samuel@example.com | User | Inactive | 2024-01-04 | 2024-01-13 | 54 | 4 | EU-East |
-| 20 | Tina King | tina@example.com | Admin | Active | 2024-01-05 | 2024-01-14 | 97 | 10 | APAC |
+| ID  | Name          | Email              | Role   | Status   | Created    | Updated    | Score | Level | Region  |
+| --- | ------------- | ------------------ | ------ | -------- | ---------- | ---------- | ----- | ----- | ------- |
+| 1   | Alice Johnson | alice@example.com  | Admin  | Active   | 2024-01-01 | 2024-01-15 | 95    | 10    | US-East |
+| 2   | Bob Smith     | bob@example.com    | User   | Active   | 2024-01-02 | 2024-01-14 | 82    | 8     | US-West |
+| 3   | Carol White   | carol@example.com  | Editor | Active   | 2024-01-03 | 2024-01-13 | 78    | 7     | EU-West |
+| 4   | David Brown   | david@example.com  | User   | Inactive | 2024-01-04 | 2024-01-12 | 65    | 5     | EU-East |
+| 5   | Eve Davis     | eve@example.com    | Admin  | Active   | 2024-01-05 | 2024-01-11 | 91    | 9     | APAC    |
+| 6   | Frank Miller  | frank@example.com  | User   | Active   | 2024-01-06 | 2024-01-10 | 73    | 6     | US-East |
+| 7   | Grace Wilson  | grace@example.com  | Editor | Active   | 2024-01-07 | 2024-01-09 | 88    | 8     | US-West |
+| 8   | Henry Moore   | henry@example.com  | User   | Pending  | 2024-01-08 | 2024-01-08 | 45    | 3     | EU-West |
+| 9   | Iris Taylor   | iris@example.com   | User   | Active   | 2024-01-09 | 2024-01-15 | 67    | 5     | EU-East |
+| 10  | Jack Anderson | jack@example.com   | Admin  | Active   | 2024-01-10 | 2024-01-14 | 99    | 10    | APAC    |
+| 11  | Karen Thomas  | karen@example.com  | User   | Active   | 2024-01-11 | 2024-01-13 | 71    | 6     | US-East |
+| 12  | Leo Jackson   | leo@example.com    | Editor | Inactive | 2024-01-12 | 2024-01-12 | 58    | 4     | US-West |
+| 13  | Maria Garcia  | maria@example.com  | User   | Active   | 2024-01-13 | 2024-01-15 | 84    | 8     | EU-West |
+| 14  | Nathan Lee    | nathan@example.com | User   | Active   | 2024-01-14 | 2024-01-14 | 76    | 7     | EU-East |
+| 15  | Olivia Martin | olivia@example.com | Admin  | Active   | 2024-01-15 | 2024-01-15 | 93    | 9     | APAC    |
+| 16  | Peter Clark   | peter@example.com  | User   | Pending  | 2024-01-01 | 2024-01-10 | 42    | 3     | US-East |
+| 17  | Quinn Lewis   | quinn@example.com  | Editor | Active   | 2024-01-02 | 2024-01-11 | 79    | 7     | US-West |
+| 18  | Rachel Hall   | rachel@example.com | User   | Active   | 2024-01-03 | 2024-01-12 | 86    | 8     | EU-West |
+| 19  | Samuel Young  | samuel@example.com | User   | Inactive | 2024-01-04 | 2024-01-13 | 54    | 4     | EU-East |
+| 20  | Tina King     | tina@example.com   | Admin  | Active   | 2024-01-05 | 2024-01-14 | 97    | 10    | APAC    |
 
 ---
 
@@ -1212,11 +1227,13 @@ Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor i
 
 ###### C.1.1.1.1 Level 4
 
-Level 4 content with **bold**, *italic*, and `code`.
+Level 4 content with **bold**, _italic_, and `code`.
 
 > Level 4 blockquote with nested content
->> Level 5 nested blockquote
->>> Level 6 deeply nested
+>
+> > Level 5 nested blockquote
+> >
+> > > Level 6 deeply nested
 
 - Level 4 list
   - Level 5 nested

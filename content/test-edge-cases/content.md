@@ -40,9 +40,9 @@ $ € £ ¥ ₹ ₽ ₿ ¢ ƒ ₩ ₪ ₫ ₭ ₮ ₯ ₱ ₲ ₳ ₴ ₵
 ### Box Drawing
 
 ┌─────┬─────┐
-│     │     │
+│ │ │
 ├─────┼─────┤
-│     │     │
+│ │ │
 └─────┴─────┘
 
 ### Miscellaneous Symbols
@@ -186,8 +186,8 @@ Empty blockquote above.
 
 Empty code block above.
 
-|   |
-|---|
+|     |
+| --- |
 
 Empty table above.
 
@@ -196,26 +196,37 @@ Empty table above.
 ## Deeply Nested Structures
 
 > Level 1
->> Level 2
->>> Level 3
->>>> Level 4
->>>>> Level 5
->>>>>> Level 6
->>>>>>> Level 7
->>>>>>>> Level 8
->>>>>>>>> Level 9
->>>>>>>>>> Level 10
+>
+> > Level 2
+> >
+> > > Level 3
+> > >
+> > > > Level 4
+> > > >
+> > > > > Level 5
+> > > > >
+> > > > > > Level 6
+> > > > > >
+> > > > > > > Level 7
+> > > > > > >
+> > > > > > > > Level 8
+> > > > > > > >
+> > > > > > > > > Level 9
+> > > > > > > > >
+> > > > > > > > > > Level 10
 
 ---
 
 ## Mixed Nesting
 
 > Blockquote with list:
+>
 > - Item 1
 >   - Nested item
 >     - Deeply nested
 >       > And a quote inside!
 >       > With multiple lines
+>       >
 >       > - And another list
 >       >   1. Ordered inside
 >       >   2. More ordered
@@ -253,13 +264,13 @@ Empty table above.
 - `code in list`
   - `nested code in list`
 
-| `code` | in | table |
-|--------|-------|-------|
+| `code` | in     | table  |
+| ------ | ------ | ------ |
 | `more` | `code` | `here` |
 
 **`code in bold`**
 
-*`code in italic`*
+_`code in italic`_
 
 ~~`code in strikethrough`~~
 
@@ -313,7 +324,7 @@ $$
 
 [Just hash](#)
 
-[JavaScript link](javascript:void(0))
+[JavaScript link](<javascript:void(0)>)
 
 [Mailto](mailto:test@example.com)
 
@@ -325,13 +336,13 @@ $$
 
 ## Overlapping Formatting
 
-***Bold and italic***
+**_Bold and italic_**
 
-**Bold with *italic* inside**
+**Bold with _italic_ inside**
 
-*Italic with **bold** inside*
+_Italic with **bold** inside_
 
-~~Strikethrough with **bold** and *italic*~~
+~~Strikethrough with **bold** and _italic_~~
 
 `Code with special chars: <>&"`
 
@@ -341,7 +352,7 @@ $$
 
 _underscore_style_text_with_multiple_underscores_
 
-__double__underscore__patterns__
+**double**underscore**patterns**
 
 *asterisk*style*text*with*asterisks*
 

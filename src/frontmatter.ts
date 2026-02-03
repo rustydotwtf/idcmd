@@ -38,8 +38,8 @@ export function parseFrontmatter(markdown: string): ParsedMarkdown {
   // Check if file starts with frontmatter delimiter
   if (!trimmed.startsWith("---")) {
     return {
-      frontmatter: {},
       content: markdown,
+      frontmatter: {},
     };
   }
 
@@ -48,8 +48,8 @@ export function parseFrontmatter(markdown: string): ParsedMarkdown {
   if (endIndex === -1) {
     // No closing delimiter, treat as regular content
     return {
-      frontmatter: {},
       content: markdown,
+      frontmatter: {},
     };
   }
 
@@ -71,8 +71,8 @@ export function parseFrontmatter(markdown: string): ParsedMarkdown {
   }
 
   return {
-    frontmatter,
     content,
+    frontmatter,
   };
 }
 
