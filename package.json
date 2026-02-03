@@ -8,7 +8,7 @@
     "dev:css": "bunx @tailwindcss/cli -i src/styles/globals.css -o public/styles.css --watch",
     "dev:server": "bun --hot src/server.ts",
     "build:css": "bunx @tailwindcss/cli -i src/styles/globals.css -o dist/styles.css --minify",
-    "build": "bun run build:css && bun scripts/build.ts",
+    "build": "bun run build:css && bun src/build.ts",
     "preview": "bunx serve dist",
     "start": "bun src/server.ts",
     "check": "ultracite check",

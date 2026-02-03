@@ -1,6 +1,5 @@
-import { watch } from "node:fs";
-
-import { render, parseFrontmatter, extractTitleFromContent } from "./render.ts";
+import { extractTitleFromContent, parseFrontmatter } from "./frontmatter";
+import { render } from "./render";
 
 interface SiteConfig {
   name: string;
@@ -11,34 +10,34 @@ interface SiteConfig {
   };
 }
 
-const CONTENT_DIR = "./content";
-const PUBLIC_DIR = "./public";
-const isDev = process.env.NODE_ENV !== "production";
-
-// Live reload WebSocket clients
-const liveReloadClients = new Set<{
-  send: (msg: string) => void;
-  close: () => void;
-}>();
-
-// Watch content directory for changes in dev mode
-if (isDev) {
-  console.log("Watching content/ for changes...");
-  watch(CONTENT_DIR, { recursive: true }, (event, filename) => {
-    if (filename?.endsWith(".md")) {
-      console.log(`[live-reload] ${filename} changed`);
-      for (const client of liveReloadClients) {
-        try {
-          client.send("reload");
-        } catch {
-          liveReloadClients.delete(client);
-        }
-      }
-    }
-  });
+interface LlmsPage {
+  slug: string;
+  title: string;
+  description: string;
 }
 
-// Cache headers for Vercel CDN
+interface SearchResult {
+  slug: string;
+  title: string;
+  description: string;
+}
+
+type SearchScope = "full" | "title" | "title_and_description";
+
+interface LiveReloadClient {
+  send: (msg: string) => void;
+  close: () => void;
+}
+
+const CONTENT_DIR = "./content";
+const PUBLIC_DIR = "./public";
+const contentGlob = new Bun.Glob("*/content.md");
+const isDev = process.env.NODE_ENV !== "production";
+const LIVE_RELOAD_POLL_MS = 500;
+
+// Live reload WebSocket clients
+const liveReloadClients = new Set<LiveReloadClient>();
+
 const cacheHeaders = {
   "Cache-Control": isDev
     ? "no-cache"
@@ -65,7 +64,58 @@ const mimeTypes: Record<string, string> = {
   ".woff2": "font/woff2",
 };
 
-async function serveStaticFile(pathname: string): Promise<Response | null> {
+const notifyLiveReload = (message: string): void => {
+  for (const client of liveReloadClients) {
+    try {
+      client.send(message);
+    } catch {
+      liveReloadClients.delete(client);
+    }
+  }
+};
+
+const getContentSnapshot = async (): Promise<string> => {
+  const entries: string[] = [];
+  for await (const file of contentGlob.scan(CONTENT_DIR)) {
+    const filePath = `${CONTENT_DIR}/${file}`;
+    const { lastModified } = Bun.file(filePath);
+    entries.push(`${file}:${lastModified}`);
+  }
+
+  return entries.toSorted().join("|");
+};
+
+const startContentWatcher = async (): Promise<void> => {
+  console.log("Watching content/ for changes...");
+  let snapshot = await getContentSnapshot();
+
+  const poll = async (): Promise<void> => {
+    const nextSnapshot = await getContentSnapshot();
+    if (nextSnapshot !== snapshot) {
+      snapshot = nextSnapshot;
+      console.log("[live-reload] Content updated");
+      notifyLiveReload("reload");
+    }
+  };
+
+  setInterval(async () => {
+    try {
+      await poll();
+    } catch (error) {
+      console.warn("[live-reload] Polling error", error);
+    }
+  }, LIVE_RELOAD_POLL_MS);
+};
+
+if (isDev) {
+  try {
+    await startContentWatcher();
+  } catch (error) {
+    console.warn("[live-reload] Watcher failed", error);
+  }
+}
+
+const serveStaticFile = async (pathname: string): Promise<Response | null> => {
   const filePath = `${PUBLIC_DIR}${pathname}`;
   const file = Bun.file(filePath);
 
@@ -81,62 +131,61 @@ async function serveStaticFile(pathname: string): Promise<Response | null> {
     });
   }
   return null;
-}
+};
 
-async function getMarkdownFile(slug: string): Promise<string | null> {
-  const filePath = `${CONTENT_DIR}/${slug}/content.md`;
+const getMarkdownFilePath = (slug: string): string =>
+  `${CONTENT_DIR}/${slug}/content.md`;
+
+const getMarkdownFile = async (slug: string): Promise<string | null> => {
+  const filePath = getMarkdownFilePath(slug);
   const file = Bun.file(filePath);
 
   if (await file.exists()) {
     return file.text();
   }
   return null;
-}
+};
 
-function extractTitle(markdown: string): string | undefined {
+const extractTitle = (markdown: string): string | undefined => {
   const { frontmatter, content } = parseFrontmatter(markdown);
   return frontmatter.title ?? extractTitleFromContent(content);
-}
+};
 
-function extractDescription(markdown: string): string {
+const extractDescription = (markdown: string): string => {
   const { content } = parseFrontmatter(markdown);
-  // Skip the title line, find first non-empty paragraph
   const lines = content.split("\n");
-  let foundTitle = false;
-  let description = "";
+  const titleIndex = lines.findIndex((line) => line.startsWith("# "));
 
-  for (const line of lines) {
-    if (line.startsWith("# ")) {
-      foundTitle = true;
-      continue;
-    }
-    if (foundTitle && line.trim() && !line.startsWith("#")) {
-      description = line.trim();
-      break;
-    }
+  if (titleIndex === -1) {
+    return "No description available.";
   }
 
-  return description || "No description available.";
-}
+  const descriptionLine = lines
+    .slice(titleIndex + 1)
+    .find((line) => line.trim() && !line.startsWith("#"));
 
-async function generateLlmsTxt(): Promise<string> {
-  const siteConfig = Bun.JSONC.parse(
-    await Bun.file("site.jsonc").text()
-  ) as SiteConfig;
-  const glob = new Bun.Glob("*/content.md");
+  return descriptionLine?.trim() ?? "No description available.";
+};
 
-  const pages: { slug: string; title: string; description: string }[] = [];
-
-  for await (const file of glob.scan(CONTENT_DIR)) {
-    const markdown = await Bun.file(`${CONTENT_DIR}/${file}`).text();
-    const slug = file.replace("/content.md", "");
-    const title = extractTitle(markdown) || slug;
-    const description = extractDescription(markdown);
-    pages.push({ description, slug: slug === "index" ? "" : slug, title });
+const loadSiteConfig = async (): Promise<SiteConfig> => {
+  const file = Bun.file("site.jsonc");
+  if (await file.exists()) {
+    const text = await file.text();
+    return Bun.JSONC.parse(text) as SiteConfig;
   }
 
-  // Sort: index first, then alphabetically
-  pages.sort((a, b) => {
+  return { description: "", name: "Markdown Site" };
+};
+
+const toSlug = (file: string): string => file.replace("/content.md", "");
+
+const toPageSlug = (slug: string): string => (slug === "index" ? "" : slug);
+
+const toPagePath = (slug: string): string =>
+  slug === "index" ? "/" : `/${slug}`;
+
+const sortPages = (pages: LlmsPage[]): LlmsPage[] =>
+  pages.toSorted((a, b) => {
     if (a.slug === "") {
       return -1;
     }
@@ -146,150 +195,232 @@ async function generateLlmsTxt(): Promise<string> {
     return a.title.localeCompare(b.title);
   });
 
-  let output = `# ${siteConfig.name}\n\n> ${siteConfig.description}\n\n## Pages\n\n`;
+const buildLlmsPages = async (): Promise<LlmsPage[]> => {
+  const pages: LlmsPage[] = [];
+
+  for await (const file of contentGlob.scan(CONTENT_DIR)) {
+    const markdown = await Bun.file(`${CONTENT_DIR}/${file}`).text();
+    const slug = toSlug(file);
+    const title = extractTitle(markdown) ?? slug;
+    const description = extractDescription(markdown);
+
+    pages.push({
+      description,
+      slug: toPageSlug(slug),
+      title,
+    });
+  }
+
+  return pages;
+};
+
+const formatLlmsTxt = (siteConfig: SiteConfig, pages: LlmsPage[]): string => {
+  const lines = [
+    `# ${siteConfig.name}`,
+    "",
+    `> ${siteConfig.description}`,
+    "",
+    "## Pages",
+    "",
+  ];
+
   for (const page of pages) {
     const mdFile =
       page.slug === "" ? "index/content.md" : `${page.slug}/content.md`;
-    output += `- [${page.title}](/${mdFile}): ${page.description}\n`;
+    lines.push(`- [${page.title}](/${mdFile}): ${page.description}`);
   }
 
-  return output;
-}
+  return `${lines.join("\n")}\n`;
+};
+
+const generateLlmsTxt = async (): Promise<string> => {
+  const [siteConfig, pages] = await Promise.all([
+    loadSiteConfig(),
+    buildLlmsPages(),
+  ]);
+  const sortedPages = sortPages(pages);
+
+  return formatLlmsTxt(siteConfig, sortedPages);
+};
+
+const getSearchScope = (siteConfig: SiteConfig): SearchScope =>
+  siteConfig.search?.scope ?? "full";
+
+const getSearchContent = (scope: SearchScope, markdown: string): string => {
+  if (scope === "title") {
+    return extractTitle(markdown) ?? "";
+  }
+
+  if (scope === "title_and_description") {
+    return `${extractTitle(markdown) ?? ""} ${extractDescription(markdown)}`;
+  }
+
+  return markdown;
+};
+
+const buildSearchResult = async (
+  file: string,
+  query: string,
+  scope: SearchScope
+): Promise<SearchResult | null> => {
+  const markdown = await Bun.file(`${CONTENT_DIR}/${file}`).text();
+  const slug = toSlug(file);
+  const searchContent = getSearchContent(scope, markdown);
+
+  if (!searchContent.toLowerCase().includes(query)) {
+    return null;
+  }
+
+  return {
+    description: extractDescription(markdown),
+    slug: toPagePath(slug),
+    title: extractTitle(markdown) ?? slug,
+  };
+};
+
+const createSearchStream = (
+  query: string,
+  scope: SearchScope
+): AsyncIterable<string> => {
+  const stream = async function* stream(): AsyncGenerator<string> {
+    for await (const file of contentGlob.scan(CONTENT_DIR)) {
+      const result = await buildSearchResult(file, query, scope);
+      if (result) {
+        yield `${JSON.stringify(result)}\n`;
+      }
+    }
+  };
+
+  return stream();
+};
+
+const handleLiveReload = (
+  req: Request,
+  server: Server,
+  path: string
+): "handled" | Response | undefined => {
+  if (!isDev || path !== "/__live-reload") {
+    return undefined;
+  }
+
+  const upgraded = server.upgrade(req);
+  if (upgraded) {
+    return "handled";
+  }
+
+  return new Response("WebSocket upgrade failed", { status: 400 });
+};
+
+const handleLlmsTxt = async (path: string): Promise<Response | undefined> => {
+  if (path !== "/llms.txt") {
+    return undefined;
+  }
+
+  const llmsTxt = await generateLlmsTxt();
+  return new Response(llmsTxt, {
+    headers: {
+      "Content-Type": "text/plain; charset=utf-8",
+      ...staticCacheHeaders,
+    },
+  });
+};
+
+const handleSearch = async (url: URL): Promise<Response | undefined> => {
+  if (url.pathname !== "/api/search") {
+    return undefined;
+  }
+
+  const query = url.searchParams.get("q")?.toLowerCase();
+  if (!query) {
+    return Response.json(
+      { error: "Missing query parameter 'q'" },
+      { status: 400 }
+    );
+  }
+
+  const siteConfig = await loadSiteConfig();
+  const scope = getSearchScope(siteConfig);
+  const stream = createSearchStream(query, scope);
+
+  return new Response(stream, {
+    headers: { "Content-Type": "application/jsonl" },
+  });
+};
+
+const handleMarkdownRequest = async (
+  path: string
+): Promise<Response | undefined> => {
+  if (!path.endsWith(".md")) {
+    return undefined;
+  }
+
+  const slug = path.endsWith("/content.md")
+    ? path.slice(1, -11)
+    : path.slice(1, -3);
+  const markdown = await getMarkdownFile(slug);
+
+  if (!markdown) {
+    return new Response("Not Found", {
+      headers: { "Content-Type": "text/plain" },
+      status: 404,
+    });
+  }
+
+  return new Response(markdown, {
+    headers: {
+      "Content-Type": "text/markdown; charset=utf-8",
+      ...staticCacheHeaders,
+    },
+    status: 200,
+  });
+};
+
+const handlePageRequest = async (path: string): Promise<Response> => {
+  const normalizedPath = path === "/" ? "/index" : path;
+  const slug = normalizedPath.slice(1);
+  const markdown = await getMarkdownFile(slug);
+
+  if (!markdown) {
+    return new Response("Not Found", {
+      headers: { "Content-Type": "text/plain" },
+      status: 404,
+    });
+  }
+
+  const currentPath = normalizedPath === "/index" ? "/" : normalizedPath;
+  const html = await render(markdown, undefined, isDev, currentPath);
+
+  return new Response(html, {
+    headers: cacheHeaders,
+    status: 200,
+  });
+};
+
+const handleRequest = async (
+  req: Request,
+  server: Server
+): Promise<Response | undefined> => {
+  const url = new URL(req.url);
+  const path = url.pathname;
+  const liveReload = handleLiveReload(req, server, path);
+
+  if (liveReload === "handled") {
+    return undefined;
+  }
+
+  return (
+    liveReload ??
+    (await handleLlmsTxt(path)) ??
+    (await handleSearch(url)) ??
+    (await serveStaticFile(path)) ??
+    (await handleMarkdownRequest(path)) ??
+    (await handlePageRequest(path))
+  );
+};
 
 const server = Bun.serve({
-  async fetch(req, server) {
-    const url = new URL(req.url);
-    let path = url.pathname;
-
-    // Handle WebSocket upgrade for live reload
-    if (isDev && path === "/__live-reload") {
-      const upgraded = server.upgrade(req);
-      if (upgraded) {
-        return;
-      }
-      return new Response("WebSocket upgrade failed", { status: 400 });
-    }
-
-    // Handle /llms.txt
-    if (path === "/llms.txt") {
-      const llmsTxt = await generateLlmsTxt();
-      return new Response(llmsTxt, {
-        headers: {
-          "Content-Type": "text/plain; charset=utf-8",
-          ...staticCacheHeaders,
-        },
-      });
-    }
-
-    // Handle /api/search
-    if (path === "/api/search") {
-      const query = url.searchParams.get("q")?.toLowerCase();
-      if (!query) {
-        return new Response(
-          JSON.stringify({ error: "Missing query parameter 'q'" }),
-          {
-            headers: { "Content-Type": "application/json" },
-            status: 400,
-          }
-        );
-      }
-
-      return new Response(
-        async function* fetch() {
-          const glob = new Bun.Glob("*/content.md");
-          const siteConfig = Bun.JSONC.parse(
-            await Bun.file("site.jsonc").text()
-          ) as SiteConfig;
-          const scope = siteConfig.search?.scope ?? "full";
-
-          for await (const file of glob.scan(CONTENT_DIR)) {
-            const markdown = await Bun.file(`${CONTENT_DIR}/${file}`).text();
-            const slug = file.replace("/content.md", "");
-
-            // Determine searchable content based on scope
-            let searchContent: string;
-            if (scope === "title") {
-              searchContent = extractTitle(markdown) ?? "";
-            } else if (scope === "title_and_description") {
-              searchContent = `${extractTitle(markdown) ?? ""} ${extractDescription(markdown)}`;
-            } else {
-              searchContent = markdown;
-            }
-
-            if (searchContent.toLowerCase().includes(query)) {
-              const result = {
-                description: extractDescription(markdown),
-                slug: slug === "index" ? "/" : `/${slug}`,
-                title: extractTitle(markdown) ?? slug,
-              };
-              yield JSON.stringify(result) + "\n";
-            }
-          }
-        },
-        { headers: { "Content-Type": "application/jsonl" } }
-      );
-    }
-
-    // Try to serve static files first
-    const staticResponse = await serveStaticFile(path);
-    if (staticResponse) {
-      return staticResponse;
-    }
-
-    // Handle raw markdown requests
-    // Supports both /about.md and /about/content.md formats
-    if (path.endsWith(".md")) {
-      let slug: string;
-      if (path.endsWith("/content.md")) {
-        // /about/content.md -> about
-        slug = path.slice(1, -11);
-      } else {
-        // /about.md -> about
-        slug = path.slice(1, -3);
-      }
-
-      const markdown = await getMarkdownFile(slug);
-
-      if (!markdown) {
-        return new Response("Not Found", {
-          headers: { "Content-Type": "text/plain" },
-          status: 404,
-        });
-      }
-
-      return new Response(markdown, {
-        headers: {
-          "Content-Type": "text/markdown; charset=utf-8",
-          ...staticCacheHeaders,
-        },
-        status: 200,
-      });
-    }
-
-    // Handle root path
-    if (path === "/") {
-      path = "/index";
-    }
-
-    // Remove leading slash for file lookup
-    const slug = path.slice(1);
-
-    const markdown = await getMarkdownFile(slug);
-
-    if (!markdown) {
-      return new Response("Not Found", {
-        headers: { "Content-Type": "text/plain" },
-        status: 404,
-      });
-    }
-
-    const currentPath = path === "/index" ? "/" : path;
-    const html = await render(markdown, undefined, isDev, currentPath);
-
-    return new Response(html, {
-      headers: cacheHeaders,
-      status: 200,
-    });
+  fetch(req, server) {
+    return handleRequest(req, server);
   },
 
   port: process.env.PORT || 4000,

@@ -1,9 +1,9 @@
 import { Glob } from "bun";
 
-import { parseFrontmatter, extractTitleFromContent } from "../src/frontmatter";
-import { renderLayout } from "../src/layout.tsx";
-import { discoverNavigation } from "../src/navigation";
-import { highlightCodeBlocks } from "../src/render";
+import { parseFrontmatter, extractTitleFromContent } from "./frontmatter";
+import { renderLayout } from "./layout";
+import { discoverNavigation } from "./navigation";
+import { highlightCodeBlocks } from "./render";
 
 // Find all content.md files in content/<slug>/ directories
 const glob = new Glob("*/content.md");

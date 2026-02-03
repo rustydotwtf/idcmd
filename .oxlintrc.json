@@ -5,14 +5,23 @@
     "./node_modules/ultracite/config/oxlint/react/.oxlintrc.json"
   ],
   "rules": {
-    "max-lines": [
-      "error",
-      {
-        "max": 350,
-        "skipBlankLines": true,
-        "skipComments": true,
-        "ignorePattern": ["^import"]
+    "jest/require-hook": "off"
+  },
+  "overrides": [
+    {
+      "files": [
+        "**/*.test.ts",
+        "**/*.test.tsx",
+        "**/*.test.js",
+        "**/*.test.jsx",
+        "**/*.spec.ts",
+        "**/*.spec.tsx",
+        "**/*.spec.js",
+        "**/*.spec.jsx"
+      ],
+      "rules": {
+        "jest/require-hook": "error"
       }
-    ]
-  }
+    }
+  ]
 }

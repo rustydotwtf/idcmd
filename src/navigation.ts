@@ -3,12 +3,15 @@
  * Scans content folders and builds navigation structure from frontmatter.
  */
 
+import type { PageMeta } from "./frontmatter";
+
 import { parseFrontmatter, extractTitleFromContent } from "./frontmatter";
 
 export interface NavItem {
   title: string;
   href: string;
-  iconSvg: string; // SVG content for the icon
+  // SVG content for the icon
+  iconSvg: string;
   order: number;
 }
 
@@ -43,20 +46,20 @@ const DEFAULT_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height=
 /**
  * Load site configuration from site.jsonc
  */
-async function loadSiteConfig(): Promise<SiteConfig> {
+const loadSiteConfig = async (): Promise<SiteConfig> => {
   const file = Bun.file("site.jsonc");
   if (await file.exists()) {
     const text = await file.text();
     return Bun.JSONC.parse(text) as SiteConfig;
   }
   return { description: "", name: "Markdown Site" };
-}
+};
 
 /**
  * Load an icon by name from the icons directory.
  * Returns the SVG content or undefined if not found.
  */
-async function loadIconByName(name: string): Promise<string | undefined> {
+const loadIconByName = async (name: string): Promise<string | undefined> => {
   const iconFile = `${ICONS_DIR}/${name}.svg`;
   const file = Bun.file(iconFile);
 
@@ -64,16 +67,16 @@ async function loadIconByName(name: string): Promise<string | undefined> {
     return file.text();
   }
   return undefined;
-}
+};
 
 /**
  * Load a custom icon from a content folder.
  * The path should be relative (e.g., "./icon.svg").
  */
-async function loadCustomIcon(
+const loadCustomIcon = async (
   slug: string,
   iconPath: string
-): Promise<string | undefined> {
+): Promise<string | undefined> => {
   const iconFile = `${CONTENT_DIR}/${slug}/${iconPath.slice(2)}`;
   const file = Bun.file(iconFile);
 
@@ -83,7 +86,7 @@ async function loadCustomIcon(
 
   console.warn(`Custom icon not found: ${iconFile}`);
   return undefined;
-}
+};
 
 /**
  * Resolve an icon specification to SVG content.
@@ -91,7 +94,7 @@ async function loadCustomIcon(
  * - "home" -> loads from icons/home.svg
  * - Falls back to default file icon
  */
-async function resolveIcon(slug: string, icon: string): Promise<string> {
+const resolveIcon = async (slug: string, icon: string): Promise<string> => {
   if (icon.startsWith("./")) {
     // Custom icon from content folder
     const svg = await loadCustomIcon(slug, icon);
@@ -109,7 +112,110 @@ async function resolveIcon(slug: string, icon: string): Promise<string> {
     `Icon "${icon}" not found in icons/ folder for ${slug}, using default`
   );
   return DEFAULT_ICON;
-}
+};
+
+const buildGroupsMap = (groups: GroupConfig[]): Map<string, NavGroup> => {
+  const groupsMap = new Map<string, NavGroup>();
+  for (const group of groups) {
+    groupsMap.set(group.id, {
+      id: group.id,
+      items: [],
+      label: group.label,
+      order: group.order,
+    });
+  }
+  return groupsMap;
+};
+
+const createDefaultGroup = (): NavGroup => ({
+  id: "_default",
+  items: [],
+  label: "Pages",
+  order: 999,
+});
+
+const createGroupFromId = (groupId: string): NavGroup => ({
+  id: groupId,
+  items: [],
+  label: groupId.charAt(0).toUpperCase() + groupId.slice(1),
+  order: 100,
+});
+
+const buildNavItem = async (
+  slug: string,
+  frontmatter: PageMeta,
+  content: string
+): Promise<NavItem> => {
+  const title = frontmatter.title ?? extractTitleFromContent(content) ?? slug;
+  const href = slug === "index" ? "/" : `/${slug}`;
+  const iconName = frontmatter.icon ?? "file";
+  const iconSvg = await resolveIcon(slug, iconName);
+
+  return {
+    href,
+    iconSvg,
+    order: frontmatter.order ?? 100,
+    title,
+  };
+};
+
+const addNavItemToGroups = (
+  groupsMap: Map<string, NavGroup>,
+  defaultGroup: NavGroup,
+  navItem: NavItem,
+  groupId: string | undefined
+): void => {
+  if (!groupId) {
+    defaultGroup.items.push(navItem);
+    return;
+  }
+
+  const existingGroup = groupsMap.get(groupId);
+  if (existingGroup) {
+    existingGroup.items.push(navItem);
+    return;
+  }
+
+  const createdGroup = createGroupFromId(groupId);
+  createdGroup.items.push(navItem);
+  groupsMap.set(groupId, createdGroup);
+};
+
+const addFileToNavigation = async (
+  file: string,
+  groupsMap: Map<string, NavGroup>,
+  defaultGroup: NavGroup
+): Promise<void> => {
+  const slug = file.replace("/content.md", "");
+  const markdown = await Bun.file(`${CONTENT_DIR}/${file}`).text();
+  const { frontmatter, content } = parseFrontmatter(markdown);
+
+  if (frontmatter.hidden) {
+    return;
+  }
+
+  const navItem = await buildNavItem(slug, frontmatter, content);
+  addNavItemToGroups(groupsMap, defaultGroup, navItem, frontmatter.group);
+};
+
+const finalizeGroups = (
+  groupsMap: Map<string, NavGroup>,
+  defaultGroup: NavGroup
+): NavGroup[] => {
+  if (defaultGroup.items.length > 0) {
+    groupsMap.set(defaultGroup.id, defaultGroup);
+  }
+
+  const groups = [...groupsMap.values()]
+    .filter((group) => group.items.length > 0)
+    .toSorted((a, b) => a.order - b.order);
+
+  for (const group of groups) {
+    group.items.sort((a, b) => a.order - b.order);
+  }
+
+  return groups;
+};
 
 /**
  * Discover all pages and build navigation structure.
@@ -119,94 +225,18 @@ async function resolveIcon(slug: string, icon: string): Promise<string> {
  * - Group (for sidebar sections)
  * - Order (sort order within group)
  */
-export async function discoverNavigation(): Promise<NavGroup[]> {
+export const discoverNavigation = async (): Promise<NavGroup[]> => {
   const siteConfig = await loadSiteConfig();
   const glob = new Bun.Glob("*/content.md");
 
   // Map of group ID -> NavGroup
-  const groupsMap = new Map<string, NavGroup>();
-
-  // Initialize groups from config
-  const configGroups = siteConfig.groups ?? [];
-  for (const group of configGroups) {
-    groupsMap.set(group.id, {
-      id: group.id,
-      items: [],
-      label: group.label,
-      order: group.order,
-    });
-  }
-
-  // Default group for pages without a group specified
-  const defaultGroup: NavGroup = {
-    id: "_default",
-    items: [],
-    label: "Pages",
-    order: 999,
-  };
+  const groupsMap = buildGroupsMap(siteConfig.groups ?? []);
+  const defaultGroup = createDefaultGroup();
 
   // Scan all content folders
   for await (const file of glob.scan(CONTENT_DIR)) {
-    const slug = file.replace("/content.md", "");
-    const markdown = await Bun.file(`${CONTENT_DIR}/${file}`).text();
-    const { frontmatter, content } = parseFrontmatter(markdown);
-
-    // Skip hidden pages
-    if (frontmatter.hidden) {
-      continue;
-    }
-
-    // Determine title
-    const title = frontmatter.title ?? extractTitleFromContent(content) ?? slug;
-
-    // Determine href
-    const href = slug === "index" ? "/" : `/${slug}`;
-
-    // Resolve icon to SVG content
-    const iconName = frontmatter.icon ?? "file";
-    const iconSvg = await resolveIcon(slug, iconName);
-
-    const navItem: NavItem = {
-      href,
-      iconSvg,
-      order: frontmatter.order ?? 100,
-      title,
-    };
-
-    // Add to appropriate group
-    const groupId = frontmatter.group;
-    if (groupId && groupsMap.has(groupId)) {
-      groupsMap.get(groupId)!.items.push(navItem);
-    } else if (groupId) {
-      // Group specified but not in config, create it
-      if (!groupsMap.has(groupId)) {
-        groupsMap.set(groupId, {
-          id: groupId,
-          items: [],
-          label: groupId.charAt(0).toUpperCase() + groupId.slice(1),
-          order: 100,
-        });
-      }
-      groupsMap.get(groupId)!.items.push(navItem);
-    } else {
-      // No group specified, add to default
-      defaultGroup.items.push(navItem);
-    }
+    await addFileToNavigation(file, groupsMap, defaultGroup);
   }
 
-  // Add default group if it has items
-  if (defaultGroup.items.length > 0) {
-    groupsMap.set(defaultGroup.id, defaultGroup);
-  }
-
-  // Convert to array, sort groups by order, and sort items within each group
-  const groups = [...groupsMap.values()]
-    .filter((g) => g.items.length > 0)
-    .toSorted((a, b) => a.order - b.order);
-
-  for (const group of groups) {
-    group.items.sort((a, b) => a.order - b.order);
-  }
-
-  return groups;
-}
+  return finalizeGroups(groupsMap, defaultGroup);
+};

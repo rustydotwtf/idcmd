@@ -6,7 +6,7 @@ import type { PageMeta } from "./frontmatter";
 import type { NavGroup } from "./navigation";
 
 import { parseFrontmatter, extractTitleFromContent } from "./frontmatter";
-import { renderLayout } from "./layout.tsx";
+import { renderLayout } from "./layout";
 import { discoverNavigation } from "./navigation";
 
 const liveReloadScript = `
@@ -30,7 +30,7 @@ const liveReloadScript = `
 // Initialize shiki highlighter (cached singleton)
 let highlighterPromise: Promise<Highlighter> | null = null;
 
-async function getHighlighter(): Promise<Highlighter> {
+const getHighlighter = (): Promise<Highlighter> => {
   if (!highlighterPromise) {
     highlighterPromise = createHighlighter({
       langs: [
@@ -55,59 +55,58 @@ async function getHighlighter(): Promise<Highlighter> {
     });
   }
   return highlighterPromise;
-}
+};
 
 // Highlight code blocks in HTML using shiki
-export async function highlightCodeBlocks(html: string): Promise<string> {
+const codeBlockRegex =
+  /<pre><code class="language-(\w+)">([\s\S]*?)<\/code><\/pre>/g;
+
+const decodeHtmlEntities = (encoded: string): string =>
+  encoded
+    .replaceAll("&lt;", "<")
+    .replaceAll("&gt;", ">")
+    .replaceAll("&amp;", "&")
+    .replaceAll("&quot;", '"')
+    .replaceAll("&#39;", "'");
+
+const getEffectiveLanguage = (
+  loadedLanguages: Set<string>,
+  language: string
+): string => (loadedLanguages.has(language) ? language : "plaintext");
+
+export const highlightCodeBlocks = async (html: string): Promise<string> => {
   const highlighter = await getHighlighter();
+  const loadedLanguages = new Set(highlighter.getLoadedLanguages());
 
-  // Match <pre><code class="language-xxx">...</code></pre> blocks
-  const codeBlockRegex =
-    /<pre><code class="language-(\w+)">([\s\S]*?)<\/code><\/pre>/g;
+  return html.replace(
+    codeBlockRegex,
+    (_match: string, lang?: string, encodedCode?: string) => {
+      const rawLanguage = lang ?? "plaintext";
+      const code = decodeHtmlEntities(encodedCode ?? "");
+      const effectiveLang = getEffectiveLanguage(loadedLanguages, rawLanguage);
 
-  const matches = [...html.matchAll(codeBlockRegex)];
-
-  let result = html;
-  for (const match of matches) {
-    const fullMatch = match[0];
-    const lang = match[1] ?? "plaintext";
-    const encodedCode = match[2] ?? "";
-
-    // Decode HTML entities
-    const code = encodedCode
-      .replaceAll("&lt;", "<")
-      .replaceAll("&gt;", ">")
-      .replaceAll("&amp;", "&")
-      .replaceAll("&quot;", '"')
-      .replaceAll("&#39;", "'");
-
-    // Check if language is loaded, fallback to plaintext
-    const loadedLangs = highlighter.getLoadedLanguages();
-    const effectiveLang = loadedLangs.includes(lang) ? lang : "plaintext";
-
-    const highlighted = highlighter.codeToHtml(code, {
-      lang: effectiveLang as string,
-      themes: {
-        dark: "github-dark",
-        light: "github-light",
-      },
-    });
-
-    result = result.replace(fullMatch, highlighted);
-  }
-
-  return result;
-}
+      return highlighter.codeToHtml(code, {
+        lang: effectiveLang as string,
+        themes: {
+          dark: "github-dark",
+          light: "github-light",
+        },
+      });
+    }
+  );
+};
 
 // Cache navigation data (refreshed on each request in dev, cached in prod)
 let navigationCache: NavGroup[] | null = null;
 
-export async function getNavigation(forceRefresh = false): Promise<NavGroup[]> {
+export const getNavigation = async (
+  forceRefresh = false
+): Promise<NavGroup[]> => {
   if (!navigationCache || forceRefresh) {
     navigationCache = await discoverNavigation();
   }
   return navigationCache;
-}
+};
 
 export interface RenderResult {
   html: string;
@@ -118,12 +117,12 @@ export interface RenderResult {
  * Render markdown to HTML with layout.
  * Parses frontmatter, applies syntax highlighting, and includes navigation.
  */
-export async function render(
+export const render = async (
   markdown: string,
   titleOverride?: string,
   isDev = false,
   currentPath = "/"
-): Promise<string> {
+): Promise<string> => {
   // Parse frontmatter from markdown
   const { frontmatter, content } = parseFrontmatter(markdown);
 
@@ -164,7 +163,7 @@ export async function render(
   }
 
   return html;
-}
+};
 
 // Re-export for convenience
 export { parseFrontmatter, extractTitleFromContent, type PageMeta };

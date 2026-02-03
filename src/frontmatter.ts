@@ -32,55 +32,57 @@ export interface ParsedMarkdown {
  * # Content here
  * ```
  */
-export function parseFrontmatter(markdown: string): ParsedMarkdown {
-  const trimmed = markdown.trimStart();
-
-  // Check if file starts with frontmatter delimiter
+const getFrontmatterBlock = (
+  trimmed: string
+): { yamlBlock: string; content: string } | null => {
   if (!trimmed.startsWith("---")) {
-    return {
-      content: markdown,
-      frontmatter: {},
-    };
+    return null;
   }
 
-  // Find the closing delimiter
   const endIndex = trimmed.indexOf("---", 3);
   if (endIndex === -1) {
-    // No closing delimiter, treat as regular content
-    return {
-      content: markdown,
-      frontmatter: {},
-    };
+    return null;
   }
 
-  // Extract the YAML block (between the two ---)
-  const yamlBlock = trimmed.slice(3, endIndex).trim();
+  return {
+    content: trimmed.slice(endIndex + 3).trimStart(),
+    yamlBlock: trimmed.slice(3, endIndex).trim(),
+  };
+};
 
-  // Get the remaining content after frontmatter
-  const content = trimmed.slice(endIndex + 3).trimStart();
-
-  // Parse YAML using Bun's native parser
-  let frontmatter: PageMeta = {};
+const parseYamlFrontmatter = (yamlBlock: string): PageMeta => {
   try {
     const parsed = Bun.YAML.parse(yamlBlock);
     if (parsed && typeof parsed === "object") {
-      frontmatter = parsed as PageMeta;
+      return parsed as PageMeta;
     }
   } catch (error) {
     console.warn("Failed to parse frontmatter YAML:", error);
   }
 
+  return {};
+};
+
+export const parseFrontmatter = (markdown: string): ParsedMarkdown => {
+  const trimmed = markdown.trimStart();
+  const block = getFrontmatterBlock(trimmed);
+
+  if (!block) {
+    return {
+      content: markdown,
+      frontmatter: {},
+    };
+  }
+
   return {
-    content,
-    frontmatter,
+    content: block.content,
+    frontmatter: parseYamlFrontmatter(block.yamlBlock),
   };
-}
+};
 
 /**
  * Extract title from markdown content (first h1 heading).
  * Used as fallback when frontmatter doesn't specify a title.
  */
-export function extractTitleFromContent(markdown: string): string | undefined {
-  const match = markdown.match(/^#\s+(.+)$/m);
-  return match?.[1];
-}
+export const extractTitleFromContent = (markdown: string): string | undefined =>
+  markdown.match(/^#\s+(.+)$/m)?.[1];
