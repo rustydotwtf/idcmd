@@ -137,8 +137,12 @@ async function generateLlmsTxt(): Promise<string> {
 
   // Sort: index first, then alphabetically
   pages.sort((a, b) => {
-    if (a.slug === "") {return -1;}
-    if (b.slug === "") {return 1;}
+    if (a.slug === "") {
+      return -1;
+    }
+    if (b.slug === "") {
+      return 1;
+    }
     return a.title.localeCompare(b.title);
   });
 
@@ -160,7 +164,9 @@ const server = Bun.serve({
     // Handle WebSocket upgrade for live reload
     if (isDev && path === "/__live-reload") {
       const upgraded = server.upgrade(req);
-      if (upgraded) return undefined;
+      if (upgraded) {
+        return;
+      }
       return new Response("WebSocket upgrade failed", { status: 400 });
     }
 
@@ -182,14 +188,14 @@ const server = Bun.serve({
         return new Response(
           JSON.stringify({ error: "Missing query parameter 'q'" }),
           {
-            status: 400,
             headers: { "Content-Type": "application/json" },
+            status: 400,
           }
         );
       }
 
       return new Response(
-        async function* () {
+        async function* fetch() {
           const glob = new Bun.Glob("*/content.md");
           const siteConfig = Bun.JSONC.parse(
             await Bun.file("site.jsonc").text()
@@ -212,9 +218,9 @@ const server = Bun.serve({
 
             if (searchContent.toLowerCase().includes(query)) {
               const result = {
+                description: extractDescription(markdown),
                 slug: slug === "index" ? "/" : `/${slug}`,
                 title: extractTitle(markdown) ?? slug,
-                description: extractDescription(markdown),
               };
               yield JSON.stringify(result) + "\n";
             }
@@ -246,17 +252,17 @@ const server = Bun.serve({
 
       if (!markdown) {
         return new Response("Not Found", {
-          status: 404,
           headers: { "Content-Type": "text/plain" },
+          status: 404,
         });
       }
 
       return new Response(markdown, {
-        status: 200,
         headers: {
           "Content-Type": "text/markdown; charset=utf-8",
           ...staticCacheHeaders,
         },
+        status: 200,
       });
     }
 
@@ -272,8 +278,8 @@ const server = Bun.serve({
 
     if (!markdown) {
       return new Response("Not Found", {
-        status: 404,
         headers: { "Content-Type": "text/plain" },
+        status: 404,
       });
     }
 
@@ -281,24 +287,24 @@ const server = Bun.serve({
     const html = await render(markdown, undefined, isDev, currentPath);
 
     return new Response(html, {
-      status: 200,
       headers: cacheHeaders,
+      status: 200,
     });
   },
 
   port: process.env.PORT || 4000,
 
   websocket: {
-    open(ws) {
-      liveReloadClients.add(ws);
-      console.log("[live-reload] Client connected");
-    },
     close(ws) {
       liveReloadClients.delete(ws);
       console.log("[live-reload] Client disconnected");
     },
     message() {
       // No messages expected from client
+    },
+    open(ws) {
+      liveReloadClients.add(ws);
+      console.log("[live-reload] Client connected");
     },
   },
 });

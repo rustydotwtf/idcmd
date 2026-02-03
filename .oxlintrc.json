@@ -3,5 +3,16 @@
   "extends": [
     "./node_modules/ultracite/config/oxlint/core/.oxlintrc.json",
     "./node_modules/ultracite/config/oxlint/react/.oxlintrc.json"
-  ]
+  ],
+  "rules": {
+    "max-lines": [
+      "error",
+      {
+        "max": 350,
+        "skipBlankLines": true,
+        "skipComments": true,
+        "ignorePattern": ["^import"]
+      }
+    ]
+  }
 }

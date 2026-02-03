@@ -1,7 +1,7 @@
 import { Glob } from "bun";
 
 import { parseFrontmatter, extractTitleFromContent } from "../src/frontmatter";
-import { renderLayout } from "../src/Layout.tsx";
+import { renderLayout } from "../src/layout.tsx";
 import { discoverNavigation } from "../src/navigation";
 import { highlightCodeBlocks } from "../src/render";
 

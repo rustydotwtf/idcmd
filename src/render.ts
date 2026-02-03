@@ -1,11 +1,13 @@
-import { createHighlighter } from 'shiki';
-import type { Highlighter } from 'shiki';
+import type { Highlighter } from "shiki";
 
-import { parseFrontmatter, extractTitleFromContent } from './frontmatter';
-import type { PageMeta } from './frontmatter';
-import { renderLayout } from "./Layout.tsx";
-import { discoverNavigation } from './navigation';
-import type { NavGroup } from './navigation';
+import { createHighlighter } from "shiki";
+
+import type { PageMeta } from "./frontmatter";
+import type { NavGroup } from "./navigation";
+
+import { parseFrontmatter, extractTitleFromContent } from "./frontmatter";
+import { renderLayout } from "./layout.tsx";
+import { discoverNavigation } from "./navigation";
 
 const liveReloadScript = `
 <script>
@@ -73,11 +75,11 @@ export async function highlightCodeBlocks(html: string): Promise<string> {
 
     // Decode HTML entities
     const code = encodedCode
-      .replaceAll(/&lt;/g, "<")
-      .replaceAll(/&gt;/g, ">")
-      .replaceAll(/&amp;/g, "&")
-      .replaceAll(/&quot;/g, '"')
-      .replaceAll(/&#39;/g, "'");
+      .replaceAll("&lt;", "<")
+      .replaceAll("&gt;", ">")
+      .replaceAll("&amp;", "&")
+      .replaceAll("&quot;", '"')
+      .replaceAll("&#39;", "'");
 
     // Check if language is loaded, fallback to plaintext
     const loadedLangs = highlighter.getLoadedLanguages();
