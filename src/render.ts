@@ -1,5 +1,11 @@
 import { renderLayout } from "./Layout.tsx";
 import { createHighlighter, type Highlighter } from "shiki";
+import {
+  parseFrontmatter,
+  extractTitleFromContent,
+  type PageMeta,
+} from "./frontmatter";
+import { discoverNavigation, type NavGroup } from "./navigation";
 
 const liveReloadScript = `
 <script>
@@ -50,7 +56,7 @@ async function getHighlighter(): Promise<Highlighter> {
 }
 
 // Highlight code blocks in HTML using shiki
-async function highlightCodeBlocks(html: string): Promise<string> {
+export async function highlightCodeBlocks(html: string): Promise<string> {
   const highlighter = await getHighlighter();
 
   // Match <pre><code class="language-xxx">...</code></pre> blocks
@@ -91,14 +97,43 @@ async function highlightCodeBlocks(html: string): Promise<string> {
   return result;
 }
 
+// Cache navigation data (refreshed on each request in dev, cached in prod)
+let navigationCache: NavGroup[] | null = null;
+
+export async function getNavigation(forceRefresh = false): Promise<NavGroup[]> {
+  if (!navigationCache || forceRefresh) {
+    navigationCache = await discoverNavigation();
+  }
+  return navigationCache;
+}
+
+export interface RenderResult {
+  html: string;
+  frontmatter: PageMeta;
+}
+
+/**
+ * Render markdown to HTML with layout.
+ * Parses frontmatter, applies syntax highlighting, and includes navigation.
+ */
 export async function render(
   markdown: string,
-  title?: string,
+  titleOverride?: string,
   isDev = false,
   currentPath = "/"
 ): Promise<string> {
+  // Parse frontmatter from markdown
+  const { frontmatter, content } = parseFrontmatter(markdown);
+
+  // Determine title: override > frontmatter > h1 extraction
+  const title =
+    titleOverride ?? frontmatter.title ?? extractTitleFromContent(content);
+
+  // Get navigation (refresh in dev mode for live updates)
+  const navigation = await getNavigation(isDev);
+
   // Convert markdown to HTML string with GFM extensions
-  let contentHtml = Bun.markdown.html(markdown, {
+  let contentHtml = Bun.markdown.html(content, {
     tables: true,
     strikethrough: true,
     tasklists: true,
@@ -118,6 +153,7 @@ export async function render(
     title,
     content: contentHtml,
     currentPath,
+    navigation,
   });
 
   // Add live reload script for dev mode
@@ -127,3 +163,6 @@ export async function render(
 
   return html;
 }
+
+// Re-export for convenience
+export { parseFrontmatter, extractTitleFromContent, type PageMeta };

@@ -1,6 +1,11 @@
 import { renderLayout } from "../src/Layout.tsx";
 import { Glob } from "bun";
-import { createHighlighter, type Highlighter } from "shiki";
+import {
+  parseFrontmatter,
+  extractTitleFromContent,
+} from "../src/frontmatter";
+import { discoverNavigation } from "../src/navigation";
+import { highlightCodeBlocks } from "../src/render";
 
 // Find all content.md files in content/<slug>/ directories
 const glob = new Glob("*/content.md");
@@ -12,81 +17,27 @@ for await (const file of glob.scan("content")) {
 
 console.log(`Found ${contentFiles.length} content pages`);
 
-// Extract title from markdown (first h1)
-function extractTitle(markdown: string): string | undefined {
-  const match = markdown.match(/^#\s+(.+)$/m);
-  return match?.[1];
-}
-
-// Initialize shiki highlighter
-const highlighter: Highlighter = await createHighlighter({
-  themes: ["github-dark", "github-light"],
-  langs: [
-    "javascript",
-    "typescript",
-    "jsx",
-    "tsx",
-    "json",
-    "html",
-    "css",
-    "markdown",
-    "bash",
-    "shell",
-    "python",
-    "rust",
-    "go",
-    "sql",
-    "yaml",
-    "toml",
-  ],
-});
-
-// Highlight code blocks in HTML using shiki
-function highlightCodeBlocks(html: string): string {
-  const codeBlockRegex =
-    /<pre><code class="language-(\w+)">([\s\S]*?)<\/code><\/pre>/g;
-
-  const matches = [...html.matchAll(codeBlockRegex)];
-
-  let result = html;
-  for (const match of matches) {
-    const fullMatch = match[0];
-    const lang = match[1] ?? "plaintext";
-    const encodedCode = match[2] ?? "";
-
-    const code = encodedCode
-      .replace(/&lt;/g, "<")
-      .replace(/&gt;/g, ">")
-      .replace(/&amp;/g, "&")
-      .replace(/&quot;/g, '"')
-      .replace(/&#39;/g, "'");
-
-    const loadedLangs = highlighter.getLoadedLanguages();
-    const effectiveLang = loadedLangs.includes(lang) ? lang : "plaintext";
-
-    const highlighted = highlighter.codeToHtml(code, {
-      lang: effectiveLang as string,
-      themes: {
-        light: "github-light",
-        dark: "github-dark",
-      },
-    });
-
-    result = result.replace(fullMatch, highlighted);
-  }
-
-  return result;
-}
+// Discover navigation once for all pages
+console.log("Discovering navigation...");
+const navigation = await discoverNavigation();
+console.log(
+  `Found ${navigation.length} groups with ${navigation.reduce((acc, g) => acc + g.items.length, 0)} total pages`
+);
 
 // Ensure dist directory exists
 await Bun.write("dist/.gitkeep", "");
 
 for (const file of contentFiles) {
   const markdown = await Bun.file(file).text();
-  const title = extractTitle(markdown);
+
+  // Parse frontmatter
+  const { frontmatter, content } = parseFrontmatter(markdown);
+
+  // Determine title: frontmatter > h1 extraction
+  const title = frontmatter.title ?? extractTitleFromContent(content);
 
   // Convert markdown to HTML and apply syntax highlighting
-  let contentHtml = Bun.markdown.html(markdown, {
+  let contentHtml = Bun.markdown.html(content, {
     tables: true,
     strikethrough: true,
     tasklists: true,
@@ -97,7 +48,7 @@ for (const file of contentFiles) {
     headings: true,
     autolinks: true,
   });
-  contentHtml = highlightCodeBlocks(contentHtml);
+  contentHtml = await highlightCodeBlocks(contentHtml);
 
   // Determine output path and current path for navigation
   // content/index/content.md -> dist/index.html, path: /
@@ -110,6 +61,7 @@ for (const file of contentFiles) {
     content: contentHtml,
     cssPath: "/styles.css",
     currentPath,
+    navigation,
   });
 
   let outPath: string;
@@ -126,7 +78,7 @@ for (const file of contentFiles) {
 }
 
 // Copy CSS to dist
-const cssSource = await Bun.file("dist/styles.css").exists()
+const cssSource = (await Bun.file("dist/styles.css").exists())
   ? "dist/styles.css"
   : "public/styles.css";
 

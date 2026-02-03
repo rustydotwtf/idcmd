@@ -1,3 +1,10 @@
+---
+title: Code Blocks
+icon: code
+group: tests
+order: 2
+---
+
 # Code Block Stress Test
 
 This page tests code blocks with all supported Shiki languages and edge cases.

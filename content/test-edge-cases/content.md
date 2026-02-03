@@ -1,3 +1,10 @@
+---
+title: Edge Cases
+icon: warning
+group: tests
+order: 4
+---
+
 # Edge Cases Stress Test
 
 This page tests edge cases, special characters, unicode, and unusual markdown scenarios.

@@ -1,3 +1,10 @@
+---
+title: Home
+icon: home
+group: main
+order: 1
+---
+
 # Welcome to Markdown Site
 
 This is a minimal **Bun + React SSR** site that renders markdown files.

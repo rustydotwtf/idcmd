@@ -1,3 +1,10 @@
+---
+title: Tables
+icon: table
+group: tests
+order: 3
+---
+
 # Table Stress Test
 
 This page tests various table configurations and edge cases.

@@ -1,9 +1,10 @@
-import { render } from "./render.ts";
+import { render, parseFrontmatter, extractTitleFromContent } from "./render.ts";
 import { watch } from "fs";
 
 interface SiteConfig {
   name: string;
   description: string;
+  groups?: { id: string; label: string; order: number }[];
   search?: {
     scope?: "full" | "title" | "title_and_description";
   };
@@ -87,13 +88,14 @@ async function getMarkdownFile(slug: string): Promise<string | null> {
 }
 
 function extractTitle(markdown: string): string | undefined {
-  const match = markdown.match(/^#\s+(.+)$/m);
-  return match?.[1];
+  const { frontmatter, content } = parseFrontmatter(markdown);
+  return frontmatter.title ?? extractTitleFromContent(content);
 }
 
 function extractDescription(markdown: string): string {
+  const { content } = parseFrontmatter(markdown);
   // Skip the title line, find first non-empty paragraph
-  const lines = markdown.split("\n");
+  const lines = content.split("\n");
   let foundTitle = false;
   let description = "";
 
@@ -260,9 +262,8 @@ const server = Bun.serve({
       });
     }
 
-    const title = extractTitle(markdown);
     const currentPath = path === "/index" ? "/" : path;
-    const html = await render(markdown, title, isDev, currentPath);
+    const html = await render(markdown, undefined, isDev, currentPath);
 
     return new Response(html, {
       status: 200,

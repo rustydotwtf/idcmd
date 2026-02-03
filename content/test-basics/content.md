@@ -1,3 +1,10 @@
+---
+title: Basic Markdown
+icon: flask
+group: tests
+order: 1
+---
+
 # Markdown Basics Stress Test
 
 This page tests all core markdown features.

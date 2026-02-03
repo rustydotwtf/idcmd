@@ -1,3 +1,10 @@
+---
+title: About
+icon: info
+group: main
+order: 2
+---
+
 # About
 
 This is a sample about page to demonstrate file-based routing.

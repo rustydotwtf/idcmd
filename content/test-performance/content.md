@@ -1,3 +1,10 @@
+---
+title: Performance
+icon: gauge
+group: tests
+order: 5
+---
+
 # Performance Stress Test
 
 This page contains a large amount of content to stress test parsing performance and rendering.
