@@ -10,13 +10,20 @@
     "build:css": "bunx @tailwindcss/cli -i src/styles/globals.css -o dist/styles.css --minify",
     "build": "bun run build:css && bun scripts/build.ts",
     "preview": "bunx serve dist",
-    "start": "bun src/server.ts"
+    "start": "bun src/server.ts",
+    "check": "ultracite check",
+    "fix": "ultracite fix",
+    "prepare": "lefthook install"
   },
   "devDependencies": {
     "@tailwindcss/cli": "^4.1.18",
     "@types/bun": "latest",
     "concurrently": "^9.2.1",
-    "tailwindcss": "^4.1.18"
+    "lefthook": "^2.1.0",
+    "oxfmt": "^0.28.0",
+    "oxlint": "^1.43.0",
+    "tailwindcss": "^4.1.18",
+    "ultracite": "7.1.4"
   },
   "peerDependencies": {
     "typescript": "^5"
