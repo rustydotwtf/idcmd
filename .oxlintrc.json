@@ -18,6 +18,12 @@
   },
   "overrides": [
     {
+      "files": ["src/layout.tsx"],
+      "rules": {
+        "react/no-danger": "off"
+      }
+    },
+    {
       "files": [
         "**/*.test.ts",
         "**/*.test.tsx",
