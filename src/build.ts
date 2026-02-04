@@ -38,7 +38,15 @@ const copyPublicFile = async (fileName: string): Promise<void> => {
   }
 };
 
-await copyPublicFile("favicon.svg");
+const staticAssets = [
+  "favicon.svg",
+  "live-reload.js",
+  "nav-prefetch.js",
+] as const;
+
+for (const asset of staticAssets) {
+  await copyPublicFile(asset);
+}
 
 const resolveCssSource = async (): Promise<string | null> => {
   if (await Bun.file("dist/styles.css").exists()) {

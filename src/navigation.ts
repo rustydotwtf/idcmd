@@ -7,10 +7,11 @@ import type { PageMeta } from "./frontmatter";
 import type { GroupConfig } from "./utils/site-config";
 
 import { parseFrontmatter, extractTitleFromContent } from "./frontmatter";
+import { resolveIconSvg } from "./icons";
 import {
-  CONTENT_DIR,
   contentGlob,
   slugFromContentFile,
+  CONTENT_DIR,
 } from "./utils/content-paths";
 import { loadSiteConfig } from "./utils/site-config";
 
@@ -28,70 +29,6 @@ export interface NavGroup {
   order: number;
   items: NavItem[];
 }
-
-const ICONS_DIR = "./icons";
-
-// Default fallback icon (file icon)
-const DEFAULT_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/></svg>`;
-
-/**
- * Load an icon by name from the icons directory.
- * Returns the SVG content or undefined if not found.
- */
-const loadIconByName = async (name: string): Promise<string | undefined> => {
-  const iconFile = `${ICONS_DIR}/${name}.svg`;
-  const file = Bun.file(iconFile);
-
-  if (await file.exists()) {
-    return file.text();
-  }
-  return undefined;
-};
-
-/**
- * Load a custom icon from a content folder.
- * The path should be relative (e.g., "./icon.svg").
- */
-const loadCustomIcon = async (
-  slug: string,
-  iconPath: string
-): Promise<string | undefined> => {
-  const iconFile = `${CONTENT_DIR}/${slug}/${iconPath.slice(2)}`;
-  const file = Bun.file(iconFile);
-
-  if (await file.exists()) {
-    return file.text();
-  }
-
-  console.warn(`Custom icon not found: ${iconFile}`);
-  return undefined;
-};
-
-/**
- * Resolve an icon specification to SVG content.
- * - "./icon.svg" -> loads from content/<slug>/icon.svg
- * - "home" -> loads from icons/home.svg
- * - Falls back to default file icon
- */
-const resolveIcon = async (slug: string, icon: string): Promise<string> => {
-  if (icon.startsWith("./")) {
-    // Custom icon from content folder
-    const svg = await loadCustomIcon(slug, icon);
-    return svg ?? DEFAULT_ICON;
-  }
-
-  // Try to load from icons directory
-  const svg = await loadIconByName(icon);
-  if (svg) {
-    return svg;
-  }
-
-  // Icon not found, warn and use default
-  console.warn(
-    `Icon "${icon}" not found in icons/ folder for ${slug}, using default`
-  );
-  return DEFAULT_ICON;
-};
 
 const buildGroupsMap = (groups: GroupConfig[]): Map<string, NavGroup> => {
   const groupsMap = new Map<string, NavGroup>();
@@ -127,8 +64,7 @@ const buildNavItem = async (
 ): Promise<NavItem> => {
   const title = frontmatter.title ?? extractTitleFromContent(content) ?? slug;
   const href = slug === "index" ? "/" : `/${slug}`;
-  const iconName = frontmatter.icon ?? "file";
-  const iconSvg = await resolveIcon(slug, iconName);
+  const iconSvg = await resolveIconSvg(slug, frontmatter.icon);
 
   return {
     href,

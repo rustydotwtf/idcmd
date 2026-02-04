@@ -20,6 +20,7 @@ interface LayoutProps {
   inlineCss?: string;
   currentPath?: string;
   navigation?: NavGroup[];
+  scriptPaths?: string[];
 }
 
 const escapeHtml = (value: string): string =>
@@ -55,54 +56,7 @@ const renderNavLink = (item: NavItem, currentPath: string): string => {
   `;
 };
 
-const navPrefetchScript = `
-<script>
-(() => {
-  const connection = navigator.connection;
-  if (connection?.saveData) {
-    return;
-  }
-
-  const prefetched = new Set();
-
-  const prefetchPage = (href) => {
-    const url = new URL(href, window.location.href);
-    if (url.origin !== window.location.origin) {
-      return;
-    }
-
-    const destination = url.toString();
-    if (prefetched.has(destination)) {
-      return;
-    }
-    prefetched.add(destination);
-
-    const link = document.createElement("link");
-    link.rel = "prefetch";
-    link.as = "document";
-    link.href = destination;
-    document.head.append(link);
-  };
-
-  const links = document.querySelectorAll("a[data-prefetch='hover']");
-  for (const link of links) {
-    if (!(link instanceof HTMLAnchorElement)) {
-      continue;
-    }
-    link.addEventListener("mouseenter", () => prefetchPage(link.href), {
-      passive: true,
-    });
-    link.addEventListener("focus", () => prefetchPage(link.href), {
-      passive: true,
-    });
-    link.addEventListener("touchstart", () => prefetchPage(link.href), {
-      passive: true,
-      once: true,
-    });
-  }
-})();
-</script>
-`;
+const DEFAULT_SCRIPT_PATHS = ["/nav-prefetch.js"] as const;
 
 const renderNavGroup = (group: NavGroup, currentPath: string): string => {
   const safeLabel = escapeHtml(group.label);
@@ -144,6 +98,7 @@ const renderLayoutBody = (props: LayoutProps): string => {
     inlineCss,
     currentPath = "/",
     navigation = [],
+    scriptPaths = [],
   } = props;
   const safeTitle = escapeHtml(title);
   const resolvedCssPath = inlineCss ? cssPath : (cssPath ?? "/styles.css");
@@ -154,6 +109,9 @@ const renderLayoutBody = (props: LayoutProps): string => {
       : "",
   ]
     .filter(Boolean)
+    .join("\n");
+  const scripts = [...DEFAULT_SCRIPT_PATHS, ...scriptPaths]
+    .map((scriptPath) => `<script defer src="${scriptPath}"></script>`)
     .join("\n");
 
   return `
@@ -182,7 +140,7 @@ const renderLayoutBody = (props: LayoutProps): string => {
             ${content}
           </main>
         </div>
-        ${navPrefetchScript}
+        ${scripts}
       </body>
     </html>
   `;

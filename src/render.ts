@@ -10,24 +10,6 @@ import { renderLayout } from "./layout";
 import { discoverNavigation } from "./navigation";
 import { renderMarkdownToHtml } from "./utils/markdown";
 
-const liveReloadScript = `
-<script>
-(function() {
-  const ws = new WebSocket('ws://' + location.host + '/__live-reload');
-  ws.onmessage = function(e) {
-    if (e.data === 'reload') {
-      console.log('[live-reload] Reloading...');
-      location.reload();
-    }
-  };
-  ws.onclose = function() {
-    console.log('[live-reload] Disconnected, attempting reconnect...');
-    setTimeout(function() { location.reload(); }, 1000);
-  };
-})();
-</script>
-`;
-
 // Initialize shiki highlighter (cached singleton)
 let highlighterPromise: Promise<Highlighter> | null = null;
 
@@ -141,17 +123,13 @@ export const render = async (
   contentHtml = await highlightCodeBlocks(contentHtml);
 
   // Render with static layout
-  let html = renderLayout({
+  const html = renderLayout({
     content: contentHtml,
     currentPath,
     navigation,
+    scriptPaths: isDev ? ["/live-reload.js"] : [],
     title,
   });
-
-  // Add live reload script for dev mode
-  if (isDev) {
-    html = html.replace("</body>", `${liveReloadScript}</body>`);
-  }
 
   return html;
 };
