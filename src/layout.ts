@@ -46,6 +46,7 @@ const renderNavLink = (item: NavItem, currentPath: string): string => {
   return `
     <a
       href="${item.href}"
+      data-prefetch="hover"
       class="flex items-center gap-3 px-3 py-2 text-sm rounded-md hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors ${activeClass}"
     >
       ${renderIcon(item.iconSvg)}
@@ -53,6 +54,55 @@ const renderNavLink = (item: NavItem, currentPath: string): string => {
     </a>
   `;
 };
+
+const navPrefetchScript = `
+<script>
+(() => {
+  const connection = navigator.connection;
+  if (connection?.saveData) {
+    return;
+  }
+
+  const prefetched = new Set();
+
+  const prefetchPage = (href) => {
+    const url = new URL(href, window.location.href);
+    if (url.origin !== window.location.origin) {
+      return;
+    }
+
+    const destination = url.toString();
+    if (prefetched.has(destination)) {
+      return;
+    }
+    prefetched.add(destination);
+
+    const link = document.createElement("link");
+    link.rel = "prefetch";
+    link.as = "document";
+    link.href = destination;
+    document.head.append(link);
+  };
+
+  const links = document.querySelectorAll("a[data-prefetch='hover']");
+  for (const link of links) {
+    if (!(link instanceof HTMLAnchorElement)) {
+      continue;
+    }
+    link.addEventListener("mouseenter", () => prefetchPage(link.href), {
+      passive: true,
+    });
+    link.addEventListener("focus", () => prefetchPage(link.href), {
+      passive: true,
+    });
+    link.addEventListener("touchstart", () => prefetchPage(link.href), {
+      passive: true,
+      once: true,
+    });
+  }
+})();
+</script>
+`;
 
 const renderNavGroup = (group: NavGroup, currentPath: string): string => {
   const safeLabel = escapeHtml(group.label);
@@ -132,6 +182,7 @@ const renderLayoutBody = (props: LayoutProps): string => {
             ${content}
           </main>
         </div>
+        ${navPrefetchScript}
       </body>
     </html>
   `;
