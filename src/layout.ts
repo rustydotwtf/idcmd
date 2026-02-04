@@ -17,6 +17,7 @@ interface LayoutProps {
   title?: string;
   content: string;
   cssPath?: string;
+  inlineCss?: string;
   currentPath?: string;
   navigation?: NavGroup[];
 }
@@ -89,11 +90,21 @@ const renderLayoutBody = (props: LayoutProps): string => {
   const {
     title = "Markdown Site",
     content,
-    cssPath = "/styles.css",
+    cssPath,
+    inlineCss,
     currentPath = "/",
     navigation = [],
   } = props;
   const safeTitle = escapeHtml(title);
+  const resolvedCssPath = inlineCss ? cssPath : (cssPath ?? "/styles.css");
+  const styles = [
+    inlineCss ? `<style>${inlineCss}</style>` : "",
+    resolvedCssPath
+      ? `<link rel="stylesheet" href="${resolvedCssPath}" />`
+      : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
 
   return `
     <html lang="en">
@@ -111,7 +122,7 @@ const renderLayoutBody = (props: LayoutProps): string => {
           href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap"
           rel="stylesheet"
         />
-        <link rel="stylesheet" href="${cssPath}" />
+        ${styles}
       </head>
       <body class="bg-background text-foreground font-mono">
         ${renderSidebar(navigation, currentPath)}

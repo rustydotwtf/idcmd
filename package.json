@@ -11,7 +11,8 @@
     "build": "bun run build:css && bun src/build.ts",
     "preview": "bunx serve dist",
     "start": "bun src/server.ts",
-    "check": "ultracite check",
+    "check": "ultracite check && bun run typecheck",
+    "typecheck": "tsgo --noEmit -p tsconfig.json",
     "fix": "ultracite fix",
     "prepare": "lefthook install"
   },
@@ -22,6 +23,7 @@
   },
   "devDependencies": {
     "@tailwindcss/cli": "^4.1.18",
+    "@typescript/native-preview": "latest",
     "@types/bun": "latest",
     "concurrently": "^9.2.1",
     "lefthook": "^2.1.0",

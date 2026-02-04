@@ -25,6 +25,20 @@ console.log(
 // Ensure dist directory exists
 await Bun.write("dist/.gitkeep", "");
 
+const resolveCssSource = async (): Promise<string | null> => {
+  if (await Bun.file("dist/styles.css").exists()) {
+    return "dist/styles.css";
+  }
+  if (await Bun.file("public/styles.css").exists()) {
+    return "public/styles.css";
+  }
+  return null;
+};
+
+const cssSource = await resolveCssSource();
+const inlineCss = cssSource ? await Bun.file(cssSource).text() : undefined;
+const cssPath = inlineCss ? undefined : "/styles.css";
+
 for (const file of contentFiles) {
   const markdown = await Bun.file(file).text();
 
@@ -56,8 +70,9 @@ for (const file of contentFiles) {
 
   const html = renderLayout({
     content: contentHtml,
-    cssPath: "/styles.css",
+    cssPath,
     currentPath,
+    inlineCss,
     navigation,
     title,
   });
@@ -75,13 +90,8 @@ for (const file of contentFiles) {
   console.log(`  ${file} -> ${outPath}`);
 }
 
-// Copy CSS to dist
-const cssSource = (await Bun.file("dist/styles.css").exists())
-  ? "dist/styles.css"
-  : "public/styles.css";
-
-if (await Bun.file(cssSource).exists()) {
-  console.log(`CSS already at dist/styles.css`);
+if (cssSource) {
+  console.log(`Using CSS from ${cssSource}`);
 } else {
   console.log("Warning: No styles.css found. Run build:css first.");
 }
