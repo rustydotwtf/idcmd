@@ -1,4 +1,4 @@
-# create-markdown-site
+# idcmd
 
 To install dependencies:
 

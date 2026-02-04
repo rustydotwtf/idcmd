@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "create-markdown-site",
+      "name": "idcmd",
       "dependencies": {
         "preact": "^10.28.3",
         "preact-render-to-string": "^6.6.5",
