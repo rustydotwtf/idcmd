@@ -28,6 +28,18 @@ console.log(
 // Ensure dist directory exists
 await Bun.write("dist/.gitkeep", "");
 
+const copyPublicFile = async (fileName: string): Promise<void> => {
+  const source = `public/${fileName}`;
+  const target = `dist/${fileName}`;
+  const file = Bun.file(source);
+
+  if (await file.exists()) {
+    await Bun.write(target, file);
+  }
+};
+
+await copyPublicFile("favicon.svg");
+
 const resolveCssSource = async (): Promise<string | null> => {
   if (await Bun.file("dist/styles.css").exists()) {
     return "dist/styles.css";

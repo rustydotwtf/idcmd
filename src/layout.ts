@@ -122,6 +122,7 @@ const renderLayoutBody = (props: LayoutProps): string => {
           href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap"
           rel="stylesheet"
         />
+        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
         ${styles}
       </head>
       <body class="bg-background text-foreground font-mono">
