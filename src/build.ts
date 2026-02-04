@@ -1,3 +1,4 @@
+import { generateLlmsTxt } from "./content";
 import { parseFrontmatter, extractTitleFromContent } from "./frontmatter";
 import { renderLayout } from "./layout";
 import { discoverNavigation } from "./navigation";
@@ -36,6 +37,20 @@ const copyPublicFile = async (fileName: string): Promise<void> => {
   if (await file.exists()) {
     await Bun.write(target, file);
   }
+};
+
+const writeMarkdownOutputs = async (
+  slug: string,
+  markdown: string
+): Promise<void> => {
+  const flatMarkdownPath =
+    slug === "index" ? "dist/index.md" : `dist/${slug}.md`;
+  const nestedMarkdownPath =
+    slug === "index" ? "dist/index/content.md" : `dist/${slug}/content.md`;
+
+  await Bun.write(flatMarkdownPath, markdown);
+  await Bun.write(nestedMarkdownPath, markdown);
+  console.log(`  markdown -> ${flatMarkdownPath}`);
 };
 
 const staticAssets = [
@@ -102,7 +117,12 @@ for (const file of contentFiles) {
 
   await Bun.write(outPath, html);
   console.log(`  ${filePath} -> ${outPath}`);
+  await writeMarkdownOutputs(slug, markdown);
 }
+
+const llmsTxt = await generateLlmsTxt();
+await Bun.write("dist/llms.txt", llmsTxt);
+console.log("  generated dist/llms.txt");
 
 if (cssSource) {
   console.log(`Using CSS from ${cssSource}`);

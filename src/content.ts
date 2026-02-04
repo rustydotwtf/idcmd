@@ -65,20 +65,32 @@ const sortPages = (pages: LlmsPage[]): LlmsPage[] =>
     return a.title.localeCompare(b.title);
   });
 
+const buildLlmsPage = async (file: string): Promise<LlmsPage | null> => {
+  const markdown = await Bun.file(`${CONTENT_DIR}/${file}`).text();
+  const { frontmatter } = parseFrontmatter(markdown);
+  if (frontmatter.hidden) {
+    return null;
+  }
+
+  const slug = slugFromContentFile(file);
+  const title = extractTitle(markdown) ?? slug;
+  const description = extractDescription(markdown);
+
+  return {
+    description,
+    slug: pageSlugFromContentSlug(slug),
+    title,
+  };
+};
+
 const buildLlmsPages = async (): Promise<LlmsPage[]> => {
   const pages: LlmsPage[] = [];
 
   for await (const file of contentGlob.scan(CONTENT_DIR)) {
-    const markdown = await Bun.file(`${CONTENT_DIR}/${file}`).text();
-    const slug = slugFromContentFile(file);
-    const title = extractTitle(markdown) ?? slug;
-    const description = extractDescription(markdown);
-
-    pages.push({
-      description,
-      slug: pageSlugFromContentSlug(slug),
-      title,
-    });
+    const page = await buildLlmsPage(file);
+    if (page) {
+      pages.push(page);
+    }
   }
 
   return pages;

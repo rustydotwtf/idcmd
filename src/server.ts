@@ -226,16 +226,29 @@ const handleMarkdownRequest = async (
   });
 };
 
+const createNotFoundResponse = async (): Promise<Response> => {
+  const notFoundMarkdown = await getMarkdownFile("404");
+  if (notFoundMarkdown) {
+    const html = await render(notFoundMarkdown, undefined, isDev, "/404");
+    return new Response(html, {
+      headers: cacheHeaders,
+      status: 404,
+    });
+  }
+
+  return new Response("Not Found", {
+    headers: { "Content-Type": "text/plain; charset=utf-8" },
+    status: 404,
+  });
+};
+
 const handlePageRequest = async (path: string): Promise<Response> => {
   const normalizedPath = path === "/" ? "/index" : path;
   const slug = normalizedPath.slice(1);
   const markdown = await getMarkdownFile(slug);
 
   if (!markdown) {
-    return new Response("Not Found", {
-      headers: { "Content-Type": "text/plain" },
-      status: 404,
-    });
+    return createNotFoundResponse();
   }
 
   const currentPath = normalizedPath === "/index" ? "/" : normalizedPath;
