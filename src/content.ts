@@ -1,6 +1,8 @@
+import type { SearchResult } from "./search-contract";
 import type { SearchScope, SiteConfig } from "./utils/site-config";
 
 import { extractTitleFromContent, parseFrontmatter } from "./frontmatter";
+import { toSearchResultJsonLine } from "./search-contract";
 import {
   CONTENT_DIR,
   contentGlob,
@@ -12,12 +14,6 @@ import {
 import { loadSiteConfig } from "./utils/site-config";
 
 interface LlmsPage {
-  slug: string;
-  title: string;
-  description: string;
-}
-
-export interface SearchResult {
   slug: string;
   title: string;
   description: string;
@@ -165,7 +161,7 @@ export const createSearchStream = (
     for await (const file of contentGlob.scan(CONTENT_DIR)) {
       const result = await buildSearchResult(file, query, scope);
       if (result) {
-        yield `${JSON.stringify(result)}\n`;
+        yield toSearchResultJsonLine(result);
       }
     }
   };

@@ -11,7 +11,8 @@
     "build": "bun run build:css && bun src/build.ts",
     "preview": "bunx serve dist",
     "start": "bun src/server.ts",
-    "check": "ultracite check && bun run typecheck",
+    "check": "ultracite check && bun run typecheck && bun run test",
+    "test": "bun test",
     "typecheck": "tsgo --noEmit -p tsconfig.json",
     "fix": "ultracite fix",
     "prepare": "lefthook install"

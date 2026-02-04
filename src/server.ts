@@ -1,13 +1,9 @@
 import type { Server } from "bun";
 
-import {
-  createSearchStream,
-  generateLlmsTxt,
-  getMarkdownFile,
-} from "./content";
+import { generateLlmsTxt, getMarkdownFile } from "./content";
 import { render } from "./render";
+import { handleSearchRequest } from "./search-api";
 import { CONTENT_DIR, contentGlob } from "./utils/content-paths";
-import { getSearchScope, loadSiteConfig } from "./utils/site-config";
 
 interface LiveReloadClient {
   send: (msg: string) => void;
@@ -19,7 +15,6 @@ type ServerInstance = Server<undefined>;
 const PUBLIC_DIR = "./public";
 const isDev = process.env.NODE_ENV !== "production";
 const LIVE_RELOAD_POLL_MS = 500;
-const textEncoder = new TextEncoder();
 
 // Live reload WebSocket clients
 const liveReloadClients = new Set<LiveReloadClient>();
@@ -58,32 +53,6 @@ const notifyLiveReload = (message: string): void => {
       liveReloadClients.delete(client);
     }
   }
-};
-
-const toReadableStream = (
-  iterable: AsyncIterable<string>
-): ReadableStream<Uint8Array> => {
-  const iterator = iterable[Symbol.asyncIterator]();
-
-  return new ReadableStream({
-    async cancel() {
-      if (iterator.return) {
-        await iterator.return();
-      }
-    },
-    async pull(controller) {
-      try {
-        const { done, value } = await iterator.next();
-        if (done) {
-          controller.close();
-          return;
-        }
-        controller.enqueue(textEncoder.encode(value));
-      } catch (error) {
-        controller.error(error);
-      }
-    },
-  });
 };
 
 const getContentSnapshot = async (): Promise<string> => {
@@ -176,28 +145,6 @@ const handleLlmsTxt = async (path: string): Promise<Response | undefined> => {
   });
 };
 
-const handleSearch = async (url: URL): Promise<Response | undefined> => {
-  if (url.pathname !== "/api/search") {
-    return undefined;
-  }
-
-  const query = url.searchParams.get("q")?.toLowerCase();
-  if (!query) {
-    return Response.json(
-      { error: "Missing query parameter 'q'" },
-      { status: 400 }
-    );
-  }
-
-  const siteConfig = await loadSiteConfig();
-  const scope = getSearchScope(siteConfig);
-  const stream = createSearchStream(query, scope);
-
-  return new Response(toReadableStream(stream), {
-    headers: { "Content-Type": "application/jsonl; charset=utf-8" },
-  });
-};
-
 const handleMarkdownRequest = async (
   path: string
 ): Promise<Response | undefined> => {
@@ -275,7 +222,7 @@ const handleRequest = async (
   return (
     liveReload ??
     (await handleLlmsTxt(path)) ??
-    (await handleSearch(url)) ??
+    (await handleSearchRequest(url)) ??
     (await serveStaticFile(path)) ??
     (await handleMarkdownRequest(path)) ??
     (await handlePageRequest(path))

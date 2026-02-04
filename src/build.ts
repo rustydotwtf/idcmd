@@ -57,6 +57,7 @@ const staticAssets = [
   "favicon.svg",
   "live-reload.js",
   "nav-prefetch.js",
+  "search.js",
 ] as const;
 
 for (const asset of staticAssets) {

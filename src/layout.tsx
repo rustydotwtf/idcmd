@@ -27,7 +27,7 @@ interface LayoutProps {
   scriptPaths?: string[];
 }
 
-const DEFAULT_SCRIPT_PATHS = ["/nav-prefetch.js"] as const;
+const DEFAULT_SCRIPT_PATHS = ["/nav-prefetch.js", "/search.js"] as const;
 
 const Icon = ({ svg }: { svg: string }): JSX.Element => (
   <span
@@ -105,6 +105,38 @@ const Sidebar = ({
   </aside>
 );
 
+const SearchPanel = (): JSX.Element => (
+  <section
+    data-search-root
+    class="mb-6 not-prose rounded-lg border border-border bg-card/50 p-4"
+  >
+    <form data-search-form class="flex gap-2" role="search" noValidate>
+      <label htmlFor="site-search" class="sr-only">
+        Search pages
+      </label>
+      <input
+        id="site-search"
+        name="q"
+        type="search"
+        autocomplete="off"
+        spellcheck={false}
+        placeholder="Search docs..."
+        class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+      />
+      <button
+        type="submit"
+        class="rounded-md border border-input px-3 py-2 text-sm hover:bg-muted"
+      >
+        Search
+      </button>
+    </form>
+    <p data-search-status class="mt-2 text-sm text-muted-foreground">
+      Type at least 2 characters to search.
+    </p>
+    <ul data-search-results class="mt-3 hidden space-y-2" />
+  </section>
+);
+
 const Layout = ({
   title = "Markdown Site",
   content,
@@ -142,10 +174,13 @@ const Layout = ({
       <body class="bg-background text-foreground font-mono">
         <Sidebar navigation={navigation} currentPath={currentPath} />
         <div class="main-wrapper">
-          <main
-            class="main-content prose"
-            dangerouslySetInnerHTML={{ __html: content }}
-          />
+          <main class="main-content">
+            <SearchPanel />
+            <article
+              class="prose"
+              dangerouslySetInnerHTML={{ __html: content }}
+            />
+          </main>
         </div>
         {mergedScriptPaths.map((scriptPath) => (
           <script key={scriptPath} defer src={scriptPath} />
