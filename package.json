@@ -23,8 +23,8 @@
   },
   "devDependencies": {
     "@tailwindcss/cli": "^4.1.18",
-    "@typescript/native-preview": "latest",
     "@types/bun": "latest",
+    "@typescript/native-preview": "latest",
     "concurrently": "^9.2.1",
     "lefthook": "^2.1.0",
     "oxfmt": "^0.28.0",
