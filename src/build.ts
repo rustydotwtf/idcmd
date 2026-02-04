@@ -1,16 +1,19 @@
-import { Glob } from "bun";
-
 import { parseFrontmatter, extractTitleFromContent } from "./frontmatter";
 import { renderLayout } from "./layout";
 import { discoverNavigation } from "./navigation";
 import { highlightCodeBlocks } from "./render";
+import {
+  CONTENT_DIR,
+  contentGlob,
+  slugFromContentFile,
+} from "./utils/content-paths";
+import { renderMarkdownToHtml } from "./utils/markdown";
 
 // Find all content.md files in content/<slug>/ directories
-const glob = new Glob("*/content.md");
 const contentFiles: string[] = [];
 
-for await (const file of glob.scan("content")) {
-  contentFiles.push(`content/${file}`);
+for await (const file of contentGlob.scan(CONTENT_DIR)) {
+  contentFiles.push(file);
 }
 
 console.log(`Found ${contentFiles.length} content pages`);
@@ -40,7 +43,8 @@ const inlineCss = cssSource ? await Bun.file(cssSource).text() : undefined;
 const cssPath = inlineCss ? undefined : "/styles.css";
 
 for (const file of contentFiles) {
-  const markdown = await Bun.file(file).text();
+  const filePath = `${CONTENT_DIR}/${file}`;
+  const markdown = await Bun.file(filePath).text();
 
   // Parse frontmatter
   const { frontmatter, content } = parseFrontmatter(markdown);
@@ -49,23 +53,13 @@ for (const file of contentFiles) {
   const title = frontmatter.title ?? extractTitleFromContent(content);
 
   // Convert markdown to HTML and apply syntax highlighting
-  let contentHtml = Bun.markdown.html(content, {
-    autolinks: true,
-    hardSoftBreaks: true,
-    headings: true,
-    latexMath: true,
-    strikethrough: true,
-    tables: true,
-    tasklists: true,
-    underline: true,
-    wikiLinks: true,
-  });
+  let contentHtml = renderMarkdownToHtml(content);
   contentHtml = await highlightCodeBlocks(contentHtml);
 
   // Determine output path and current path for navigation
   // content/index/content.md -> dist/index.html, path: /
   // content/about/content.md -> dist/about/index.html, path: /about
-  const slug = file.replace("content/", "").replace("/content.md", "");
+  const slug = slugFromContentFile(file);
   const currentPath = slug === "index" ? "/" : `/${slug}`;
 
   const html = renderLayout({
@@ -87,7 +81,7 @@ for (const file of contentFiles) {
   }
 
   await Bun.write(outPath, html);
-  console.log(`  ${file} -> ${outPath}`);
+  console.log(`  ${filePath} -> ${outPath}`);
 }
 
 if (cssSource) {

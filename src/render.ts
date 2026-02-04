@@ -8,6 +8,7 @@ import type { NavGroup } from "./navigation";
 import { parseFrontmatter, extractTitleFromContent } from "./frontmatter";
 import { renderLayout } from "./layout";
 import { discoverNavigation } from "./navigation";
+import { renderMarkdownToHtml } from "./utils/markdown";
 
 const liveReloadScript = `
 <script>
@@ -134,17 +135,7 @@ export const render = async (
   const navigation = await getNavigation(isDev);
 
   // Convert markdown to HTML string with GFM extensions
-  let contentHtml = Bun.markdown.html(content, {
-    autolinks: true,
-    hardSoftBreaks: true,
-    headings: true,
-    latexMath: true,
-    strikethrough: true,
-    tables: true,
-    tasklists: true,
-    underline: true,
-    wikiLinks: true,
-  });
+  let contentHtml = renderMarkdownToHtml(content);
 
   // Apply syntax highlighting to code blocks
   contentHtml = await highlightCodeBlocks(contentHtml);

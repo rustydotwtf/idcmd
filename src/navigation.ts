@@ -4,8 +4,15 @@
  */
 
 import type { PageMeta } from "./frontmatter";
+import type { GroupConfig } from "./utils/site-config";
 
 import { parseFrontmatter, extractTitleFromContent } from "./frontmatter";
+import {
+  CONTENT_DIR,
+  contentGlob,
+  slugFromContentFile,
+} from "./utils/content-paths";
+import { loadSiteConfig } from "./utils/site-config";
 
 export interface NavItem {
   title: string;
@@ -22,38 +29,10 @@ export interface NavGroup {
   items: NavItem[];
 }
 
-export interface GroupConfig {
-  id: string;
-  label: string;
-  order: number;
-}
-
-export interface SiteConfig {
-  name: string;
-  description: string;
-  groups?: GroupConfig[];
-  search?: {
-    scope?: "full" | "title" | "title_and_description";
-  };
-}
-
-const CONTENT_DIR = "./content";
 const ICONS_DIR = "./icons";
 
 // Default fallback icon (file icon)
 const DEFAULT_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/></svg>`;
-
-/**
- * Load site configuration from site.jsonc
- */
-const loadSiteConfig = async (): Promise<SiteConfig> => {
-  const file = Bun.file("site.jsonc");
-  if (await file.exists()) {
-    const text = await file.text();
-    return Bun.JSONC.parse(text) as SiteConfig;
-  }
-  return { description: "", name: "Markdown Site" };
-};
 
 /**
  * Load an icon by name from the icons directory.
@@ -186,7 +165,7 @@ const addFileToNavigation = async (
   groupsMap: Map<string, NavGroup>,
   defaultGroup: NavGroup
 ): Promise<void> => {
-  const slug = file.replace("/content.md", "");
+  const slug = slugFromContentFile(file);
   const markdown = await Bun.file(`${CONTENT_DIR}/${file}`).text();
   const { frontmatter, content } = parseFrontmatter(markdown);
 
@@ -227,14 +206,13 @@ const finalizeGroups = (
  */
 export const discoverNavigation = async (): Promise<NavGroup[]> => {
   const siteConfig = await loadSiteConfig();
-  const glob = new Bun.Glob("*/content.md");
 
   // Map of group ID -> NavGroup
   const groupsMap = buildGroupsMap(siteConfig.groups ?? []);
   const defaultGroup = createDefaultGroup();
 
   // Scan all content folders
-  for await (const file of glob.scan(CONTENT_DIR)) {
+  for await (const file of contentGlob.scan(CONTENT_DIR)) {
     await addFileToNavigation(file, groupsMap, defaultGroup);
   }
 

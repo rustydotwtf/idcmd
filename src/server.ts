@@ -1,15 +1,13 @@
 import type { Server } from "bun";
 
 import {
-  CONTENT_DIR,
-  contentGlob,
   createSearchStream,
   generateLlmsTxt,
   getMarkdownFile,
-  getSearchScope,
-  loadSiteConfig,
 } from "./content";
 import { render } from "./render";
+import { CONTENT_DIR, contentGlob } from "./utils/content-paths";
+import { getSearchScope, loadSiteConfig } from "./utils/site-config";
 
 interface LiveReloadClient {
   send: (msg: string) => void;
