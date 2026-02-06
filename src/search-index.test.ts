@@ -1,0 +1,60 @@
+import { describe, expect, it } from "bun:test";
+
+import { generateSearchIndexFromContent, search } from "./search-index";
+import { loadSiteConfig } from "./utils/site-config";
+
+const FIXED_GENERATED_AT = "1970-01-01T00:00:00.000Z";
+const CANONICAL_URL_PATTERN = /^\/$|\/$/;
+
+const isSorted = (values: string[]): boolean => {
+  let previous: string | undefined;
+
+  for (const current of values) {
+    if (previous !== undefined && previous > current) {
+      return false;
+    }
+    previous = current;
+  }
+
+  return true;
+};
+
+const createIndex = async () => {
+  const siteConfig = await loadSiteConfig();
+  return generateSearchIndexFromContent({
+    generatedAt: FIXED_GENERATED_AT,
+    siteConfig,
+  });
+};
+
+const expectCanonicalUrls = (urls: string[]): void => {
+  for (const url of urls) {
+    expect(url).toMatch(CANONICAL_URL_PATTERN);
+  }
+};
+
+describe("search-index", () => {
+  it("generates a stable v1 index with canonical urls", async () => {
+    const index = await createIndex();
+
+    expect(index).toMatchObject({
+      generatedAt: FIXED_GENERATED_AT,
+      version: 1,
+    });
+    expect(index.documents.length > 0).toBe(true);
+
+    const urls = index.documents.map((doc) => doc.url);
+    expect(urls).not.toContain("/404/");
+    expect(urls[0]).toBe("/");
+    expect(isSorted(urls.slice(1))).toBe(true);
+    expectCanonicalUrls(urls);
+  });
+
+  it("searches documents via AND-matching tokens", async () => {
+    const index = await createIndex();
+
+    const results = search(index, "markdown site", "full");
+    expect(results.length > 0).toBe(true);
+    expect(results.every((r) => CANONICAL_URL_PATTERN.test(r.slug))).toBe(true);
+  });
+});
