@@ -40,6 +40,11 @@ describe("right rail", () => {
     expect(html.includes("http%3A%2F%2Flocalhost%3A4000%2Fabout.md")).toBe(
       true
     );
+
+    // Absolute llms.txt URL should be included in the encoded prompt.
+    expect(html.includes("http%3A%2F%2Flocalhost%3A4000%2Fllms.txt")).toBe(
+      true
+    );
   });
 });
 
