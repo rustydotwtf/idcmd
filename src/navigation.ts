@@ -63,7 +63,7 @@ const buildNavItem = async (
   content: string
 ): Promise<NavItem> => {
   const title = frontmatter.title ?? extractTitleFromContent(content) ?? slug;
-  const href = slug === "index" ? "/" : `/${slug}`;
+  const href = slug === "index" ? "/" : `/${slug}/`;
   const iconSvg = await resolveIconSvg(slug, frontmatter.icon);
 
   return {

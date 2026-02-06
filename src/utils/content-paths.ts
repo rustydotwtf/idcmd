@@ -11,4 +11,4 @@ export const pageSlugFromContentSlug = (slug: string): string =>
   slug === "index" ? "" : slug;
 
 export const pagePathFromContentSlug = (slug: string): string =>
-  slug === "index" ? "/" : `/${slug}`;
+  slug === "index" ? "/" : `/${slug}/`;

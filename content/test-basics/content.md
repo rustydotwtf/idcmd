@@ -181,7 +181,7 @@ Using three underscores:
 
 [Link with title](https://example.com "Example Title")
 
-[Internal link to about page](/about)
+[Internal link to about page](/about/)
 
 [Link with special chars](https://example.com/path?query=value&other=123)
 
