@@ -1,9 +1,10 @@
 import { describe, expect, it } from "bun:test";
 
 import { renderLayout } from "@/layout";
+import { extractTocFromHtml } from "@/utils/toc";
 
 describe("right rail", () => {
-  it("renders 'On this page' and links to h2/h3 ids", () => {
+  it("renders TOC links to h2/h3 ids", () => {
     const html = renderLayout({
       canonicalUrl: "http://localhost:4000/about/",
       content:
@@ -15,10 +16,12 @@ describe("right rail", () => {
       title: "Test",
     });
 
-    expect(html.includes("On this page")).toBe(true);
     expect(html.includes('href="#sec"')).toBe(true);
     expect(html.includes('href="#sub"')).toBe(true);
     expect(html.includes('class="pl-3"')).toBe(true);
+    expect(html.includes('data-toc-root="1"')).toBe(true);
+    expect(html.includes('data-toc-scroll-container="1"')).toBe(true);
+    expect(html.includes('data-toc-link="1"')).toBe(true);
   });
 
   it("builds provider URLs with an absolute markdown link", () => {
@@ -37,5 +40,28 @@ describe("right rail", () => {
     expect(html.includes("http%3A%2F%2Flocalhost%3A4000%2Fabout.md")).toBe(
       true
     );
+  });
+});
+
+describe("extractTocFromHtml", () => {
+  it("defaults to h2/h3 only", () => {
+    const items = extractTocFromHtml(
+      '<h1 id="a"><a href="#a">A</a></h1>' +
+        '<h2 id="b"><a href="#b">B</a></h2>' +
+        '<h3 id="c"><a href="#c">C</a></h3>'
+    );
+
+    expect(items.map((i) => i.id)).toEqual(["b", "c"]);
+  });
+
+  it("supports configurable heading levels", () => {
+    const items = extractTocFromHtml(
+      '<h1 id="a"><a href="#a">A</a></h1>' +
+        '<h2 id="b"><a href="#b">B</a></h2>' +
+        '<h3 id="c"><a href="#c">C</a></h3>',
+      { levels: [1, 2, 3] }
+    );
+
+    expect(items.map((i) => i.id)).toEqual(["a", "b", "c"]);
   });
 });

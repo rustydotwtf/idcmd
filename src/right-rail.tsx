@@ -1,5 +1,6 @@
 import type { JSX } from "preact";
 
+import type { ResolvedRightRailConfig } from "./utils/site-config";
 import type { TocItem } from "./utils/toc";
 
 const CaretDownIcon = (): JSX.Element => (
@@ -114,36 +115,74 @@ const AskInDropdown = ({
 );
 
 const OnThisPage = ({ items }: { items: TocItem[] }): JSX.Element => (
-  <section class="rounded-xl border border-border bg-card/30 p-4">
-    <h2 class="text-sm font-semibold text-foreground">On this page</h2>
-    <nav class="mt-3">
-      <ul class="space-y-2 text-sm text-muted-foreground">
-        {items.map((item) => (
-          <li key={item.id} class={item.level === 3 ? "pl-3" : ""}>
-            <a href={`#${item.id}`} class="hover:text-foreground">
-              {item.text}
-            </a>
-          </li>
-        ))}
-      </ul>
+  <section class="flex min-h-0 flex-1 flex-col" data-toc-root="1">
+    <nav aria-label="Table of contents" class="min-h-0 flex flex-1 flex-col">
+      <div class="toc-scroll min-h-0 flex-1" data-toc-scroll-container="1">
+        <ul class="space-y-2 text-sm text-muted-foreground">
+          {items.map((item) => (
+            <li key={item.id} class={item.level >= 3 ? "pl-3" : ""}>
+              <a
+                href={`#${item.id}`}
+                class="hover:text-foreground"
+                data-toc-link="1"
+              >
+                {item.text}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
     </nav>
   </section>
 );
+
+const getVisibilityClass = (
+  visibleFrom: ResolvedRightRailConfig["visibleFrom"]
+): string => {
+  switch (visibleFrom) {
+    case "always": {
+      return "block";
+    }
+    case "never": {
+      return "hidden";
+    }
+    case "md": {
+      return "hidden md:block";
+    }
+    case "lg": {
+      return "hidden lg:block";
+    }
+    default: {
+      return "hidden xl:block";
+    }
+  }
+};
+
+const getPanelClass = (
+  placement: ResolvedRightRailConfig["placement"]
+): string =>
+  placement === "viewport"
+    ? "fixed top-24 bottom-0 right-8 z-20 w-64 flex flex-col gap-6 min-h-0"
+    : "sticky top-24 h-[calc(100vh-6rem)] flex flex-col gap-6 min-h-0";
 
 export const RightRail = ({
   canonicalUrl,
   currentPath,
   tocItems,
+  rightRailConfig,
 }: {
   canonicalUrl?: string;
   currentPath: string;
   tocItems: TocItem[];
+  rightRailConfig: ResolvedRightRailConfig;
 }): JSX.Element => {
   const { chatgptUrl, claudeUrl } = buildAskUrls({ canonicalUrl, currentPath });
+  const visibilityClass = getVisibilityClass(rightRailConfig.visibleFrom);
+  const panelClass = getPanelClass(rightRailConfig.placement);
 
   return (
-    <aside class="hidden xl:block w-64 shrink-0">
-      <div class="sticky top-24 space-y-6">
+    <aside class={`${visibilityClass} w-64 shrink-0`}>
+      <div class={panelClass}>
         <AskInDropdown chatgptUrl={chatgptUrl} claudeUrl={claudeUrl} />
         {tocItems.length > 0 ? <OnThisPage items={tocItems} /> : null}
       </div>

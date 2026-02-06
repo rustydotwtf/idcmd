@@ -2,7 +2,13 @@ import type { JSX } from "preact";
 
 import { render } from "preact-render-to-string";
 
+import type {
+  ResolvedRightRailConfig,
+  RightRailConfig,
+} from "./utils/site-config";
+
 import { RightRail } from "./right-rail";
+import { resolveRightRailConfig } from "./utils/site-config";
 import { extractTocFromHtml } from "./utils/toc";
 
 // Types matching navigation.ts exports
@@ -33,6 +39,7 @@ interface LayoutProps {
   scriptPaths?: string[];
   searchQuery?: string;
   showRightRail?: boolean;
+  rightRailConfig?: RightRailConfig;
 }
 
 const Icon = ({ svg }: { svg: string }): JSX.Element => (
@@ -172,6 +179,127 @@ const TopNavbar = ({
   </header>
 );
 
+interface DocumentHeadProps {
+  canonicalUrl?: string;
+  description?: string;
+  inlineCss?: string;
+  resolvedCssPath?: string;
+  title: string;
+}
+
+const DocumentHead = ({
+  canonicalUrl,
+  description,
+  inlineCss,
+  resolvedCssPath,
+  title,
+}: DocumentHeadProps): JSX.Element => (
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    {description ? <meta name="description" content={description} /> : null}
+    {canonicalUrl ? <link rel="canonical" href={canonicalUrl} /> : null}
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      rel="preconnect"
+      href="https://fonts.gstatic.com"
+      crossOrigin="anonymous"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    {inlineCss ? <style>{inlineCss}</style> : null}
+    {resolvedCssPath ? <link rel="stylesheet" href={resolvedCssPath} /> : null}
+  </head>
+);
+
+const buildHtmlClass = (smoothScroll: boolean): string =>
+  smoothScroll ? "dark smooth-scroll" : "dark";
+
+interface ScrollSpyDataset {
+  scrollspy?: string;
+  scrollspyCenter?: string;
+  scrollspyUpdateHash?: string;
+}
+
+const buildScrollSpyDataset = (
+  isScrollSpyEnabled: boolean,
+  rightRail: ResolvedRightRailConfig
+): ScrollSpyDataset =>
+  isScrollSpyEnabled
+    ? {
+        scrollspy: "1",
+        scrollspyCenter: rightRail.scrollSpy.centerActiveItem ? "1" : undefined,
+        scrollspyUpdateHash: rightRail.scrollSpy.updateHash,
+      }
+    : {};
+
+interface DocumentBodyProps {
+  canonicalUrl?: string;
+  content: string;
+  currentPath: string;
+  navigation: NavGroup[];
+  rightRail: ResolvedRightRailConfig;
+  scriptPaths: string[];
+  scrollSpyDataset: ScrollSpyDataset;
+  searchQuery?: string;
+  shouldShowRightRail: boolean;
+  siteName: string;
+  tocItems: ReturnType<typeof extractTocFromHtml>;
+}
+
+const DocumentBody = ({
+  canonicalUrl,
+  content,
+  currentPath,
+  navigation,
+  rightRail,
+  scriptPaths,
+  scrollSpyDataset,
+  searchQuery,
+  shouldShowRightRail,
+  siteName,
+  tocItems,
+}: DocumentBodyProps): JSX.Element => (
+  <body
+    class="bg-background text-foreground font-mono"
+    data-scrollspy={scrollSpyDataset.scrollspy}
+    data-scrollspy-center={scrollSpyDataset.scrollspyCenter}
+    data-scrollspy-update-hash={scrollSpyDataset.scrollspyUpdateHash}
+  >
+    <Sidebar
+      siteName={siteName}
+      navigation={navigation}
+      currentPath={currentPath}
+    />
+    <div class="main-wrapper">
+      <TopNavbar query={searchQuery} siteName={siteName} />
+      <main class="main-content">
+        <div class="mx-auto flex w-full max-w-6xl items-start gap-10">
+          <article
+            class="prose min-w-0 flex-1"
+            dangerouslySetInnerHTML={{ __html: content }}
+          />
+          {shouldShowRightRail ? (
+            <RightRail
+              canonicalUrl={canonicalUrl}
+              currentPath={currentPath}
+              tocItems={tocItems}
+              rightRailConfig={rightRail}
+            />
+          ) : null}
+        </div>
+      </main>
+    </div>
+    {scriptPaths.map((scriptPath) => (
+      <script key={scriptPath} defer src={scriptPath} />
+    ))}
+  </body>
+);
+
 const Layout = ({
   title = "Markdown Site",
   siteName = "Markdown Site",
@@ -185,62 +313,44 @@ const Layout = ({
   scriptPaths = [],
   searchQuery,
   showRightRail = true,
+  rightRailConfig,
 }: LayoutProps): JSX.Element => {
   const resolvedCssPath = inlineCss ? undefined : (cssPath ?? "/styles.css");
-  const tocItems = showRightRail ? extractTocFromHtml(content) : [];
+  const resolvedRightRailConfig = resolveRightRailConfig(rightRailConfig);
+  const shouldShowRightRail = showRightRail && resolvedRightRailConfig.enabled;
+  const tocItems = shouldShowRightRail
+    ? extractTocFromHtml(content, { levels: resolvedRightRailConfig.tocLevels })
+    : [];
+  const isScrollSpyEnabled =
+    resolvedRightRailConfig.scrollSpy.enabled && tocItems.length > 0;
+  const htmlClass = buildHtmlClass(resolvedRightRailConfig.smoothScroll);
+  const scrollSpyDataset = buildScrollSpyDataset(
+    isScrollSpyEnabled,
+    resolvedRightRailConfig
+  );
 
   return (
-    <html lang="en" class="dark">
-      <head>
-        <meta charset="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>{title}</title>
-        {description ? <meta name="description" content={description} /> : null}
-        {canonicalUrl ? <link rel="canonical" href={canonicalUrl} /> : null}
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link
-          rel="preconnect"
-          href="https://fonts.gstatic.com"
-          crossOrigin="anonymous"
-        />
-        <link
-          href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap"
-          rel="stylesheet"
-        />
-        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-        {inlineCss ? <style>{inlineCss}</style> : null}
-        {resolvedCssPath ? (
-          <link rel="stylesheet" href={resolvedCssPath} />
-        ) : null}
-      </head>
-      <body class="bg-background text-foreground font-mono">
-        <Sidebar
-          siteName={siteName}
-          navigation={navigation}
-          currentPath={currentPath}
-        />
-        <div class="main-wrapper">
-          <TopNavbar query={searchQuery} siteName={siteName} />
-          <main class="main-content">
-            <div class="mx-auto flex w-full max-w-6xl items-start gap-10">
-              <article
-                class="prose min-w-0 flex-1"
-                dangerouslySetInnerHTML={{ __html: content }}
-              />
-              {showRightRail ? (
-                <RightRail
-                  canonicalUrl={canonicalUrl}
-                  currentPath={currentPath}
-                  tocItems={tocItems}
-                />
-              ) : null}
-            </div>
-          </main>
-        </div>
-        {scriptPaths.map((scriptPath) => (
-          <script key={scriptPath} defer src={scriptPath} />
-        ))}
-      </body>
+    <html lang="en" class={htmlClass}>
+      <DocumentHead
+        canonicalUrl={canonicalUrl}
+        description={description}
+        inlineCss={inlineCss}
+        resolvedCssPath={resolvedCssPath}
+        title={title}
+      />
+      <DocumentBody
+        canonicalUrl={canonicalUrl}
+        content={content}
+        currentPath={currentPath}
+        navigation={navigation}
+        rightRail={resolvedRightRailConfig}
+        scriptPaths={scriptPaths}
+        scrollSpyDataset={scrollSpyDataset}
+        searchQuery={searchQuery}
+        shouldShowRightRail={shouldShowRightRail}
+        siteName={siteName}
+        tocItems={tocItems}
+      />
     </html>
   );
 };

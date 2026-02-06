@@ -11,7 +11,8 @@ import { discoverNavigation } from "./navigation";
 import { deriveDescription, deriveTitle } from "./page-meta";
 import { resolveAbsoluteUrl } from "./url-utils";
 import { renderMarkdownToHtml } from "./utils/markdown";
-import { loadSiteConfig } from "./utils/site-config";
+import { loadSiteConfig, resolveRightRailConfig } from "./utils/site-config";
+import { extractTocFromHtml } from "./utils/toc";
 
 // Initialize shiki highlighter (cached singleton)
 let highlighterPromise: Promise<Highlighter> | null = null;
@@ -134,29 +135,34 @@ export const render = async (
 
   const { content } = parseFrontmatter(markdown);
   const siteConfig = await loadSiteConfig();
+  const rightRail = resolveRightRailConfig(siteConfig.rightRail);
   const { description, title } = derivePageMeta(
     markdown,
     siteConfig.description,
     titleOverride
   );
 
-  // Get navigation (refresh in dev mode for live updates)
   const navigation = await getNavigation(isDev);
-
   const contentHtml = await highlightCodeBlocks(renderMarkdownToHtml(content));
-
-  const canonicalUrl = resolveAbsoluteUrl(
-    siteConfig.baseUrl ?? origin,
-    currentPath
-  );
+  const tocItems =
+    rightRail.enabled && rightRail.scrollSpy.enabled
+      ? extractTocFromHtml(contentHtml, { levels: rightRail.tocLevels })
+      : [];
+  const scriptPaths = [
+    ...(isDev ? ["/live-reload.js"] : []),
+    ...(rightRail.enabled && rightRail.scrollSpy.enabled && tocItems.length > 0
+      ? ["/right-rail-scrollspy.js"]
+      : []),
+  ];
 
   return renderLayout({
-    canonicalUrl,
+    canonicalUrl: resolveAbsoluteUrl(siteConfig.baseUrl ?? origin, currentPath),
     content: contentHtml,
     currentPath,
     description,
     navigation,
-    scriptPaths: isDev ? ["/live-reload.js"] : [],
+    rightRailConfig: siteConfig.rightRail,
+    scriptPaths,
     searchQuery,
     siteName: siteConfig.name,
     title,

@@ -18,7 +18,8 @@ import {
   slugFromContentFile,
 } from "./utils/content-paths";
 import { renderMarkdownToHtml } from "./utils/markdown";
-import { loadSiteConfig } from "./utils/site-config";
+import { loadSiteConfig, resolveRightRailConfig } from "./utils/site-config";
+import { extractTocFromHtml } from "./utils/toc";
 
 const MAX_INDEX_BYTES = 5 * 1024 * 1024;
 const MAX_BUILD_SECONDS = 60;
@@ -36,6 +37,7 @@ for await (const file of contentGlob.scan(CONTENT_DIR)) {
 console.log(`Found ${contentFiles.length} content pages`);
 
 const siteConfig = await loadSiteConfig();
+const resolvedRightRailConfig = resolveRightRailConfig(siteConfig.rightRail);
 
 // Discover navigation once for all pages
 console.log("Discovering navigation...");
@@ -121,6 +123,7 @@ const renderStaticSearchPage = (): string => {
     description: siteConfig.description,
     inlineCss,
     navigation,
+    rightRailConfig: siteConfig.rightRail,
     searchQuery: "",
     showRightRail: false,
     siteName: siteConfig.name,
@@ -145,6 +148,19 @@ for (const file of contentFiles) {
   let contentHtml = renderMarkdownToHtml(content);
   contentHtml = await highlightCodeBlocks(contentHtml);
 
+  const tocItems =
+    resolvedRightRailConfig.enabled && resolvedRightRailConfig.scrollSpy.enabled
+      ? extractTocFromHtml(contentHtml, {
+          levels: resolvedRightRailConfig.tocLevels,
+        })
+      : [];
+  const scriptPaths: string[] =
+    resolvedRightRailConfig.enabled &&
+    resolvedRightRailConfig.scrollSpy.enabled &&
+    tocItems.length > 0
+      ? ["/right-rail-scrollspy.js"]
+      : [];
+
   // Determine output path and current path for navigation
   // content/index/content.md -> dist/index.html, path: /
   // content/about/content.md -> dist/about/index.html, path: /about
@@ -160,6 +176,8 @@ for (const file of contentFiles) {
     description,
     inlineCss,
     navigation,
+    rightRailConfig: siteConfig.rightRail,
+    scriptPaths,
     siteName: siteConfig.name,
     title,
   });

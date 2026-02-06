@@ -15,4 +15,32 @@
     // What to search: "full" | "title" | "title_and_description"
     "scope": "full",
   },
+
+  // Right rail configuration (Ask menu + "On this page" table of contents)
+  "rightRail": {
+    // Master switch for the entire right rail
+    "enabled": true,
+
+    // "xl" | "lg" | "md" | "always" | "never"
+    "visibleFrom": "xl",
+
+    // "content" | "viewport"
+    // - "content": sits in the centered content column (default)
+    // - "viewport": pinned near the right edge of the viewport (like many docs sites)
+    "placement": "viewport",
+
+    // Which headings are included in the TOC (SSR)
+    "tocLevels": [2, 3],
+
+    // Smooth scrolling for in-page anchors via CSS `scroll-behavior: smooth`
+    "smoothScroll": false,
+
+    "scrollSpy": {
+      "enabled": true,
+      "centerActiveItem": true,
+
+      // "never" | "replace" | "push" (only "never" is implemented right now)
+      "updateHash": "never",
+    },
+  },
 }

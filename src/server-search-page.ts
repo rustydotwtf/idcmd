@@ -68,6 +68,7 @@ const buildSearchPageHtml = async (
     currentPath: "/search/",
     description: siteConfig.description,
     navigation,
+    rightRailConfig: siteConfig.rightRail,
     searchQuery: query,
     showRightRail: false,
     siteName: siteConfig.name,

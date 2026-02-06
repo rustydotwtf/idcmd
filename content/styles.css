@@ -112,6 +112,10 @@
   }
 }
 
+html.smooth-scroll {
+  scroll-behavior: smooth;
+}
+
 /* ============================================
    LAYOUT - Sidebar and main content structure
    ============================================ */
@@ -175,6 +179,48 @@
 }
 
 /* ============================================
+   RIGHT RAIL - Table of contents scroll + active
+   ============================================ */
+
+.toc-scroll {
+  height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 0.25rem;
+  scrollbar-gutter: stable;
+}
+
+/*
+  "Follow" mode:
+  - No independent scrolling in the TOC.
+  - JS translates the list to keep the active item centered.
+  - Without JS, the default `overflow-y: auto` remains as a fallback.
+*/
+body[data-toc-follow="1"] .toc-scroll {
+  /* Prefer `overflow: clip` (no scroll container) when supported. */
+  overflow: hidden;
+  overflow: clip;
+  /* Ensure wheel/trackpad scroll continues to the page while hovering the TOC. */
+  overscroll-behavior: auto;
+}
+
+body[data-toc-follow="1"] .toc-scroll > ul {
+  will-change: transform;
+}
+
+[data-toc-link] {
+  display: block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.5rem;
+}
+
+[data-toc-link][aria-current="location"] {
+  background-color: var(--accent);
+  color: var(--accent-foreground);
+  font-weight: 600;
+}
+
+/* ============================================
    PROSE - Typography for markdown content
    ============================================ */
 
@@ -200,6 +246,11 @@
   }
   h3 {
     @apply text-xl mt-4 mb-2;
+  }
+  h1,
+  h2,
+  h3 {
+    scroll-margin-top: var(--scroll-margin-top, 96px);
   }
   p {
     @apply my-4;
