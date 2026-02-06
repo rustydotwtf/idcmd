@@ -104,6 +104,18 @@
 }
 
 @layer base {
+  /*
+    Tailwind v4’s `border` utility relies on `border-style: var(--tw-border-style)`.
+    In some browsers the Tailwind-defined `--tw-border-style` var can be missing
+    (it’s gated behind a complex `@supports` block), which makes borders render
+    as `border-style: none`. Defining it here ensures borders consistently show.
+  */
+  *,
+  ::before,
+  ::after,
+  ::backdrop {
+    --tw-border-style: solid;
+  }
   * {
     @apply border-border outline-ring/50;
   }
