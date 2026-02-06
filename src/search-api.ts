@@ -1,4 +1,7 @@
-import { createSearchStream } from "./content";
+import type { SearchResult } from "./search-contract";
+
+import { toSearchResultJsonLine } from "./search-contract";
+import { loadSearchIndex, search } from "./search-index";
 import { getSearchScope, loadSiteConfig } from "./utils/site-config";
 
 const textEncoder = new TextEncoder();
@@ -29,26 +32,44 @@ const toReadableStream = (
   });
 };
 
-export const handleSearchRequest = async (
-  url: URL
-): Promise<Response | undefined> => {
-  if (url.pathname !== "/api/search") {
-    return undefined;
-  }
+const getQueryParam = (url: URL): string | null =>
+  url.searchParams.get("q")?.trim().toLowerCase() ?? null;
 
-  const query = url.searchParams.get("q")?.toLowerCase();
-  if (!query) {
-    return Response.json(
-      { error: "Missing query parameter 'q'" },
-      { status: 400 }
-    );
-  }
+const createMissingQueryResponse = (): Response =>
+  Response.json({ error: "Missing query parameter 'q'" }, { status: 400 });
 
+const toJsonLinesStream = (
+  results: readonly SearchResult[]
+): AsyncIterable<string> =>
+  (async function* stream(): AsyncGenerator<string> {
+    for (const result of results) {
+      yield toSearchResultJsonLine(result);
+    }
+  })();
+
+const createSearchResponse = async (query: string): Promise<Response> => {
   const siteConfig = await loadSiteConfig();
   const scope = getSearchScope(siteConfig);
-  const stream = createSearchStream(query, scope);
+  const index = await loadSearchIndex({ siteConfig });
+  const results = search(index, query, scope);
+  const stream = toJsonLinesStream(results);
 
   return new Response(toReadableStream(stream), {
     headers: { "Content-Type": "application/jsonl; charset=utf-8" },
   });
+};
+
+export const handleSearchRequest = (
+  url: URL
+): Promise<Response | undefined> => {
+  if (url.pathname !== "/api/search") {
+    return Promise.resolve(undefined satisfies Response | undefined);
+  }
+
+  const query = getQueryParam(url);
+  if (!query) {
+    return Promise.resolve(createMissingQueryResponse());
+  }
+
+  return createSearchResponse(query);
 };

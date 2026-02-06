@@ -11,6 +11,7 @@ const expectValidResults = (jsonl: string): void => {
 
   for (const result of results) {
     expect(result.slug.startsWith("/")).toBe(true);
+    expect(result.slug === "/" || result.slug.endsWith("/")).toBe(true);
     expect(result.title.length > 0).toBe(true);
     expect(result.description.length > 0).toBe(true);
   }

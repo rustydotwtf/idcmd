@@ -3,6 +3,13 @@ import type { Server } from "bun";
 import { generateLlmsTxt, getMarkdownFile } from "./content";
 import { render } from "./render";
 import { handleSearchRequest } from "./search-api";
+import { handleSearchPageRequest } from "./server-search-page";
+import { handleRobotsTxt, handleSitemapXml } from "./server-seo";
+import {
+  getRedirectForCanonicalHtmlPath,
+  isFileLikePathname,
+  toCanonicalHtmlPathname,
+} from "./url-policy";
 import { CONTENT_DIR, contentGlob } from "./utils/content-paths";
 
 interface LiveReloadClient {
@@ -13,8 +20,11 @@ interface LiveReloadClient {
 type ServerInstance = Server<undefined>;
 
 const PUBLIC_DIR = "./public";
+const DIST_DIR = "./dist";
 const isDev = process.env.NODE_ENV !== "production";
 const LIVE_RELOAD_POLL_MS = 500;
+const MIN_SEARCH_QUERY_LENGTH = 2;
+const MAX_SEARCH_RESULTS = 50;
 
 // Live reload WebSocket clients
 const liveReloadClients = new Set<LiveReloadClient>();
@@ -44,6 +54,18 @@ const mimeTypes: Record<string, string> = {
   ".woff": "font/woff",
   ".woff2": "font/woff2",
 };
+
+const withQueryString = (pathname: string, search: string): string =>
+  search ? `${pathname}${search}` : pathname;
+
+const createRedirectResponse = (pathname: string, url: URL): Response =>
+  new Response(null, {
+    headers: {
+      Location: withQueryString(pathname, url.search),
+      ...(isDev ? { "Cache-Control": "no-cache" } : {}),
+    },
+    status: 308,
+  });
 
 const notifyLiveReload = (message: string): void => {
   for (const client of liveReloadClients) {
@@ -96,8 +118,11 @@ if (isDev) {
   }
 }
 
-const serveStaticFile = async (pathname: string): Promise<Response | null> => {
-  const filePath = `${PUBLIC_DIR}${pathname}`;
+const tryServeFileFromRoot = async (
+  rootDir: string,
+  pathname: string
+): Promise<Response | null> => {
+  const filePath = `${rootDir}${pathname}`;
   const file = Bun.file(filePath);
 
   if (await file.exists()) {
@@ -110,6 +135,17 @@ const serveStaticFile = async (pathname: string): Promise<Response | null> => {
         ...staticCacheHeaders,
       },
     });
+  }
+  return null;
+};
+
+const serveStaticFile = async (pathname: string): Promise<Response | null> => {
+  const roots = isDev ? [PUBLIC_DIR] : [DIST_DIR, PUBLIC_DIR];
+  for (const root of roots) {
+    const response = await tryServeFileFromRoot(root, pathname);
+    if (response) {
+      return response;
+    }
   }
   return null;
 };
@@ -173,10 +209,16 @@ const handleMarkdownRequest = async (
   });
 };
 
-const createNotFoundResponse = async (): Promise<Response> => {
+const createNotFoundResponse = async (url: URL): Promise<Response> => {
   const notFoundMarkdown = await getMarkdownFile("404");
   if (notFoundMarkdown) {
-    const html = await render(notFoundMarkdown, undefined, isDev, "/404");
+    const canonicalPathname = toCanonicalHtmlPathname(url.pathname);
+    const html = await render(notFoundMarkdown, {
+      currentPath: canonicalPathname,
+      isDev,
+      origin: url.origin,
+      searchQuery: url.searchParams.get("q") ?? undefined,
+    });
     return new Response(html, {
       headers: cacheHeaders,
       status: 404,
@@ -189,22 +231,45 @@ const createNotFoundResponse = async (): Promise<Response> => {
   });
 };
 
-const handlePageRequest = async (path: string): Promise<Response> => {
-  const normalizedPath = path === "/" ? "/index" : path;
-  const slug = normalizedPath.slice(1);
+const handlePageRequest = async (url: URL): Promise<Response> => {
+  const canonicalPathname = toCanonicalHtmlPathname(url.pathname);
+  const slug =
+    canonicalPathname === "/" ? "index" : canonicalPathname.slice(1, -1);
   const markdown = await getMarkdownFile(slug);
 
   if (!markdown) {
-    return createNotFoundResponse();
+    return createNotFoundResponse(url);
   }
 
-  const currentPath = normalizedPath === "/index" ? "/" : normalizedPath;
-  const html = await render(markdown, undefined, isDev, currentPath);
+  const html = await render(markdown, {
+    currentPath: canonicalPathname,
+    isDev,
+    origin: url.origin,
+  });
 
   return new Response(html, {
     headers: cacheHeaders,
     status: 200,
   });
+};
+
+const maybeHandleCanonicalRedirect = (url: URL): Response | undefined => {
+  const { pathname } = url;
+
+  if (pathname === "/__live-reload" || pathname.startsWith("/api/")) {
+    return undefined;
+  }
+
+  if (isFileLikePathname(pathname)) {
+    return undefined;
+  }
+
+  const redirectPathname = getRedirectForCanonicalHtmlPath(pathname);
+  if (!redirectPathname) {
+    return undefined;
+  }
+
+  return createRedirectResponse(redirectPathname, url);
 };
 
 const handleRequest = async (
@@ -219,13 +284,25 @@ const handleRequest = async (
     return undefined;
   }
 
+  const seoEnv = { distDir: DIST_DIR, isDev, staticCacheHeaders };
+  const searchPageEnv = {
+    cacheHeaders,
+    isDev,
+    maxResults: MAX_SEARCH_RESULTS,
+    minQueryLength: MIN_SEARCH_QUERY_LENGTH,
+  };
+
   return (
     liveReload ??
     (await handleLlmsTxt(path)) ??
+    (await handleRobotsTxt(url, seoEnv)) ??
+    (await handleSitemapXml(url, seoEnv)) ??
     (await handleSearchRequest(url)) ??
     (await serveStaticFile(path)) ??
     (await handleMarkdownRequest(path)) ??
-    (await handlePageRequest(path))
+    (await (maybeHandleCanonicalRedirect(url) ??
+      handleSearchPageRequest(url, searchPageEnv))) ??
+    (await handlePageRequest(url))
   );
 };
 
