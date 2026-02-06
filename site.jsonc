@@ -1,7 +1,9 @@
 {
   "name": "Markdown Site",
   "description": "A markdown site template with first-class LLM support.",
-  "baseUrl": "http://localhost:4000",
+  // Production base URL. In Vercel you can omit this and set `SITE_BASE_URL`,
+  // or rely on Vercel-provided env vars (VERCEL_URL, etc.).
+  "baseUrl": "https://idcmd.vercel.app",
 
   // Navigation groups for the sidebar
   // Pages are assigned to groups via frontmatter: group: "main"

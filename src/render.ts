@@ -156,7 +156,12 @@ export const render = async (
   ];
 
   return renderLayout({
-    canonicalUrl: resolveAbsoluteUrl(siteConfig.baseUrl ?? origin, currentPath),
+    // In dev we want canonical/LLM links to point at the current server origin (localhost),
+    // even if the configured `baseUrl` is production.
+    canonicalUrl: resolveAbsoluteUrl(
+      isDev ? origin : (siteConfig.baseUrl ?? origin),
+      currentPath
+    ),
     content: contentHtml,
     currentPath,
     description,
