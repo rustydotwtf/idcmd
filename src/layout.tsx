@@ -19,15 +19,16 @@ export interface NavGroup {
 
 interface LayoutProps {
   title?: string;
+  description?: string;
+  canonicalUrl?: string;
   content: string;
   cssPath?: string;
   inlineCss?: string;
   currentPath?: string;
   navigation?: NavGroup[];
   scriptPaths?: string[];
+  searchQuery?: string;
 }
-
-const DEFAULT_SCRIPT_PATHS = ["/nav-prefetch.js", "/search.js"] as const;
 
 const Icon = ({ svg }: { svg: string }): JSX.Element => (
   <span
@@ -105,12 +106,15 @@ const Sidebar = ({
   </aside>
 );
 
-const SearchPanel = (): JSX.Element => (
-  <section
-    data-search-root
-    class="mb-6 not-prose rounded-lg border border-border bg-card/50 p-4"
-  >
-    <form data-search-form class="flex gap-2" role="search" noValidate>
+const SearchForm = ({ query }: { query?: string }): JSX.Element => (
+  <section class="mb-6 not-prose rounded-lg border border-border bg-card/50 p-4">
+    <form
+      method="get"
+      action="/search/"
+      class="flex gap-2"
+      role="search"
+      noValidate
+    >
       <label htmlFor="site-search" class="sr-only">
         Search pages
       </label>
@@ -121,6 +125,7 @@ const SearchPanel = (): JSX.Element => (
         autocomplete="off"
         spellcheck={false}
         placeholder="Search docs..."
+        defaultValue={query ?? ""}
         class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
       />
       <button
@@ -130,24 +135,22 @@ const SearchPanel = (): JSX.Element => (
         Search
       </button>
     </form>
-    <p data-search-status class="mt-2 text-sm text-muted-foreground">
-      Type at least 2 characters to search.
-    </p>
-    <ul data-search-results class="mt-3 hidden space-y-2" />
   </section>
 );
 
 const Layout = ({
   title = "Markdown Site",
+  description,
+  canonicalUrl,
   content,
   cssPath,
   inlineCss,
   currentPath = "/",
   navigation = [],
   scriptPaths = [],
+  searchQuery,
 }: LayoutProps): JSX.Element => {
-  const resolvedCssPath = inlineCss ? cssPath : (cssPath ?? "/styles.css");
-  const mergedScriptPaths = [...DEFAULT_SCRIPT_PATHS, ...scriptPaths];
+  const resolvedCssPath = inlineCss ? undefined : (cssPath ?? "/styles.css");
 
   return (
     <html lang="en" class="dark">
@@ -155,6 +158,8 @@ const Layout = ({
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title>{title}</title>
+        {description ? <meta name="description" content={description} /> : null}
+        {canonicalUrl ? <link rel="canonical" href={canonicalUrl} /> : null}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
           rel="preconnect"
@@ -175,14 +180,14 @@ const Layout = ({
         <Sidebar navigation={navigation} currentPath={currentPath} />
         <div class="main-wrapper">
           <main class="main-content">
-            <SearchPanel />
+            <SearchForm query={searchQuery} />
             <article
               class="prose"
               dangerouslySetInnerHTML={{ __html: content }}
             />
           </main>
         </div>
-        {mergedScriptPaths.map((scriptPath) => (
+        {scriptPaths.map((scriptPath) => (
           <script key={scriptPath} defer src={scriptPath} />
         ))}
       </body>

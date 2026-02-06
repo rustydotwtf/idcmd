@@ -6,6 +6,7 @@
 
 export interface PageMeta {
   title?: string;
+  description?: string;
   icon?: string;
   group?: string;
   order?: number;

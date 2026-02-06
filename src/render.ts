@@ -8,7 +8,10 @@ import type { NavGroup } from "./navigation";
 import { parseFrontmatter, extractTitleFromContent } from "./frontmatter";
 import { renderLayout } from "./layout";
 import { discoverNavigation } from "./navigation";
+import { deriveDescription, deriveTitle } from "./page-meta";
+import { resolveAbsoluteUrl } from "./url-utils";
 import { renderMarkdownToHtml } from "./utils/markdown";
+import { loadSiteConfig } from "./utils/site-config";
 
 // Initialize shiki highlighter (cached singleton)
 let highlighterPromise: Promise<Highlighter> | null = null;
@@ -96,42 +99,67 @@ export interface RenderResult {
   frontmatter: PageMeta;
 }
 
+export interface RenderOptions {
+  titleOverride?: string;
+  isDev?: boolean;
+  currentPath?: string;
+  origin?: string;
+  searchQuery?: string;
+}
+
+const derivePageMeta = (
+  markdown: string,
+  siteDefaultDescription: string,
+  titleOverride: string | undefined
+): { title: string; description: string } => ({
+  description: deriveDescription(markdown, siteDefaultDescription),
+  title: deriveTitle(markdown, titleOverride),
+});
+
 /**
  * Render markdown to HTML with layout.
  * Parses frontmatter, applies syntax highlighting, and includes navigation.
  */
 export const render = async (
   markdown: string,
-  titleOverride?: string,
-  isDev = false,
-  currentPath = "/"
+  options: RenderOptions = {}
 ): Promise<string> => {
-  // Parse frontmatter from markdown
-  const { frontmatter, content } = parseFrontmatter(markdown);
+  const {
+    currentPath = "/",
+    isDev = false,
+    origin,
+    searchQuery,
+    titleOverride,
+  } = options;
 
-  // Determine title: override > frontmatter > h1 extraction
-  const title =
-    titleOverride ?? frontmatter.title ?? extractTitleFromContent(content);
+  const { content } = parseFrontmatter(markdown);
+  const siteConfig = await loadSiteConfig();
+  const { description, title } = derivePageMeta(
+    markdown,
+    siteConfig.description,
+    titleOverride
+  );
 
   // Get navigation (refresh in dev mode for live updates)
   const navigation = await getNavigation(isDev);
 
-  // Convert markdown to HTML string with GFM extensions
-  let contentHtml = renderMarkdownToHtml(content);
+  const contentHtml = await highlightCodeBlocks(renderMarkdownToHtml(content));
 
-  // Apply syntax highlighting to code blocks
-  contentHtml = await highlightCodeBlocks(contentHtml);
+  const canonicalUrl = resolveAbsoluteUrl(
+    siteConfig.baseUrl ?? origin,
+    currentPath
+  );
 
-  // Render with static layout
-  const html = renderLayout({
+  return renderLayout({
+    canonicalUrl,
     content: contentHtml,
     currentPath,
+    description,
     navigation,
     scriptPaths: isDev ? ["/live-reload.js"] : [],
+    searchQuery,
     title,
   });
-
-  return html;
 };
 
 // Re-export for convenience

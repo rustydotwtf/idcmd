@@ -1,13 +1,11 @@
-import type { SearchResult } from "./search-contract";
-import type { SearchScope, SiteConfig } from "./utils/site-config";
+import type { SiteConfig } from "./utils/site-config";
 
-import { extractTitleFromContent, parseFrontmatter } from "./frontmatter";
-import { toSearchResultJsonLine } from "./search-contract";
+import { parseFrontmatter } from "./frontmatter";
+import { deriveDescription, deriveTitle } from "./page-meta";
 import {
   CONTENT_DIR,
   contentGlob,
   getMarkdownFilePath,
-  pagePathFromContentSlug,
   pageSlugFromContentSlug,
   slugFromContentFile,
 } from "./utils/content-paths";
@@ -29,27 +27,6 @@ export const getMarkdownFile = async (slug: string): Promise<string | null> => {
   return null;
 };
 
-const extractTitle = (markdown: string): string | undefined => {
-  const { frontmatter, content } = parseFrontmatter(markdown);
-  return frontmatter.title ?? extractTitleFromContent(content);
-};
-
-const extractDescription = (markdown: string): string => {
-  const { content } = parseFrontmatter(markdown);
-  const lines = content.split("\n");
-  const titleIndex = lines.findIndex((line) => line.startsWith("# "));
-
-  if (titleIndex === -1) {
-    return "No description available.";
-  }
-
-  const descriptionLine = lines
-    .slice(titleIndex + 1)
-    .find((line) => line.trim() && !line.startsWith("#"));
-
-  return descriptionLine?.trim() ?? "No description available.";
-};
-
 const sortPages = (pages: LlmsPage[]): LlmsPage[] =>
   pages.toSorted((a, b) => {
     if (a.slug === "") {
@@ -61,7 +38,10 @@ const sortPages = (pages: LlmsPage[]): LlmsPage[] =>
     return a.title.localeCompare(b.title);
   });
 
-const buildLlmsPage = async (file: string): Promise<LlmsPage | null> => {
+const buildLlmsPage = async (
+  file: string,
+  siteConfig: SiteConfig
+): Promise<LlmsPage | null> => {
   const markdown = await Bun.file(`${CONTENT_DIR}/${file}`).text();
   const { frontmatter } = parseFrontmatter(markdown);
   if (frontmatter.hidden) {
@@ -69,8 +49,8 @@ const buildLlmsPage = async (file: string): Promise<LlmsPage | null> => {
   }
 
   const slug = slugFromContentFile(file);
-  const title = extractTitle(markdown) ?? slug;
-  const description = extractDescription(markdown);
+  const title = deriveTitle(markdown);
+  const description = deriveDescription(markdown, siteConfig.description);
 
   return {
     description,
@@ -79,11 +59,11 @@ const buildLlmsPage = async (file: string): Promise<LlmsPage | null> => {
   };
 };
 
-const buildLlmsPages = async (): Promise<LlmsPage[]> => {
+const buildLlmsPages = async (siteConfig: SiteConfig): Promise<LlmsPage[]> => {
   const pages: LlmsPage[] = [];
 
   for await (const file of contentGlob.scan(CONTENT_DIR)) {
-    const page = await buildLlmsPage(file);
+    const page = await buildLlmsPage(file, siteConfig);
     if (page) {
       pages.push(page);
     }
@@ -112,59 +92,9 @@ const formatLlmsTxt = (siteConfig: SiteConfig, pages: LlmsPage[]): string => {
 };
 
 export const generateLlmsTxt = async (): Promise<string> => {
-  const [siteConfig, pages] = await Promise.all([
-    loadSiteConfig(),
-    buildLlmsPages(),
-  ]);
+  const siteConfig = await loadSiteConfig();
+  const pages = await buildLlmsPages(siteConfig);
   const sortedPages = sortPages(pages);
 
   return formatLlmsTxt(siteConfig, sortedPages);
-};
-
-const getSearchContent = (scope: SearchScope, markdown: string): string => {
-  if (scope === "title") {
-    return extractTitle(markdown) ?? "";
-  }
-
-  if (scope === "title_and_description") {
-    return `${extractTitle(markdown) ?? ""} ${extractDescription(markdown)}`;
-  }
-
-  return markdown;
-};
-
-const buildSearchResult = async (
-  file: string,
-  query: string,
-  scope: SearchScope
-): Promise<SearchResult | null> => {
-  const markdown = await Bun.file(`${CONTENT_DIR}/${file}`).text();
-  const slug = slugFromContentFile(file);
-  const searchContent = getSearchContent(scope, markdown);
-
-  if (!searchContent.toLowerCase().includes(query)) {
-    return null;
-  }
-
-  return {
-    description: extractDescription(markdown),
-    slug: pagePathFromContentSlug(slug),
-    title: extractTitle(markdown) ?? slug,
-  };
-};
-
-export const createSearchStream = (
-  query: string,
-  scope: SearchScope
-): AsyncIterable<string> => {
-  const stream = async function* stream(): AsyncGenerator<string> {
-    for await (const file of contentGlob.scan(CONTENT_DIR)) {
-      const result = await buildSearchResult(file, query, scope);
-      if (result) {
-        yield toSearchResultJsonLine(result);
-      }
-    }
-  };
-
-  return stream();
 };

@@ -9,6 +9,7 @@ export interface GroupConfig {
 export interface SiteConfig {
   name: string;
   description: string;
+  baseUrl?: string;
   groups?: GroupConfig[];
   search?: {
     scope?: SearchScope;
