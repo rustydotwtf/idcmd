@@ -47,13 +47,24 @@ console.log(
 // Ensure dist directory exists
 await Bun.write("dist/.gitkeep", "");
 
-const copyPublicFile = async (fileName: string): Promise<void> => {
-  const source = `public/${fileName}`;
-  const target = `dist/${fileName}`;
-  const file = Bun.file(source);
+const shouldCopyPublicPath = (relativePath: string): boolean =>
+  // Do not overwrite the minified `dist/styles.css` produced by `build:css`.
+  relativePath !== "styles.css";
 
-  if (await file.exists()) {
-    await Bun.write(target, file);
+const copyPublicFileToDist = async (relativePath: string): Promise<void> => {
+  const file = Bun.file(`public/${relativePath}`);
+  if (!(await file.exists())) {
+    return;
+  }
+  await Bun.write(`dist/${relativePath}`, file);
+};
+
+const copyPublicToDist = async (): Promise<void> => {
+  const publicFiles = new Bun.Glob("**/*").scan("public");
+  for await (const relativePath of publicFiles) {
+    if (shouldCopyPublicPath(relativePath)) {
+      await copyPublicFileToDist(relativePath);
+    }
   }
 };
 
@@ -71,16 +82,7 @@ const writeMarkdownOutputs = async (
   console.log(`  markdown -> ${flatMarkdownPath}`);
 };
 
-const staticAssets = [
-  "favicon.svg",
-  "live-reload.js",
-  "nav-prefetch.js",
-  "search.js",
-] as const;
-
-for (const asset of staticAssets) {
-  await copyPublicFile(asset);
-}
+await copyPublicToDist();
 
 const resolveCssSource = async (): Promise<string | null> => {
   if (await Bun.file("dist/styles.css").exists()) {
@@ -120,6 +122,7 @@ const renderStaticSearchPage = (): string => {
     inlineCss,
     navigation,
     searchQuery: "",
+    showRightRail: false,
     siteName: siteConfig.name,
     title: `Search - ${siteConfig.name}`,
   });

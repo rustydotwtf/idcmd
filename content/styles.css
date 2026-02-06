@@ -164,7 +164,14 @@
 .main-content {
   flex: 1;
   padding: 2rem;
-  max-width: 48rem;
+}
+
+/* Hide default disclosure markers; we style the dropdown ourselves. */
+.llm-menu summary {
+  list-style: none;
+}
+.llm-menu summary::-webkit-details-marker {
+  display: none;
 }
 
 /* ============================================

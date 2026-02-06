@@ -2,6 +2,9 @@ import type { JSX } from "preact";
 
 import { render } from "preact-render-to-string";
 
+import { RightRail } from "./right-rail";
+import { extractTocFromHtml } from "./utils/toc";
+
 // Types matching navigation.ts exports
 export interface NavItem {
   title: string;
@@ -29,6 +32,7 @@ interface LayoutProps {
   navigation?: NavGroup[];
   scriptPaths?: string[];
   searchQuery?: string;
+  showRightRail?: boolean;
 }
 
 const Icon = ({ svg }: { svg: string }): JSX.Element => (
@@ -180,8 +184,10 @@ const Layout = ({
   navigation = [],
   scriptPaths = [],
   searchQuery,
+  showRightRail = true,
 }: LayoutProps): JSX.Element => {
   const resolvedCssPath = inlineCss ? undefined : (cssPath ?? "/styles.css");
+  const tocItems = showRightRail ? extractTocFromHtml(content) : [];
 
   return (
     <html lang="en" class="dark">
@@ -216,10 +222,19 @@ const Layout = ({
         <div class="main-wrapper">
           <TopNavbar query={searchQuery} siteName={siteName} />
           <main class="main-content">
-            <article
-              class="prose"
-              dangerouslySetInnerHTML={{ __html: content }}
-            />
+            <div class="mx-auto flex w-full max-w-6xl items-start gap-10">
+              <article
+                class="prose min-w-0 flex-1"
+                dangerouslySetInnerHTML={{ __html: content }}
+              />
+              {showRightRail ? (
+                <RightRail
+                  canonicalUrl={canonicalUrl}
+                  currentPath={currentPath}
+                  tocItems={tocItems}
+                />
+              ) : null}
+            </div>
           </main>
         </div>
         {scriptPaths.map((scriptPath) => (

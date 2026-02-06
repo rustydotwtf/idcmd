@@ -69,6 +69,7 @@ const buildSearchPageHtml = async (
     description: siteConfig.description,
     navigation,
     searchQuery: query,
+    showRightRail: false,
     siteName: siteConfig.name,
     title: `Search - ${siteConfig.name}`,
   });
