@@ -1,8 +1,8 @@
 import { describe, expect, it } from "bun:test";
 import { isSorted } from "tests/test-utils";
 
-import { generateSearchIndexFromContent, search } from "@/search-index";
-import { loadSiteConfig } from "@/utils/site-config";
+import { generateSearchIndexFromContent, search } from "@/search/index";
+import { loadSiteConfig } from "@/site/config";
 
 const FIXED_GENERATED_AT = "1970-01-01T00:00:00.000Z";
 const CANONICAL_URL_PATTERN = /^\/$|\/$/;

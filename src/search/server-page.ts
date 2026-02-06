@@ -1,13 +1,18 @@
-import type { NavGroup } from "./navigation";
-import type { SearchResult } from "./search-contract";
-import type { SearchScope, SiteConfig } from "./utils/site-config";
+import type { NavGroup } from "@/content/navigation";
+import type { SearchScope } from "@/site/config";
 
-import { renderLayout } from "./layout";
-import { getNavigation } from "./render";
-import { loadSearchIndex, search as runSearch } from "./search-index";
-import { renderSearchPageContent } from "./search-page";
-import { resolveAbsoluteUrl } from "./url-utils";
-import { getSearchScope, loadSiteConfig } from "./utils/site-config";
+import { getNavigation, renderDocument } from "@/render/page-renderer";
+import {
+  getSearchScope,
+  loadSiteConfig,
+  resolveRightRailConfig,
+} from "@/site/config";
+import { resolveCanonicalUrl } from "@/site/urls";
+
+import type { SearchResult } from "./contract";
+
+import { loadSearchIndex, search as runSearch } from "./index";
+import { renderSearchPageContent } from "./page";
 
 export interface SearchPageHandlerEnv {
   cacheHeaders: HeadersInit;
@@ -15,9 +20,6 @@ export interface SearchPageHandlerEnv {
   maxResults: number;
   minQueryLength: number;
 }
-
-const getBaseUrl = (siteConfig: SiteConfig, url: URL): string =>
-  siteConfig.baseUrl ?? url.origin;
 
 const getTopPages = (
   navigation: NavGroup[]
@@ -42,9 +44,9 @@ const buildSearchPageHtml = async (
   env: SearchPageHandlerEnv
 ): Promise<string> => {
   const siteConfig = await loadSiteConfig();
-  const baseUrl = getBaseUrl(siteConfig, url);
   const scope = getSearchScope(siteConfig);
   const query = url.searchParams.get("q")?.trim() ?? "";
+  const rightRail = resolveRightRailConfig(siteConfig.rightRail);
 
   const [navigation, index] = await Promise.all([
     getNavigation(env.isDev),
@@ -60,19 +62,27 @@ const buildSearchPageHtml = async (
     topPages,
   });
 
-  const canonicalUrl = resolveAbsoluteUrl(baseUrl, "/search/");
+  const canonicalUrl = resolveCanonicalUrl(
+    {
+      configuredBaseUrl: siteConfig.baseUrl,
+      isDev: env.isDev,
+      requestOrigin: url.origin,
+    },
+    "/search/"
+  );
 
-  return renderLayout({
+  return renderDocument({
     canonicalUrl,
-    content,
+    contentHtml: content,
     currentPath: "/search/",
     description: siteConfig.description,
     navigation,
-    rightRailConfig: siteConfig.rightRail,
+    rightRail,
     searchQuery: query,
     showRightRail: false,
     siteName: siteConfig.name,
     title: `Search - ${siteConfig.name}`,
+    tocItems: [],
   });
 };
 

@@ -67,7 +67,7 @@ const DEFAULT_RIGHT_RAIL_CONFIG: ResolvedRightRailConfig = {
 } as const;
 
 export const resolveRightRailConfig = (
-  config: RightRailConfig | undefined
+  config?: RightRailConfig
 ): ResolvedRightRailConfig => ({
   enabled: config?.enabled ?? DEFAULT_RIGHT_RAIL_CONFIG.enabled,
   placement: config?.placement ?? DEFAULT_RIGHT_RAIL_CONFIG.placement,

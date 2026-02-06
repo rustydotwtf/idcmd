@@ -1,45 +1,30 @@
+/* eslint-disable react/no-danger */
 import type { JSX } from "preact";
 
 import { render } from "preact-render-to-string";
 
-import type {
-  ResolvedRightRailConfig,
-  RightRailConfig,
-} from "./utils/site-config";
+import type { NavGroup, NavItem } from "@/content/navigation";
+import type { ResolvedRightRailConfig } from "@/site/config";
+
+import type { TocItem } from "./toc";
 
 import { RightRail } from "./right-rail";
-import { resolveRightRailConfig } from "./utils/site-config";
-import { extractTocFromHtml } from "./utils/toc";
 
-// Types matching navigation.ts exports
-export interface NavItem {
+export interface LayoutProps {
   title: string;
-  href: string;
-  iconSvg: string;
-  order: number;
-}
-
-export interface NavGroup {
-  id: string;
-  label: string;
-  order: number;
-  items: NavItem[];
-}
-
-interface LayoutProps {
-  title?: string;
-  siteName?: string;
+  siteName: string;
   description?: string;
   canonicalUrl?: string;
   content: string;
   cssPath?: string;
   inlineCss?: string;
-  currentPath?: string;
-  navigation?: NavGroup[];
+  currentPath: string;
+  navigation: NavGroup[];
   scriptPaths?: string[];
   searchQuery?: string;
   showRightRail?: boolean;
-  rightRailConfig?: RightRailConfig;
+  rightRail: ResolvedRightRailConfig;
+  tocItems: TocItem[];
 }
 
 const Icon = ({ svg }: { svg: string }): JSX.Element => (
@@ -248,7 +233,7 @@ interface DocumentBodyProps {
   searchQuery?: string;
   shouldShowRightRail: boolean;
   siteName: string;
-  tocItems: ReturnType<typeof extractTocFromHtml>;
+  tocItems: TocItem[];
 }
 
 const DocumentBody = ({
@@ -301,33 +286,27 @@ const DocumentBody = ({
 );
 
 const Layout = ({
-  title = "Markdown Site",
-  siteName = "Markdown Site",
+  title,
+  siteName,
   description,
   canonicalUrl,
   content,
   cssPath,
   inlineCss,
-  currentPath = "/",
-  navigation = [],
+  currentPath,
+  navigation,
   scriptPaths = [],
   searchQuery,
   showRightRail = true,
-  rightRailConfig,
+  rightRail,
+  tocItems,
 }: LayoutProps): JSX.Element => {
   const resolvedCssPath = inlineCss ? undefined : (cssPath ?? "/styles.css");
-  const resolvedRightRailConfig = resolveRightRailConfig(rightRailConfig);
-  const shouldShowRightRail = showRightRail && resolvedRightRailConfig.enabled;
-  const tocItems = shouldShowRightRail
-    ? extractTocFromHtml(content, { levels: resolvedRightRailConfig.tocLevels })
-    : [];
+  const shouldShowRightRail = showRightRail && rightRail.enabled;
   const isScrollSpyEnabled =
-    resolvedRightRailConfig.scrollSpy.enabled && tocItems.length > 0;
-  const htmlClass = buildHtmlClass(resolvedRightRailConfig.smoothScroll);
-  const scrollSpyDataset = buildScrollSpyDataset(
-    isScrollSpyEnabled,
-    resolvedRightRailConfig
-  );
+    shouldShowRightRail && rightRail.scrollSpy.enabled && tocItems.length > 0;
+  const htmlClass = buildHtmlClass(rightRail.smoothScroll);
+  const scrollSpyDataset = buildScrollSpyDataset(isScrollSpyEnabled, rightRail);
 
   return (
     <html lang="en" class={htmlClass}>
@@ -343,7 +322,7 @@ const Layout = ({
         content={content}
         currentPath={currentPath}
         navigation={navigation}
-        rightRail={resolvedRightRailConfig}
+        rightRail={rightRail}
         scriptPaths={scriptPaths}
         scrollSpyDataset={scrollSpyDataset}
         searchQuery={searchQuery}

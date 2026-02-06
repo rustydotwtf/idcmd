@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
 
-import { generateRobotsTxt, generateSitemapXml } from "@/seo-files";
+import { generateRobotsTxt, generateSitemapXml } from "@/seo/files";
 
 describe("seo-files", () => {
   it("generateRobotsTxt includes sitemap and ends with a newline", () => {

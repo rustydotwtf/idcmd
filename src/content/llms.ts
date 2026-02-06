@@ -1,31 +1,21 @@
-import type { SiteConfig } from "./utils/site-config";
+import type { SiteConfig } from "@/site/config";
+
+import { loadSiteConfig } from "@/site/config";
 
 import { parseFrontmatter } from "./frontmatter";
-import { deriveDescription, deriveTitle } from "./page-meta";
+import { derivePageMetaFromParsed } from "./meta";
 import {
   CONTENT_DIR,
   contentGlob,
-  getMarkdownFilePath,
   pageSlugFromContentSlug,
   slugFromContentFile,
-} from "./utils/content-paths";
-import { loadSiteConfig } from "./utils/site-config";
+} from "./paths";
 
 interface LlmsPage {
+  description: string;
   slug: string;
   title: string;
-  description: string;
 }
-
-export const getMarkdownFile = async (slug: string): Promise<string | null> => {
-  const filePath = getMarkdownFilePath(slug);
-  const file = Bun.file(filePath);
-
-  if (await file.exists()) {
-    return file.text();
-  }
-  return null;
-};
 
 const sortPages = (pages: LlmsPage[]): LlmsPage[] =>
   pages.toSorted((a, b) => {
@@ -43,19 +33,22 @@ const buildLlmsPage = async (
   siteConfig: SiteConfig
 ): Promise<LlmsPage | null> => {
   const markdown = await Bun.file(`${CONTENT_DIR}/${file}`).text();
-  const { frontmatter } = parseFrontmatter(markdown);
-  if (frontmatter.hidden) {
+  const parsed = parseFrontmatter(markdown);
+
+  if (parsed.frontmatter.hidden) {
     return null;
   }
 
   const slug = slugFromContentFile(file);
-  const title = deriveTitle(markdown);
-  const description = deriveDescription(markdown, siteConfig.description);
+  const meta = derivePageMetaFromParsed(parsed, {
+    fallbackTitle: slug,
+    siteDefaultDescription: siteConfig.description,
+  });
 
   return {
-    description,
+    description: meta.description,
     slug: pageSlugFromContentSlug(slug),
-    title,
+    title: meta.title,
   };
 };
 

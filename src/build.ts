@@ -1,25 +1,16 @@
-import { generateLlmsTxt } from "./content";
-import { parseFrontmatter } from "./frontmatter";
-import { renderLayout } from "./layout";
-import { discoverNavigation } from "./navigation";
-import { deriveDescription, deriveTitle } from "./page-meta";
-import { highlightCodeBlocks } from "./render";
-import { generateSearchIndexFromContent } from "./search-index";
-import { renderSearchPageContent } from "./search-page";
+import { generateLlmsTxt } from "./content/llms";
+import { discoverNavigation } from "./content/navigation";
+import { CONTENT_DIR, contentGlob, slugFromContentFile } from "./content/paths";
+import { renderDocument, renderMarkdownPage } from "./render/page-renderer";
+import { generateSearchIndexFromContent } from "./search/index";
+import { renderSearchPageContent } from "./search/page";
 import {
   collectSitemapPagesFromContent,
   generateRobotsTxt,
   generateSitemapXml,
-} from "./seo-files";
-import { resolveAbsoluteUrl } from "./url-utils";
-import {
-  CONTENT_DIR,
-  contentGlob,
-  slugFromContentFile,
-} from "./utils/content-paths";
-import { renderMarkdownToHtml } from "./utils/markdown";
-import { loadSiteConfig, resolveRightRailConfig } from "./utils/site-config";
-import { extractTocFromHtml } from "./utils/toc";
+} from "./seo/files";
+import { loadSiteConfig, resolveRightRailConfig } from "./site/config";
+import { resolveCanonicalUrl } from "./site/urls";
 
 const MAX_INDEX_BYTES = 5 * 1024 * 1024;
 const MAX_BUILD_SECONDS = 60;
@@ -37,7 +28,6 @@ for await (const file of contentGlob.scan(CONTENT_DIR)) {
 console.log(`Found ${contentFiles.length} content pages`);
 
 const siteConfig = await loadSiteConfig();
-const resolvedRightRailConfig = resolveRightRailConfig(siteConfig.rightRail);
 
 // Discover navigation once for all pages
 console.log("Discovering navigation...");
@@ -106,28 +96,33 @@ const renderStaticSearchPage = (): string => {
     .slice(0, 8)
     .map((item) => ({ href: item.href, title: item.title }));
 
-  const content = renderSearchPageContent({
+  const contentHtml = renderSearchPageContent({
     minQueryLength: MIN_SEARCH_QUERY_LENGTH,
     query: "",
     results: [],
     topPages,
   });
 
-  const canonicalUrl = resolveAbsoluteUrl(siteConfig.baseUrl, "/search/");
+  const rightRail = resolveRightRailConfig(siteConfig.rightRail);
+  const canonicalUrl = resolveCanonicalUrl(
+    { configuredBaseUrl: siteConfig.baseUrl, isDev: false },
+    "/search/"
+  );
 
-  return renderLayout({
+  return renderDocument({
     canonicalUrl,
-    content,
+    contentHtml,
     cssPath,
     currentPath: "/search/",
     description: siteConfig.description,
     inlineCss,
     navigation,
-    rightRailConfig: siteConfig.rightRail,
+    rightRail,
     searchQuery: "",
     showRightRail: false,
     siteName: siteConfig.name,
     title: `Search - ${siteConfig.name}`,
+    tocItems: [],
   });
 };
 
@@ -138,48 +133,15 @@ for (const file of contentFiles) {
   const filePath = `${CONTENT_DIR}/${file}`;
   const markdown = await Bun.file(filePath).text();
 
-  // Parse frontmatter
-  const { content } = parseFrontmatter(markdown);
-
-  const title = deriveTitle(markdown);
-  const description = deriveDescription(markdown, siteConfig.description);
-
-  // Convert markdown to HTML and apply syntax highlighting
-  let contentHtml = renderMarkdownToHtml(content);
-  contentHtml = await highlightCodeBlocks(contentHtml);
-
-  const tocItems =
-    resolvedRightRailConfig.enabled && resolvedRightRailConfig.scrollSpy.enabled
-      ? extractTocFromHtml(contentHtml, {
-          levels: resolvedRightRailConfig.tocLevels,
-        })
-      : [];
-  const scriptPaths: string[] =
-    resolvedRightRailConfig.enabled &&
-    resolvedRightRailConfig.scrollSpy.enabled &&
-    tocItems.length > 0
-      ? ["/right-rail-scrollspy.js"]
-      : [];
-
-  // Determine output path and current path for navigation
-  // content/index/content.md -> dist/index.html, path: /
-  // content/about/content.md -> dist/about/index.html, path: /about
   const slug = slugFromContentFile(file);
   const currentPath = slug === "index" ? "/" : `/${slug}/`;
-  const canonicalUrl = resolveAbsoluteUrl(siteConfig.baseUrl, currentPath);
 
-  const html = renderLayout({
-    canonicalUrl,
-    content: contentHtml,
+  const html = await renderMarkdownPage(markdown, {
     cssPath,
     currentPath,
-    description,
     inlineCss,
     navigation,
-    rightRailConfig: siteConfig.rightRail,
-    scriptPaths,
-    siteName: siteConfig.name,
-    title,
+    siteConfig,
   });
 
   let outPath: string;

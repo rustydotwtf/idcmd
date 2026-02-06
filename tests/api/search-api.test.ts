@@ -1,8 +1,8 @@
 import { describe, expect, it } from "bun:test";
 import { requireResponse } from "tests/test-utils";
 
-import { handleSearchRequest } from "@/search-api";
-import { parseSearchResultsJsonLines } from "@/search-contract";
+import { handleSearchRequest } from "@/search/api";
+import { parseSearchResultsJsonLines } from "@/search/contract";
 
 const SEARCH_QUERY = "markdown";
 

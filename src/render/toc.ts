@@ -1,4 +1,4 @@
-import type { TocLevel } from "./site-config";
+import type { TocLevel } from "@/site/config";
 
 export interface TocItem {
   id: string;

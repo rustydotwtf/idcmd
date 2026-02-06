@@ -2,7 +2,7 @@ import type { JSX } from "preact";
 
 import { render as renderToString } from "preact-render-to-string";
 
-import type { SearchResult } from "./search-contract";
+import type { SearchResult } from "./contract";
 
 export interface TopPageLink {
   href: string;

@@ -1,19 +1,29 @@
 import { describe, expect, it } from "bun:test";
 
-import { renderLayout } from "@/layout";
-import { extractTocFromHtml } from "@/utils/toc";
+import { renderLayout } from "@/render/layout";
+import { extractTocFromHtml } from "@/render/toc";
+import { resolveRightRailConfig } from "@/site/config";
 
 describe("right rail", () => {
   it("renders TOC links to h2/h3 ids", () => {
+    const rightRail = resolveRightRailConfig();
+    const content =
+      '<h1 id="title"><a href="#title">Title</a></h1>' +
+      '<h2 id="sec"><a href="#sec">Section</a></h2>' +
+      '<h3 id="sub"><a href="#sub">Sub</a></h3>';
+    const tocItems = extractTocFromHtml(content, {
+      levels: rightRail.tocLevels,
+    });
+
     const html = renderLayout({
       canonicalUrl: "http://localhost:4000/about/",
-      content:
-        '<h1 id="title"><a href="#title">Title</a></h1>' +
-        '<h2 id="sec"><a href="#sec">Section</a></h2>' +
-        '<h3 id="sub"><a href="#sub">Sub</a></h3>',
+      content,
       currentPath: "/about/",
       navigation: [],
+      rightRail,
+      siteName: "Test",
       title: "Test",
+      tocItems,
     });
 
     expect(html.includes('href="#sec"')).toBe(true);
@@ -25,12 +35,21 @@ describe("right rail", () => {
   });
 
   it("builds provider URLs with an absolute markdown link", () => {
+    const rightRail = resolveRightRailConfig();
+    const content = '<h2 id="sec"><a href="#sec">Section</a></h2>';
+    const tocItems = extractTocFromHtml(content, {
+      levels: rightRail.tocLevels,
+    });
+
     const html = renderLayout({
       canonicalUrl: "http://localhost:4000/about/",
-      content: '<h2 id="sec"><a href="#sec">Section</a></h2>',
+      content,
       currentPath: "/about/",
       navigation: [],
+      rightRail,
+      siteName: "Test",
       title: "Test",
+      tocItems,
     });
 
     expect(html.includes("https://chatgpt.com/?prompt=")).toBe(true);

@@ -1,8 +1,9 @@
-import type { SearchResult } from "./search-contract";
+import { getSearchScope, loadSiteConfig } from "@/site/config";
 
-import { toSearchResultJsonLine } from "./search-contract";
-import { loadSearchIndex, search } from "./search-index";
-import { getSearchScope, loadSiteConfig } from "./utils/site-config";
+import type { SearchResult } from "./contract";
+
+import { toSearchResultJsonLine } from "./contract";
+import { loadSearchIndex, search } from "./index";
 
 const textEncoder = new TextEncoder();
 

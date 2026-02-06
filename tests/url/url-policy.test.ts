@@ -4,7 +4,7 @@ import {
   getRedirectForCanonicalHtmlPath,
   isFileLikePathname,
   toCanonicalHtmlPathname,
-} from "@/url-policy";
+} from "@/site/url-policy";
 
 describe("url-policy", () => {
   it("canonicalizes html pages to trailing slash", () => {

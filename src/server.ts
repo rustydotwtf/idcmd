@@ -1,21 +1,22 @@
 import type { Server } from "bun";
 
-import { generateLlmsTxt, getMarkdownFile } from "./content";
-import { render } from "./render";
-import { handleSearchRequest } from "./search-api";
-import { handleSearchPageRequest } from "./server-search-page";
-import { handleRobotsTxt, handleSitemapXml } from "./server-seo";
+import { generateLlmsTxt } from "./content/llms";
+import { getMarkdownFile } from "./content/store";
+import { renderMarkdownPage } from "./render/page-renderer";
+import { handleSearchRequest } from "./search/api";
+import { handleSearchPageRequest } from "./search/server-page";
+import { handleRobotsTxt, handleSitemapXml } from "./seo/server";
+import {
+  createHtmlCacheHeaders,
+  createStaticCacheHeaders,
+} from "./server/headers";
+import { createLiveReload } from "./server/live-reload";
+import { serveStaticFile } from "./server/static";
 import {
   getRedirectForCanonicalHtmlPath,
   isFileLikePathname,
   toCanonicalHtmlPathname,
-} from "./url-policy";
-import { CONTENT_DIR, contentGlob } from "./utils/content-paths";
-
-interface LiveReloadClient {
-  send: (msg: string) => void;
-  close: () => void;
-}
+} from "./site/url-policy";
 
 type ServerInstance = Server<undefined>;
 
@@ -26,34 +27,8 @@ const LIVE_RELOAD_POLL_MS = 250;
 const MIN_SEARCH_QUERY_LENGTH = 2;
 const MAX_SEARCH_RESULTS = 50;
 
-// Live reload WebSocket clients
-const liveReloadClients = new Set<LiveReloadClient>();
-
-const cacheHeaders = {
-  "Cache-Control": isDev
-    ? "no-cache"
-    : "s-maxage=60, stale-while-revalidate=3600",
-  "Content-Type": "text/html; charset=utf-8",
-};
-
-const staticCacheHeaders = {
-  "Cache-Control": isDev ? "no-cache" : "public, max-age=31536000, immutable",
-};
-
-// MIME types for static files
-const mimeTypes: Record<string, string> = {
-  ".css": "text/css",
-  ".gif": "image/gif",
-  ".ico": "image/x-icon",
-  ".jpeg": "image/jpeg",
-  ".jpg": "image/jpeg",
-  ".js": "application/javascript",
-  ".json": "application/json",
-  ".png": "image/png",
-  ".svg": "image/svg+xml",
-  ".woff": "font/woff",
-  ".woff2": "font/woff2",
-};
+const cacheHeaders = createHtmlCacheHeaders(isDev);
+const staticCacheHeaders = createStaticCacheHeaders(isDev);
 
 const withQueryString = (pathname: string, search: string): string =>
   search ? `${pathname}${search}` : pathname;
@@ -67,105 +42,15 @@ const createRedirectResponse = (pathname: string, url: URL): Response =>
     status: 308,
   });
 
-const notifyLiveReload = (message: string): void => {
-  for (const client of liveReloadClients) {
-    try {
-      client.send(message);
-    } catch {
-      liveReloadClients.delete(client);
-    }
-  }
-};
-
-const getContentSnapshot = async (): Promise<string> => {
-  const entries: string[] = [];
-  for await (const file of contentGlob.scan(CONTENT_DIR)) {
-    const filePath = `${CONTENT_DIR}/${file}`;
-    const { lastModified } = Bun.file(filePath);
-    entries.push(`${file}:${lastModified}`);
-  }
-
-  return entries.toSorted().join("|");
-};
-
-const startContentWatcher = async (): Promise<void> => {
-  console.log("Watching content/ for changes...");
-  let snapshot = await getContentSnapshot();
-
-  const poll = async (): Promise<void> => {
-    const nextSnapshot = await getContentSnapshot();
-    if (nextSnapshot !== snapshot) {
-      snapshot = nextSnapshot;
-      console.log("[live-reload] Content updated");
-      notifyLiveReload("reload");
-    }
-  };
-
-  setInterval(async () => {
-    try {
-      await poll();
-    } catch (error) {
-      console.warn("[live-reload] Polling error", error);
-    }
-  }, LIVE_RELOAD_POLL_MS);
-};
+const liveReload = createLiveReload({ isDev, pollMs: LIVE_RELOAD_POLL_MS });
 
 if (isDev) {
   try {
-    await startContentWatcher();
+    await liveReload.startWatcher();
   } catch (error) {
     console.warn("[live-reload] Watcher failed", error);
   }
 }
-
-const tryServeFileFromRoot = async (
-  rootDir: string,
-  pathname: string
-): Promise<Response | null> => {
-  const filePath = `${rootDir}${pathname}`;
-  const file = Bun.file(filePath);
-
-  if (await file.exists()) {
-    const ext = pathname.slice(pathname.lastIndexOf("."));
-    const contentType = mimeTypes[ext] || "application/octet-stream";
-
-    return new Response(file, {
-      headers: {
-        "Content-Type": contentType,
-        ...staticCacheHeaders,
-      },
-    });
-  }
-  return null;
-};
-
-const serveStaticFile = async (pathname: string): Promise<Response | null> => {
-  const roots = isDev ? [PUBLIC_DIR] : [DIST_DIR, PUBLIC_DIR];
-  for (const root of roots) {
-    const response = await tryServeFileFromRoot(root, pathname);
-    if (response) {
-      return response;
-    }
-  }
-  return null;
-};
-
-const handleLiveReload = (
-  req: Request,
-  server: ServerInstance,
-  path: string
-): "handled" | Response | undefined => {
-  if (!isDev || path !== "/__live-reload") {
-    return undefined;
-  }
-
-  const upgraded = server.upgrade(req);
-  if (upgraded) {
-    return "handled";
-  }
-
-  return new Response("WebSocket upgrade failed", { status: 400 });
-};
 
 const handleLlmsTxt = async (path: string): Promise<Response | undefined> => {
   if (path !== "/llms.txt") {
@@ -213,10 +98,10 @@ const createNotFoundResponse = async (url: URL): Promise<Response> => {
   const notFoundMarkdown = await getMarkdownFile("404");
   if (notFoundMarkdown) {
     const canonicalPathname = toCanonicalHtmlPathname(url.pathname);
-    const html = await render(notFoundMarkdown, {
+    const html = await renderMarkdownPage(notFoundMarkdown, {
       currentPath: canonicalPathname,
       isDev,
-      origin: url.origin,
+      requestOrigin: url.origin,
       searchQuery: url.searchParams.get("q") ?? undefined,
     });
     return new Response(html, {
@@ -241,16 +126,13 @@ const handlePageRequest = async (url: URL): Promise<Response> => {
     return createNotFoundResponse(url);
   }
 
-  const html = await render(markdown, {
+  const html = await renderMarkdownPage(markdown, {
     currentPath: canonicalPathname,
     isDev,
-    origin: url.origin,
+    requestOrigin: url.origin,
   });
 
-  return new Response(html, {
-    headers: cacheHeaders,
-    status: 200,
-  });
+  return new Response(html, { headers: cacheHeaders, status: 200 });
 };
 
 const maybeHandleCanonicalRedirect = (url: URL): Response | undefined => {
@@ -278,9 +160,9 @@ const handleRequest = async (
 ): Promise<Response | undefined> => {
   const url = new URL(req.url);
   const path = url.pathname;
-  const liveReload = handleLiveReload(req, server, path);
 
-  if (liveReload === "handled") {
+  const liveReloadUpgrade = liveReload.maybeHandleUpgrade(req, server, path);
+  if (liveReloadUpgrade === "handled") {
     return undefined;
   }
 
@@ -291,14 +173,20 @@ const handleRequest = async (
     maxResults: MAX_SEARCH_RESULTS,
     minQueryLength: MIN_SEARCH_QUERY_LENGTH,
   };
+  const staticEnv = {
+    distDir: DIST_DIR,
+    isDev,
+    publicDir: PUBLIC_DIR,
+    staticCacheHeaders,
+  };
 
   return (
-    liveReload ??
+    liveReloadUpgrade ??
     (await handleLlmsTxt(path)) ??
     (await handleRobotsTxt(url, seoEnv)) ??
     (await handleSitemapXml(url, seoEnv)) ??
     (await handleSearchRequest(url)) ??
-    (await serveStaticFile(path)) ??
+    (await serveStaticFile(path, staticEnv)) ??
     (await handleMarkdownRequest(path)) ??
     (await (maybeHandleCanonicalRedirect(url) ??
       handleSearchPageRequest(url, searchPageEnv))) ??
@@ -307,25 +195,13 @@ const handleRequest = async (
 };
 
 const server = Bun.serve({
-  fetch(req, server) {
-    return handleRequest(req, server);
+  fetch(req, serverInstance) {
+    return handleRequest(req, serverInstance);
   },
 
   port: process.env.PORT || 4000,
 
-  websocket: {
-    close(ws) {
-      liveReloadClients.delete(ws);
-      console.log("[live-reload] Client disconnected");
-    },
-    message() {
-      // No messages expected from client
-    },
-    open(ws) {
-      liveReloadClients.add(ws);
-      console.log("[live-reload] Client connected");
-    },
-  },
+  websocket: liveReload.websocket,
 });
 
 console.log(`Server running at http://localhost:${server.port}`);

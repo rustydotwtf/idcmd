@@ -38,3 +38,28 @@ bun run preview
 
 - HTML pages are canonicalized to trailing-slash paths (example: `/about/`), except `/`.
 - File-like paths (example: `/styles.css`, `/robots.txt`, `/index/content.md`) are not forced to trailing slash.
+
+## Invariants
+
+### Slug and path rules
+
+- Content lives at `content/<slug>/content.md`.
+- `slug="index"` is the home page.
+- Canonical HTML paths are `/` for index and `/<slug>/` otherwise.
+- Markdown download paths exist in two forms:
+  - Flat: `/index.md` and `/<slug>.md`
+  - Nested: `/index/content.md` and `/<slug>/content.md`
+
+### baseUrl vs origin
+
+- `site.baseUrl` is normalized to an origin (protocol + host + optional port). Any path/query/hash in config is stripped.
+- Dev server canonicals always use the request `origin` (localhost should not emit production canonicals).
+- Non-dev/server canonicals prefer `site.baseUrl` and fall back to request `origin`.
+
+### JS policy
+
+- Content routes ship `0` bytes of JavaScript by default.
+- Allowed scripts:
+  - Dev only: `/live-reload.js`
+  - Optional: `/right-rail-scrollspy.js` only when scrollspy is enabled and the computed TOC is non-empty
+- Search page is SSR-only by default (no client JS).

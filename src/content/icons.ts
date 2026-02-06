@@ -1,4 +1,4 @@
-import { CONTENT_DIR } from "./utils/content-paths";
+import { CONTENT_DIR } from "./paths";
 
 const ICONS_DIR = "./icons";
 const FALLBACK_ICON_NAME = "file";

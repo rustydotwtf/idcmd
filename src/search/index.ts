@@ -1,14 +1,15 @@
-import type { SearchResult } from "./search-contract";
-import type { SearchScope, SiteConfig } from "./utils/site-config";
+import type { SearchScope, SiteConfig } from "@/site/config";
 
-import { parseFrontmatter } from "./frontmatter";
-import { deriveDescription, deriveTitle } from "./page-meta";
+import { parseFrontmatter } from "@/content/frontmatter";
+import { derivePageMetaFromParsed } from "@/content/meta";
 import {
   CONTENT_DIR,
   contentGlob,
   pagePathFromContentSlug,
   slugFromContentFile,
-} from "./utils/content-paths";
+} from "@/content/paths";
+
+import type { SearchResult } from "./contract";
 
 export const SEARCH_INDEX_VERSION = 1 as const;
 
@@ -85,18 +86,20 @@ const buildDocumentFromFile = async (
 ): Promise<SearchIndexDocumentV1 | null> => {
   const slug = slugFromContentFile(file);
   const markdown = await Bun.file(`${CONTENT_DIR}/${file}`).text();
-  const { frontmatter } = parseFrontmatter(markdown);
+  const parsed = parseFrontmatter(markdown);
 
-  if (!isEligibleDocument(slug, frontmatter.hidden)) {
+  if (!isEligibleDocument(slug, parsed.frontmatter.hidden)) {
     return null;
   }
 
-  const title = deriveTitle(markdown);
-  const description = deriveDescription(markdown, siteConfig.description);
+  const meta = derivePageMetaFromParsed(parsed, {
+    fallbackTitle: slug,
+    siteDefaultDescription: siteConfig.description,
+  });
   const body = markdownToPlainText(markdown).slice(0, bodyMaxChars);
   const url = pagePathFromContentSlug(slug);
 
-  return { body, description, title, url };
+  return { body, description: meta.description, title: meta.title, url };
 };
 
 export interface GenerateSearchIndexOptions {

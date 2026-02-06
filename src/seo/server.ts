@@ -1,9 +1,11 @@
+import { loadSiteConfig } from "@/site/config";
+import { resolveCanonicalBaseUrl } from "@/site/urls";
+
 import {
   collectSitemapPagesFromContent,
   generateRobotsTxt,
   generateSitemapXml,
-} from "./seo-files";
-import { loadSiteConfig } from "./utils/site-config";
+} from "./files";
 
 export interface SeoHandlerEnv {
   distDir: string;
@@ -51,7 +53,12 @@ export const handleRobotsTxt = async (
   }
 
   const siteConfig = await loadSiteConfig();
-  const baseUrl = siteConfig.baseUrl ?? url.origin;
+  const baseUrl =
+    resolveCanonicalBaseUrl({
+      configuredBaseUrl: siteConfig.baseUrl,
+      isDev: env.isDev,
+      requestOrigin: url.origin,
+    }) ?? url.origin;
 
   return new Response(generateRobotsTxt(baseUrl), {
     headers: {
@@ -79,7 +86,12 @@ export const handleSitemapXml = async (
   }
 
   const siteConfig = await loadSiteConfig();
-  const baseUrl = siteConfig.baseUrl ?? url.origin;
+  const baseUrl =
+    resolveCanonicalBaseUrl({
+      configuredBaseUrl: siteConfig.baseUrl,
+      isDev: env.isDev,
+      requestOrigin: url.origin,
+    }) ?? url.origin;
   const pages = await collectSitemapPagesFromContent();
 
   return new Response(generateSitemapXml(pages, baseUrl), {
