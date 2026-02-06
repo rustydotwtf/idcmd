@@ -55,10 +55,10 @@ const measureEntries = (entries) => {
   }
 };
 
-const setScrollMarginTop = () => {
+const setScrollMarginTop = (topOffset) => {
   document.documentElement.style.setProperty(
     "--scroll-margin-top",
-    `${getTopOffset()}px`
+    `${topOffset}px`
   );
 };
 
@@ -79,8 +79,8 @@ const binarySearchLastAtOrAbove = (entries, anchorLine) => {
   return lo - 1;
 };
 
-const findActiveIndex = (entries) => {
-  const anchorLine = window.scrollY + getTopOffset() + 1;
+const findActiveIndex = (entries, topOffset) => {
+  const anchorLine = window.scrollY + topOffset + 1;
   const best = binarySearchLastAtOrAbove(entries, anchorLine);
   return Math.max(0, best);
 };
@@ -175,7 +175,7 @@ const setActiveLink = (state, index) => {
 };
 
 const updateActive = (state) => {
-  setActiveLink(state, findActiveIndex(state.entries));
+  setActiveLink(state, findActiveIndex(state.entries, state.topOffset));
 };
 
 const scheduleUpdate = (state) => {
@@ -191,7 +191,8 @@ const scheduleUpdate = (state) => {
 };
 
 const refreshLayout = (state) => {
-  setScrollMarginTop();
+  state.topOffset = getTopOffset();
+  setScrollMarginTop(state.topOffset);
   measureEntries(state.entries);
   updateActive(state);
 
@@ -227,6 +228,7 @@ const createState = () => {
     isTicking: false,
     scrollContainer,
     tocList,
+    topOffset: getTopOffset(),
   };
 };
 

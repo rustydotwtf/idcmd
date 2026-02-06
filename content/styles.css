@@ -107,6 +107,11 @@
   * {
     @apply border-border outline-ring/50;
   }
+  html,
+  body {
+    /* Prevent rubber-band overscroll from pulling the sticky top navbar down. */
+    overscroll-behavior-y: none;
+  }
   body {
     @apply bg-background text-foreground;
   }
@@ -114,6 +119,15 @@
 
 html.smooth-scroll {
   scroll-behavior: smooth;
+}
+
+/*
+  Sticky + backdrop-filter can jitter on fast scroll in some browsers.
+  Forcing the header into its own composited layer tends to reduce jumping.
+*/
+header {
+  transform: translateZ(0);
+  will-change: transform;
 }
 
 /* ============================================
