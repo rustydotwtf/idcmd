@@ -158,6 +158,7 @@ export const render = async (
     navigation,
     scriptPaths: isDev ? ["/live-reload.js"] : [],
     searchQuery,
+    siteName: siteConfig.name,
     title,
   });
 };

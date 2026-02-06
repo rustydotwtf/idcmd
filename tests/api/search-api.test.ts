@@ -1,7 +1,8 @@
 import { describe, expect, it } from "bun:test";
+import { requireResponse } from "tests/test-utils";
 
-import { handleSearchRequest } from "./search-api";
-import { parseSearchResultsJsonLines } from "./search-contract";
+import { handleSearchRequest } from "@/search-api";
+import { parseSearchResultsJsonLines } from "@/search-contract";
 
 const SEARCH_QUERY = "markdown";
 
@@ -17,14 +18,6 @@ const expectValidResults = (jsonl: string): void => {
   }
 };
 
-const requireResponse = (response: Response | undefined): Response => {
-  if (!response) {
-    throw new Error("Expected /api/search response");
-  }
-
-  return response;
-};
-
 describe("/api/search", () => {
   it("returns JSONL records matching the shared search contract", async () => {
     const response = await handleSearchRequest(
@@ -34,7 +27,10 @@ describe("/api/search", () => {
       )
     );
 
-    const resolvedResponse = requireResponse(response);
+    const resolvedResponse = requireResponse(
+      response,
+      "Expected /api/search response"
+    );
     expect(resolvedResponse.status).toBe(200);
     expect(resolvedResponse.headers.get("content-type")).toContain(
       "application/jsonl; charset=utf-8"
@@ -47,7 +43,10 @@ describe("/api/search", () => {
       new URL("/api/search", "http://test")
     );
 
-    const resolvedResponse = requireResponse(response);
+    const resolvedResponse = requireResponse(
+      response,
+      "Expected /api/search response"
+    );
     expect(resolvedResponse.status).toBe(400);
     expect(resolvedResponse.headers.get("content-type")).toContain(
       "application/json"

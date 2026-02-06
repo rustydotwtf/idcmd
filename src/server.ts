@@ -22,7 +22,7 @@ type ServerInstance = Server<undefined>;
 const PUBLIC_DIR = "./public";
 const DIST_DIR = "./dist";
 const isDev = process.env.NODE_ENV !== "production";
-const LIVE_RELOAD_POLL_MS = 500;
+const LIVE_RELOAD_POLL_MS = 250;
 const MIN_SEARCH_QUERY_LENGTH = 2;
 const MAX_SEARCH_RESULTS = 50;
 

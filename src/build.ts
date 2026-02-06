@@ -120,6 +120,7 @@ const renderStaticSearchPage = (): string => {
     inlineCss,
     navigation,
     searchQuery: "",
+    siteName: siteConfig.name,
     title: `Search - ${siteConfig.name}`,
   });
 };
@@ -156,6 +157,7 @@ for (const file of contentFiles) {
     description,
     inlineCss,
     navigation,
+    siteName: siteConfig.name,
     title,
   });
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
 
-import { renderLayout } from "./layout";
+import { renderLayout } from "@/layout";
 
 describe("js policy", () => {
   it("does not include any scripts by default", () => {

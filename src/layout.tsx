@@ -19,6 +19,7 @@ export interface NavGroup {
 
 interface LayoutProps {
   title?: string;
+  siteName?: string;
   description?: string;
   canonicalUrl?: string;
   content: string;
@@ -84,15 +85,19 @@ const NavGroupComponent = ({
 );
 
 const Sidebar = ({
+  siteName,
   navigation,
   currentPath,
 }: {
+  siteName: string;
   navigation: NavGroup[];
   currentPath: string;
 }): JSX.Element => (
   <aside class="sidebar">
     <div class="sidebar-header">
-      <span class="font-semibold">Markdown Site</span>
+      <a href="/" class="font-semibold" data-prefetch="hover">
+        {siteName}
+      </a>
     </div>
     <div class="sidebar-content">
       {navigation.map((group) => (
@@ -107,39 +112,65 @@ const Sidebar = ({
 );
 
 const SearchForm = ({ query }: { query?: string }): JSX.Element => (
-  <section class="mb-6 not-prose rounded-lg border border-border bg-card/50 p-4">
-    <form
-      method="get"
-      action="/search/"
-      class="flex gap-2"
-      role="search"
-      noValidate
+  <form
+    method="get"
+    action="/search/"
+    class="flex w-full items-center gap-2"
+    role="search"
+    noValidate
+  >
+    <label htmlFor="site-search" class="sr-only">
+      Search pages
+    </label>
+    <input
+      id="site-search"
+      name="q"
+      type="search"
+      autoComplete="off"
+      spellcheck={false}
+      placeholder="Search docs..."
+      defaultValue={query ?? ""}
+      class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+    />
+    <button
+      type="submit"
+      class="shrink-0 rounded-md border border-input px-3 py-2 text-sm hover:bg-muted"
     >
-      <label htmlFor="site-search" class="sr-only">
-        Search pages
-      </label>
-      <input
-        id="site-search"
-        name="q"
-        type="search"
-        autocomplete="off"
-        spellcheck={false}
-        placeholder="Search docs..."
-        defaultValue={query ?? ""}
-        class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-      />
-      <button
-        type="submit"
-        class="rounded-md border border-input px-3 py-2 text-sm hover:bg-muted"
-      >
-        Search
-      </button>
-    </form>
-  </section>
+      Search
+    </button>
+  </form>
+);
+
+const TopNavbar = ({
+  query,
+  siteName,
+}: {
+  query?: string;
+  siteName: string;
+}): JSX.Element => (
+  <header class="sticky top-0 z-30 border-b border-border bg-background/80 backdrop-blur">
+    <div class="px-8 py-4">
+      <div class="max-w-3xl">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <a
+            href="/"
+            class="text-sm font-semibold tracking-tight"
+            data-prefetch="hover"
+          >
+            {siteName}
+          </a>
+          <div class="not-prose w-full sm:max-w-md">
+            <SearchForm query={query} />
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
 );
 
 const Layout = ({
   title = "Markdown Site",
+  siteName = "Markdown Site",
   description,
   canonicalUrl,
   content,
@@ -177,10 +208,14 @@ const Layout = ({
         ) : null}
       </head>
       <body class="bg-background text-foreground font-mono">
-        <Sidebar navigation={navigation} currentPath={currentPath} />
+        <Sidebar
+          siteName={siteName}
+          navigation={navigation}
+          currentPath={currentPath}
+        />
         <div class="main-wrapper">
+          <TopNavbar query={searchQuery} siteName={siteName} />
           <main class="main-content">
-            <SearchForm query={searchQuery} />
             <article
               class="prose"
               dangerouslySetInnerHTML={{ __html: content }}

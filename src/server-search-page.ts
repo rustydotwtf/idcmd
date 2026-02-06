@@ -69,6 +69,7 @@ const buildSearchPageHtml = async (
     description: siteConfig.description,
     navigation,
     searchQuery: query,
+    siteName: siteConfig.name,
     title: `Search - ${siteConfig.name}`,
   });
 };
