@@ -210,7 +210,12 @@ header {
 
 .toc-scroll {
   height: 100%;
-  overflow-y: auto;
+  /*
+    The right rail must never be an independently scrollable container.
+    Wheel/trackpad input over the TOC should scroll the page, not the sidebar.
+  */
+  overflow: hidden;
+  overflow: clip;
   overscroll-behavior: contain;
   padding-right: 0.25rem;
   scrollbar-gutter: stable;
@@ -220,7 +225,7 @@ header {
   "Follow" mode:
   - No independent scrolling in the TOC.
   - JS translates the list to keep the active item centered.
-  - Without JS, the default `overflow-y: auto` remains as a fallback.
+  - Without JS, the TOC is clipped (still clickable, but not independently scrollable).
 */
 body[data-toc-follow="1"] .toc-scroll {
   /* Prefer `overflow: clip` (no scroll container) when supported. */
