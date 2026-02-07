@@ -68,7 +68,7 @@ const AskInDropdown = ({
   chatgptUrl: string;
 }): JSX.Element => (
   <details class="llm-menu relative">
-    <summary class="flex w-full cursor-pointer select-none items-center justify-between gap-3 rounded-full border border-border bg-card/30 px-4 py-2 text-sm shadow-sm hover:bg-card/40">
+    <summary class="flex w-full cursor-pointer select-none items-center justify-between gap-3 rounded-full border border-white/20 bg-card/30 px-4 py-2 text-sm shadow-sm hover:border-white/30 hover:bg-card/40">
       <span class="flex items-center gap-2">
         <img
           src="/openai-white.svg"
@@ -121,6 +121,9 @@ const AskInDropdown = ({
 
 const OnThisPage = ({ items }: { items: TocItem[] }): JSX.Element => (
   <section class="flex min-h-0 flex-1 flex-col" data-toc-root="1">
+    <div class="px-0.5 pb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+      On this page
+    </div>
     <nav aria-label="Table of contents" class="min-h-0 flex flex-1 flex-col">
       <div class="toc-scroll min-h-0 flex-1" data-toc-scroll-container="1">
         <ul class="space-y-2 text-sm text-muted-foreground">

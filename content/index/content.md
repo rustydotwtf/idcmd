@@ -5,42 +5,68 @@ group: main
 order: 1
 ---
 
-# Welcome to Markdown Site
+# Markdown, meet beautiful.
 
-This is a minimal **Bun + React SSR** site that renders markdown files.
+A proof that you can build something worth looking at with nothing but markdown and a single Tailwind CSS file. No component library. No JavaScript on content pages. Just words and whitespace.
 
-## Features
+---
 
-- Server-side rendering with React
-- Built-in markdown parsing via `Bun.markdown.react()`
-- Vercel CDN caching with `s-maxage` headers
-- File-based routing from the `content/` directory
+## What this is
+
+This is a static site generator with a single constraint: **every page is a markdown file styled by one CSS file**. No React components in your content. No MDX. No client-side JavaScript on content pages.
+
+The entire visual language — typography, spacing, color, layout — lives in `styles.css` and is applied through Tailwind's utility classes and a hand-tuned `.prose` scope.
 
 ## How it works
 
-1. Request comes in to `/about/`
-2. Server looks for `content/about/content.md`
-3. Markdown is parsed and rendered with React!!!!
-4. HTML is returned with cache headers
+1. You write markdown files in the `content/` directory
+2. Bun's built-in markdown parser converts them to HTML
+3. Preact SSR wraps each page in a layout with sidebar navigation
+4. Tailwind compiles the stylesheet with your theme tokens
+5. Shiki highlights code blocks at build time — zero runtime cost
 
-## Example code
+The result is a fully static site with sub-millisecond renders.
+
+## The stack
+
+| Layer     | Technology      | Why                                             |
+| --------- | --------------- | ----------------------------------------------- |
+| Runtime   | Bun             | Fast startup, native markdown, built-in bundler |
+| Rendering | Preact SSR      | Lightweight server-side HTML generation         |
+| Styling   | Tailwind CSS v4 | Utility-first, single file, zero JS             |
+| Syntax    | Shiki           | Build-time highlighting, dual light/dark themes |
+| Body font | Inter           | Clean sans-serif for readable prose             |
+| Code font | JetBrains Mono  | Ligatures, distinct characters, monospace       |
+
+## Typography
+
+Inline code like `bun run dev` gets soft rounded badges. Code blocks get sharp corners for a terminal feel:
 
 ```typescript
-const content = Bun.markdown.react(markdown);
-const html = renderToString(<Layout>{content}</Layout>);
+const site = await buildSite({
+  content: "content/",
+  styles: "styles.css",
+  output: "dist/",
+});
 ```
 
-## Links
+## Features
 
-- [About page](/about/)
-- [Bun documentation](https://bun.sh)
+- File-based routing — `content/about/content.md` becomes `/about/`
+- Automatic sidebar navigation from frontmatter
+- Scrollspy table of contents in the right rail
+- Full-text search with zero external dependencies
+- LLM-ready with `llms.txt` and per-page markdown exports
+- Shiki syntax highlighting for 16+ languages
+- Dark mode by default, light mode supported
+- Sub-millisecond server-side renders
 
-## Markdown Stress Tests
+## See it in action
 
-These pages test various markdown parsing scenarios:
+Explore the stress tests to see how the prose styles handle real-world markdown:
 
-- [Basic Markdown Features](/test-basics/) - Headers, lists, blockquotes, links, formatting
-- [Code Blocks](/test-code/) - All 16 supported Shiki languages with syntax highlighting
-- [Tables](/test-tables/) - Various table configurations, alignments, and edge cases
-- [Edge Cases](/test-edge-cases/) - Unicode, emoji, special characters, HTML, and unusual scenarios
-- [Performance Test](/test-performance/) - Large document with 500+ lines of content
+- [Basic Markdown Features](/test-basics/) — Headers, lists, blockquotes, formatting
+- [Code Blocks](/test-code/) — All supported Shiki languages
+- [Tables](/test-tables/) — Alignments, edge cases, dense data
+- [Edge Cases](/test-edge-cases/) — Unicode, emoji, HTML, unusual scenarios
+- [Performance Test](/test-performance/) — 500+ lines of content

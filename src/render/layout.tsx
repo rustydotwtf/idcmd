@@ -46,14 +46,14 @@ const NavLink = ({
   currentPath: string;
 }): JSX.Element => {
   const activeClass = isActiveLink(item, currentPath)
-    ? "bg-sidebar-accent text-sidebar-accent-foreground"
-    : "";
+    ? "border-l-2 border-sidebar-primary font-medium text-sidebar-foreground"
+    : "border-l-2 border-transparent";
 
   return (
     <a
       href={item.href}
       data-prefetch="hover"
-      class={`flex items-center gap-3 px-3 py-2 text-sm rounded-md hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors ${activeClass}`}
+      class={`flex items-center gap-3 px-3 py-1.5 text-sm hover:text-sidebar-foreground transition-colors ${activeClass}`}
     >
       <Icon svg={item.iconSvg} />
       <span>{item.title}</span>
@@ -91,7 +91,12 @@ const Sidebar = ({
 }): JSX.Element => (
   <aside class="sidebar">
     <div class="sidebar-header">
-      <a href="/" class="font-semibold" data-prefetch="hover">
+      <a
+        href="/"
+        class="text-sm font-medium tracking-tight"
+        data-prefetch="hover"
+      >
+        <span class="text-muted-foreground">~/</span>
         {siteName}
       </a>
     </div>
@@ -111,7 +116,7 @@ const SearchForm = ({ query }: { query?: string }): JSX.Element => (
   <form
     method="get"
     action="/search/"
-    class="flex w-full items-center gap-2"
+    class="flex w-full items-center"
     role="search"
     noValidate
   >
@@ -124,16 +129,10 @@ const SearchForm = ({ query }: { query?: string }): JSX.Element => (
       type="search"
       autoComplete="off"
       spellcheck={false}
-      placeholder="Search docs..."
+      placeholder="Search..."
       defaultValue={query ?? ""}
-      class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+      class="w-full border-b border-input bg-transparent px-1 py-1.5 text-sm placeholder:text-muted-foreground focus:border-foreground focus:outline-none transition-colors"
     />
-    <button
-      type="submit"
-      class="shrink-0 rounded-md border border-input px-3 py-2 text-sm hover:bg-muted"
-    >
-      Search
-    </button>
   </form>
 );
 
@@ -144,20 +143,19 @@ const TopNavbar = ({
   query?: string;
   siteName: string;
 }): JSX.Element => (
-  <header class="sticky top-0 z-30 border-b border-border bg-background/80 backdrop-blur">
-    <div class="px-8 py-4">
-      <div class="max-w-3xl">
-        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <a
-            href="/"
-            class="text-sm font-semibold tracking-tight"
-            data-prefetch="hover"
-          >
-            {siteName}
-          </a>
-          <div class="not-prose w-full sm:max-w-md">
-            <SearchForm query={query} />
-          </div>
+  <header class="sticky top-0 z-30 border-b border-border bg-background/80 backdrop-blur-sm">
+    <div class="mx-auto max-w-6xl px-8 py-3">
+      <div class="flex items-center gap-4">
+        <a
+          href="/"
+          class="text-sm font-medium tracking-tight font-mono md:hidden"
+          data-prefetch="hover"
+        >
+          <span class="text-muted-foreground">~/</span>
+          {siteName}
+        </a>
+        <div class="not-prose w-full max-w-xs ml-auto">
+          <SearchForm query={query} />
         </div>
       </div>
     </div>
@@ -192,7 +190,7 @@ const DocumentHead = ({
       crossOrigin="anonymous"
     />
     <link
-      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap"
       rel="stylesheet"
     />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
@@ -250,7 +248,7 @@ const DocumentBody = ({
   tocItems,
 }: DocumentBodyProps): JSX.Element => (
   <body
-    class="bg-background text-foreground font-mono"
+    class="bg-background text-foreground font-sans"
     data-scrollspy={scrollSpyDataset.scrollspy}
     data-scrollspy-center={scrollSpyDataset.scrollspyCenter}
     data-scrollspy-update-hash={scrollSpyDataset.scrollspyUpdateHash}
@@ -265,7 +263,7 @@ const DocumentBody = ({
       <main class="main-content">
         <div class="mx-auto flex w-full max-w-6xl items-start gap-10">
           <article
-            class="prose min-w-0 flex-1"
+            class={`prose min-w-0 flex-1${currentPath === "/" ? " prose-home" : ""}`}
             dangerouslySetInnerHTML={{ __html: content }}
           />
           {shouldShowRightRail ? (
@@ -278,6 +276,10 @@ const DocumentBody = ({
           ) : null}
         </div>
       </main>
+      <footer class="site-footer">
+        Built with markdown + Tailwind &nbsp;|&nbsp; Zero JavaScript on content
+        pages
+      </footer>
     </div>
     {scriptPaths.map((scriptPath) => (
       <script key={scriptPath} defer src={scriptPath} />
