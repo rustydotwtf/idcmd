@@ -49,7 +49,7 @@ const buildAskUrls = ({
     ? new URL("/llms.txt", canonicalUrl).toString()
     : "/llms.txt";
 
-  const prompt = `Investigate this document and explain it to the user: ${markdownUrl}\nllms.txt: ${llmsTxtUrl}`;
+  const prompt = `Investigate this document and explain it to the user: ${markdownUrl}\ndirectory for further exploration: ${llmsTxtUrl}`;
 
   const chatgpt = new URL("https://chatgpt.com/");
   chatgpt.searchParams.set("prompt", prompt);
