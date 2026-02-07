@@ -34,9 +34,9 @@ const toEntry = (link) => {
     return null;
   }
 
-  // Use getElementById instead of querySelector so ids like "1.1-overview"
-  // (valid HTML ids, invalid CSS selectors without escaping) don't break scrollspy.
-  const heading = document.querySelector(`#${id}`);
+  // ids like "11-overview" are valid HTML ids but invalid CSS selectors unless escaped.
+  // eslint-disable-next-line unicorn/prefer-query-selector
+  const heading = document.getElementById(id);
   if (!heading) {
     return null;
   }

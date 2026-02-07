@@ -127,7 +127,7 @@ const OnThisPage = ({ items }: { items: TocItem[] }): JSX.Element => (
           {items.map((item) => (
             <li key={item.id} class={item.level >= 3 ? "pl-3" : ""}>
               <a
-                href={`#${item.id}`}
+                href={`#${encodeURIComponent(item.id)}`}
                 class="hover:text-foreground"
                 data-toc-link="1"
               >
