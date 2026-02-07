@@ -5,19 +5,26 @@ group: main
 order: 2
 ---
 
-# About this project
+# About idcmd
 
-A markdown-first static site generator built to prove that constraints produce better design.
+idcmd is a markdown-powered site builder for people who don't care about markdown. It's intentionally minimal: drop in content, ship a site, and keep the feedback loop tight.
 
 ---
 
 ## Philosophy
 
-Most static site generators give you too many escape hatches. MDX, custom components, client-side JavaScript — each one adds complexity and pulls you further from the content.
+Most static site generators give you too many escape hatches. MDX, custom components, client-side JavaScript — each one adds complexity and pulls you further from getting a site online.
 
-This project takes the opposite approach: **every page is plain markdown, styled by a single CSS file.** That constraint forces good typography, intentional spacing, and a coherent visual language. If the prose styles can't make your content look great, the styles need to improve — not your content.
+This project takes the opposite approach: **every page is plain markdown, styled by a single CSS file.** That constraint forces good typography, intentional spacing, and a coherent visual language. If the prose styles can't make your content look great, the styles need to improve — not your content. The goal isn't markdown purity, it's speed and clarity.
 
 > The constraint isn't a limitation. It's the whole point.
+
+## Brand promises
+
+- **11-second Vercel deploys** so iteration stays instant
+- **Dead simple** workflow with no extra abstractions
+- **Markdown as a means, not an identity**
+- **CLI coming soon** to make publishing even faster
 
 ## Architecture
 

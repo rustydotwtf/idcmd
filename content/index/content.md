@@ -5,15 +5,15 @@ group: main
 order: 1
 ---
 
-# Markdown, meet beautiful.
+# idcmd: the markdown builder for people who don't care about markdown.
 
-A proof that you can build something worth looking at with nothing but markdown and a single Tailwind CSS file. No component library. No JavaScript on content pages. Just words and whitespace.
+idcmd is a dead simple site builder. You drop in markdown, get a fast site, and move on with your day. If you're looking for a templating system, a component library, or a reason to obsess over markdown syntax, this isn't it.
 
 ---
 
 ## What this is
 
-This is a static site generator with a single constraint: **every page is a markdown file styled by one CSS file**. No React components in your content. No MDX. No client-side JavaScript on content pages.
+This is a static site generator with a single constraint: **every page is a markdown file styled by one CSS file**. No React components in your content. No MDX. No client-side JavaScript on content pages. It's a tool for people who just want their docs online, fast.
 
 The entire visual language — typography, spacing, color, layout — lives in `styles.css` and is applied through Tailwind's utility classes and a hand-tuned `.prose` scope.
 
@@ -25,7 +25,7 @@ The entire visual language — typography, spacing, color, layout — lives in `
 4. Tailwind compiles the stylesheet with your theme tokens
 5. Shiki highlights code blocks at build time — zero runtime cost
 
-The result is a fully static site with sub-millisecond renders.
+The result is a fully static site with sub-millisecond renders and deploys that finish in **11 seconds on Vercel**.
 
 ## The stack
 
@@ -60,6 +60,13 @@ const site = await buildSite({
 - Shiki syntax highlighting for 16+ languages
 - Dark mode by default, light mode supported
 - Sub-millisecond server-side renders
+
+## Why idcmd
+
+- **11-second Vercel deploys** that keep the feedback loop tight
+- **Dead simple** workflow: drop markdown in, get a site out
+- **No markdown worship**: it's just the input format, not the brand
+- **CLI coming soon**: the ergonomics get even better when the binary lands
 
 ## See it in action
 

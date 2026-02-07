@@ -144,7 +144,7 @@ export const loadSiteConfig = async (): Promise<SiteConfig> => {
     return { ...parsed, baseUrl: resolveBaseUrl(parsed.baseUrl) };
   }
 
-  return { description: "", name: "Markdown Site" };
+  return { description: "", name: "idcmd" };
 };
 
 export const getSearchScope = (siteConfig: SiteConfig): SearchScope =>
