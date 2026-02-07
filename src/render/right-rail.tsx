@@ -23,6 +23,32 @@ const CaretDownIcon = (): JSX.Element => (
   </svg>
 );
 
+const CopyIcon = (): JSX.Element => (
+  <svg
+    width="18"
+    height="18"
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    aria-hidden="true"
+  >
+    <path
+      d="M9 9h10v12H9V9z"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+    <path
+      d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+  </svg>
+);
+
 const buildSlugFromCurrentPath = (currentPath: string): string => {
   if (currentPath === "/") {
     return "index";
@@ -38,7 +64,7 @@ const buildAskUrls = ({
 }: {
   canonicalUrl?: string;
   currentPath: string;
-}): { chatgptUrl: string; claudeUrl: string } => {
+}): { chatgptUrl: string; claudeUrl: string; markdownPath: string } => {
   const slug = buildSlugFromCurrentPath(currentPath);
   const markdownPath = `/${slug}.md`;
   const markdownUrl = canonicalUrl
@@ -57,15 +83,21 @@ const buildAskUrls = ({
   const claude = new URL("https://claude.ai/new");
   claude.searchParams.set("q", prompt);
 
-  return { chatgptUrl: chatgpt.toString(), claudeUrl: claude.toString() };
+  return {
+    chatgptUrl: chatgpt.toString(),
+    claudeUrl: claude.toString(),
+    markdownPath,
+  };
 };
 
 const AskInDropdown = ({
   claudeUrl,
   chatgptUrl,
+  markdownPath,
 }: {
   claudeUrl: string;
   chatgptUrl: string;
+  markdownPath: string;
 }): JSX.Element => (
   <details class="llm-menu relative">
     <summary class="flex w-full cursor-pointer select-none items-center justify-between gap-3 rounded-full border border-white/20 bg-card/30 px-4 py-2 text-sm shadow-sm hover:border-white/30 hover:bg-card/40">
@@ -114,6 +146,18 @@ const AskInDropdown = ({
           class="shrink-0"
         />
         <span>Ask in Claude</span>
+      </a>
+      <a
+        href={markdownPath}
+        target="_blank"
+        rel="noopener noreferrer"
+        data-copy-markdown="1"
+        class="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm hover:bg-muted"
+      >
+        <span class="shrink-0 text-muted-foreground">
+          <CopyIcon />
+        </span>
+        <span data-copy-markdown-label="1">Copy Markdown to Clipboard</span>
       </a>
     </div>
   </details>
@@ -184,14 +228,21 @@ export const RightRail = ({
   tocItems: TocItem[];
   rightRailConfig: ResolvedRightRailConfig;
 }): JSX.Element => {
-  const { chatgptUrl, claudeUrl } = buildAskUrls({ canonicalUrl, currentPath });
+  const { chatgptUrl, claudeUrl, markdownPath } = buildAskUrls({
+    canonicalUrl,
+    currentPath,
+  });
   const visibilityClass = getVisibilityClass(rightRailConfig.visibleFrom);
   const panelClass = getPanelClass(rightRailConfig.placement);
 
   return (
     <aside class={`${visibilityClass} w-64 shrink-0`}>
       <div class={panelClass}>
-        <AskInDropdown chatgptUrl={chatgptUrl} claudeUrl={claudeUrl} />
+        <AskInDropdown
+          chatgptUrl={chatgptUrl}
+          claudeUrl={claudeUrl}
+          markdownPath={markdownPath}
+        />
         {tocItems.length > 0 ? <OnThisPage items={tocItems} /> : null}
       </div>
     </aside>

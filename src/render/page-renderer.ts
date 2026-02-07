@@ -231,6 +231,7 @@ const computeScriptPaths = (options: {
   tocItems: readonly unknown[];
 }): string[] => [
   ...(options.isDev ? ["/live-reload.js"] : []),
+  ...(options.shouldShowRightRail ? ["/llm-menu.js"] : []),
   ...(options.shouldShowRightRail &&
   options.rightRail.scrollSpy.enabled &&
   options.tocItems.length > 0

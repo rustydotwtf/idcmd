@@ -14,6 +14,7 @@ describe("page-renderer", () => {
     });
 
     expect(html.includes('data-toc-root="1"')).toBe(true);
+    expect(html.includes("/llm-menu.js")).toBe(true);
     expect(html.includes("/right-rail-scrollspy.js")).toBe(true);
   });
 
@@ -27,6 +28,22 @@ describe("page-renderer", () => {
       },
     });
 
+    expect(html.includes("/llm-menu.js")).toBe(true);
+    expect(html.includes("/right-rail-scrollspy.js")).toBe(false);
+  });
+
+  it("does not include llm-menu script when right rail is disabled", async () => {
+    const html = await renderMarkdownPage("# Title\n\n## Section\n\nHello", {
+      currentPath: "/about/",
+      navigation: [],
+      showRightRail: false,
+      siteConfig: {
+        description: "Site description",
+        name: "Test Site",
+      },
+    });
+
+    expect(html.includes("/llm-menu.js")).toBe(false);
     expect(html.includes("/right-rail-scrollspy.js")).toBe(false);
   });
 

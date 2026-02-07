@@ -52,18 +52,21 @@ describe("right rail", () => {
       tocItems,
     });
 
-    expect(html.includes("https://chatgpt.com/?prompt=")).toBe(true);
-    expect(html.includes("https://claude.ai/new?q=")).toBe(true);
+    const requiredSubstrings = [
+      "https://chatgpt.com/?prompt=",
+      "https://claude.ai/new?q=",
+      "Copy Markdown to Clipboard",
+      'data-copy-markdown="1"',
+      'href="/about.md"',
+      // Absolute markdown URL should be included in the encoded prompt.
+      "http%3A%2F%2Flocalhost%3A4000%2Fabout.md",
+      // Absolute llms.txt URL should be included in the encoded prompt.
+      "http%3A%2F%2Flocalhost%3A4000%2Fllms.txt",
+    ] as const;
 
-    // Absolute markdown URL should be included in the encoded prompt.
-    expect(html.includes("http%3A%2F%2Flocalhost%3A4000%2Fabout.md")).toBe(
-      true
-    );
-
-    // Absolute llms.txt URL should be included in the encoded prompt.
-    expect(html.includes("http%3A%2F%2Flocalhost%3A4000%2Fllms.txt")).toBe(
-      true
-    );
+    for (const needle of requiredSubstrings) {
+      expect(html.includes(needle)).toBe(true);
+    }
   });
 });
 
