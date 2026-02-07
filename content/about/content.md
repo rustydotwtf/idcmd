@@ -7,7 +7,7 @@ order: 2
 
 # About idcmd
 
-idcmd is a markdown-powered site builder for people who don't care about markdown. It's intentionally minimal: drop in content, ship a site, and keep the feedback loop tight.
+idcmd is a dead simple site builder—built for both humans and AI to use, and thoughtfully engineered so that agents can easily maintain and evolve the codebase too. Just drop in markdown, get a fast site, and move on with your day.
 
 ---
 
