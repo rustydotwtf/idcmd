@@ -233,9 +233,9 @@ const createState = () => {
 };
 
 const start = (state) => {
-  if (state.centerActiveItem) {
-    document.body.dataset.tocFollow = "1";
-  }
+  // Disable independent TOC scrolling whenever scrollspy is active.
+  // The TOC list position is controlled by JS (either centered or left as-is).
+  document.body.dataset.tocFollow = "1";
 
   window.addEventListener("scroll", () => scheduleUpdate(state), {
     passive: true,
