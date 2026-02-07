@@ -1,6 +1,6 @@
 {
   "name": "idcmd",
-  "description": "A dead simple site builder for people who don't care about Markdown.",
+  "description": "Dead-simple docs: Markdown content rendered with Preact SSR. Built for humans and AI agents.",
   // Production base URL. In Vercel you can omit this and set `SITE_BASE_URL`,
   // or rely on Vercel-provided env vars (VERCEL_URL, etc.).
   "baseUrl": "https://idcmd.vercel.app",

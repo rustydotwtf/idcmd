@@ -277,8 +277,8 @@ const DocumentBody = ({
         </div>
       </main>
       <footer class="site-footer">
-        Built with markdown + Tailwind &nbsp;|&nbsp; Zero JavaScript on content
-        pages
+        Built with Preact SSR + Tailwind &nbsp;|&nbsp; Zero JavaScript on
+        content pages
       </footer>
     </div>
     {scriptPaths.map((scriptPath) => (

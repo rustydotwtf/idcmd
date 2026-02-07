@@ -26,6 +26,37 @@ Preview the static output:
 bun run preview
 ```
 
+## Example: add a page
+
+Create:
+
+`content/hello/content.md`
+
+```md
+---
+title: Hello
+group: main
+order: 99
+icon: file
+---
+
+# Hello
+
+This is a new page.
+```
+
+Now it exists at:
+
+- `/hello/`
+
+## Customize the UI (Preact SSR)
+
+Markdown is the content model. Preact SSR is the view engine.
+
+- Edit `src/render/layout.tsx` to change the shell.
+- Edit `src/render/right-rail.tsx` for the LLM menu / TOC panel.
+- Edit `src/search/page.tsx` for the search UI.
+
 ## V1 Definition Of Done
 
 `tickets/ROADMAP.md` is the source of truth. For V1, we explicitly target:

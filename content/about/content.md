@@ -7,62 +7,57 @@ order: 2
 
 # About idcmd
 
-idcmd is a markdown-powered site builder for people who don't care about markdown. It's intentionally minimal: drop in content, ship a site, and keep the feedback loop tight.
+idcmd is a markdown-powered docs site for people who don't care about markdown.
+More accurately: it’s a small, deterministic system that’s easy for a human to use and easy for an AI agent to maintain.
 
 ---
 
-## Philosophy
+## Philosophy: constraints are the product
 
-Most static site generators give you too many escape hatches. MDX, custom components, client-side JavaScript — each one adds complexity and pulls you further from getting a site online.
+Most static site generators win by giving you escape hatches.
+idcmd wins by removing them.
 
-This project takes the opposite approach: **every page is plain markdown, styled by a single CSS file.** That constraint forces good typography, intentional spacing, and a coherent visual language. If the prose styles can't make your content look great, the styles need to improve — not your content. The goal isn't markdown purity, it's speed and clarity.
+- Plain markdown in
+- Preact SSR renders the shell (sidebar, right rail, search UI)
+- Plain HTML out
+- One CSS file for the entire visual language
+- Optional JS only when explicitly enabled and scoped
 
-> The constraint isn't a limitation. It's the whole point.
+When the rules are simple, agents can keep the system healthy.
 
-## Brand promises
+---
 
-- **11-second Vercel deploys** so iteration stays instant
-- **Dead simple** workflow with no extra abstractions
-- **Markdown as a means, not an identity**
-- **CLI coming soon** to make publishing even faster
+## The split (Markdown vs Preact)
 
-## Architecture
+Markdown is the content model. Preact is the view engine.
 
-The stack is deliberately minimal:
+This is intentionally not MDX, and it’s intentionally not “React components in your docs”.
+Content stays boring. The app stays deterministic.
 
-- **Bun** handles the server, markdown parsing, and bundling. One runtime, no build chain.
-- **Preact SSR** renders layouts server-side with zero client-side hydration on content pages.
-- **Tailwind CSS v4** compiles the theme from a single `styles.css` file using `@theme inline` tokens.
-- **Shiki** highlights code blocks at build time with dual light/dark themes — no runtime syntax highlighter.
+---
 
-### File-based routing
+## Infra as content
 
-Drop a markdown file in `content/`, and it becomes a page:
+Treat your docs like infrastructure:
 
-```
-content/
-  index/content.md    → /
-  about/content.md    → /about/
-  guide/content.md    → /guide/
-```
+- inputs are versioned
+- outputs are predictable
+- changes are verified
 
-Frontmatter controls navigation order, grouping, and icons. The sidebar builds itself.
+Today, that “contract” is mostly enforced by:
 
-### Search
+- URL invariants
+- JS policy
+- tests and `bun run check`
 
-Full-text search runs entirely server-side. No Algolia, no Pagefind, no external service. The search index is built from your markdown content at startup and queried via a simple GET request.
+Next (planned): content contracts (Zod), dead-link checks, and stricter shape validation so agents can’t accidentally drift the site.
 
-### LLM support
+---
 
-Every page is available as raw markdown at `/{slug}.md`. A `/llms.txt` file provides a machine-readable site index. This makes the entire site accessible to language models without scraping.
+## What idcmd is not
 
-## Design decisions
+- Not an MDX playground
+- Not a component framework
+- Not a client-side app disguised as docs
 
-- **Inter for body, JetBrains Mono for code** — readability where it matters, developer feel in the chrome
-- **Sharp code blocks, rounded inline code** — terminal windows vs. soft badges
-- **Left-border indicators** — active sidebar links, TOC items, and blockquotes all share the same visual language
-- **Generous whitespace** — breathing room in prose, density in navigation
-
-## Source
-
-This project is open source and built with the tools it documents. Every page you're reading is a markdown file in the `content/` directory.
+It’s a fast publishing pipeline for content.
