@@ -5,9 +5,9 @@ group: main
 order: 1
 ---
 
-# idcmd: the markdown builder for people who don't care about markdown.
+# idcmd: i don't care about markdown.
 
-idcmd is a dead simple site builder. You drop in markdown, get a fast site, and move on with your day. If you're looking for a templating system, a component library, or a reason to obsess over markdown syntax, this isn't it.
+idcmd is a dead simple site builder. You drop in markdown, get a fast site, and move on with your day.
 
 ---
 
