@@ -1,6 +1,6 @@
 import type { Server } from "bun";
 
-import { CONTENT_DIR, contentGlob } from "@/content/paths";
+import { CONTENT_DIR, scanContentFiles } from "@/content/paths";
 
 interface LiveReloadClient {
   close: () => void;
@@ -43,7 +43,7 @@ export const createLiveReload = (env: LiveReloadEnv): LiveReloadController => {
 
   const getContentSnapshot = async (): Promise<string> => {
     const entries: string[] = [];
-    for await (const file of contentGlob.scan(CONTENT_DIR)) {
+    for await (const file of scanContentFiles()) {
       const filePath = `${CONTENT_DIR}/${file}`;
       const { lastModified } = Bun.file(filePath);
       entries.push(`${file}:${lastModified}`);

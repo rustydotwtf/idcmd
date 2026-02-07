@@ -1,6 +1,10 @@
 import { generateLlmsTxt } from "./content/llms";
 import { discoverNavigation } from "./content/navigation";
-import { CONTENT_DIR, contentGlob, slugFromContentFile } from "./content/paths";
+import {
+  CONTENT_DIR,
+  scanContentFiles,
+  slugFromContentFile,
+} from "./content/paths";
 import { renderDocument, renderMarkdownPage } from "./render/page-renderer";
 import { generateSearchIndexFromContent } from "./search/index";
 import { renderSearchPageContent } from "./search/page";
@@ -16,12 +20,12 @@ const MAX_INDEX_BYTES = 5 * 1024 * 1024;
 const MAX_BUILD_SECONDS = 60;
 const MIN_SEARCH_QUERY_LENGTH = 2;
 
-// Find all content.md files in content/<slug>/ directories
+// Find all content files in `content/` (`content/<slug>.md`).
 const contentFiles: string[] = [];
 
 const buildStart = performance.now();
 
-for await (const file of contentGlob.scan(CONTENT_DIR)) {
+for await (const file of scanContentFiles()) {
   contentFiles.push(file);
 }
 
@@ -66,11 +70,8 @@ const writeMarkdownOutputs = async (
 ): Promise<void> => {
   const flatMarkdownPath =
     slug === "index" ? "dist/index.md" : `dist/${slug}.md`;
-  const nestedMarkdownPath =
-    slug === "index" ? "dist/index/content.md" : `dist/${slug}/content.md`;
 
   await Bun.write(flatMarkdownPath, markdown);
-  await Bun.write(nestedMarkdownPath, markdown);
   console.log(`  markdown -> ${flatMarkdownPath}`);
 };
 

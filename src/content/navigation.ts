@@ -11,7 +11,7 @@ import type { PageMeta } from "./frontmatter";
 
 import { parseFrontmatter, extractTitleFromContent } from "./frontmatter";
 import { resolveIconSvg } from "./icons";
-import { CONTENT_DIR, contentGlob, slugFromContentFile } from "./paths";
+import { CONTENT_DIR, scanContentFiles, slugFromContentFile } from "./paths";
 
 export interface NavItem {
   title: string;
@@ -132,7 +132,7 @@ const finalizeGroups = (
 
 /**
  * Discover all pages and build navigation structure.
- * Reads frontmatter from each content.md file to determine:
+ * Reads frontmatter from each content file to determine:
  * - Title (falls back to h1)
  * - Icon (loaded from icons/ folder or custom path)
  * - Group (for sidebar sections)
@@ -145,8 +145,8 @@ export const discoverNavigation = async (): Promise<NavGroup[]> => {
   const groupsMap = buildGroupsMap(siteConfig.groups ?? []);
   const defaultGroup = createDefaultGroup();
 
-  // Scan all content folders
-  for await (const file of contentGlob.scan(CONTENT_DIR)) {
+  // Scan all content files
+  for await (const file of scanContentFiles()) {
     await addFileToNavigation(file, groupsMap, defaultGroup);
   }
 

@@ -73,9 +73,7 @@ const handleMarkdownRequest = async (
     return undefined;
   }
 
-  const slug = path.endsWith("/content.md")
-    ? path.slice(1, -11)
-    : path.slice(1, -3);
+  const slug = path.slice(1, -3);
   const markdown = await getMarkdownFile(slug);
 
   if (!markdown) {

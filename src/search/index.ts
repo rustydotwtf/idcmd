@@ -4,8 +4,8 @@ import { parseFrontmatter } from "@/content/frontmatter";
 import { derivePageMetaFromParsed } from "@/content/meta";
 import {
   CONTENT_DIR,
-  contentGlob,
   pagePathFromContentSlug,
+  scanContentFiles,
   slugFromContentFile,
 } from "@/content/paths";
 
@@ -116,7 +116,7 @@ export const generateSearchIndexFromContent = async (
 
   const documents: SearchIndexDocumentV1[] = [];
 
-  for await (const file of contentGlob.scan(CONTENT_DIR)) {
+  for await (const file of scanContentFiles()) {
     const document = await buildDocumentFromFile(
       file,
       bodyMaxChars,

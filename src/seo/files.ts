@@ -1,8 +1,8 @@
 import { parseFrontmatter } from "@/content/frontmatter";
 import {
   CONTENT_DIR,
-  contentGlob,
   pagePathFromContentSlug,
+  scanContentFiles,
   slugFromContentFile,
 } from "@/content/paths";
 import { resolveAbsoluteUrl } from "@/site/urls";
@@ -109,7 +109,7 @@ export const collectSitemapPagesFromContent = async (): Promise<
 > => {
   const pages: SitemapPage[] = [];
 
-  for await (const file of contentGlob.scan(CONTENT_DIR)) {
+  for await (const file of scanContentFiles()) {
     const page = await collectSitemapPageFromFile(file);
     if (page) {
       pages.push(page);

@@ -6,8 +6,8 @@ import { parseFrontmatter } from "./frontmatter";
 import { derivePageMetaFromParsed } from "./meta";
 import {
   CONTENT_DIR,
-  contentGlob,
   pageSlugFromContentSlug,
+  scanContentFiles,
   slugFromContentFile,
 } from "./paths";
 
@@ -55,7 +55,7 @@ const buildLlmsPage = async (
 const buildLlmsPages = async (siteConfig: SiteConfig): Promise<LlmsPage[]> => {
   const pages: LlmsPage[] = [];
 
-  for await (const file of contentGlob.scan(CONTENT_DIR)) {
+  for await (const file of scanContentFiles()) {
     const page = await buildLlmsPage(file, siteConfig);
     if (page) {
       pages.push(page);
@@ -76,8 +76,7 @@ const formatLlmsTxt = (siteConfig: SiteConfig, pages: LlmsPage[]): string => {
   ];
 
   for (const page of pages) {
-    const mdFile =
-      page.slug === "" ? "index/content.md" : `${page.slug}/content.md`;
+    const mdFile = page.slug === "" ? "index.md" : `${page.slug}.md`;
     lines.push(`- [${page.title}](/${mdFile}): ${page.description}`);
   }
 

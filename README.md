@@ -30,7 +30,7 @@ bun run preview
 
 Create:
 
-`content/hello/content.md`
+`content/hello.md`
 
 ```md
 ---
@@ -68,18 +68,18 @@ Markdown is the content model. Preact SSR is the view engine.
 ## URL Policy
 
 - HTML pages are canonicalized to trailing-slash paths (example: `/about/`), except `/`.
-- File-like paths (example: `/styles.css`, `/robots.txt`, `/index/content.md`) are not forced to trailing slash.
+- File-like paths (example: `/styles.css`, `/robots.txt`, `/index.md`) are not forced to trailing slash.
 
 ## Invariants
 
 ### Slug and path rules
 
-- Content lives at `content/<slug>/content.md`.
+- Content lives at `content/<slug>.md`.
 - `slug="index"` is the home page.
 - Canonical HTML paths are `/` for index and `/<slug>/` otherwise.
 - Markdown download paths exist in two forms:
   - Flat: `/index.md` and `/<slug>.md`
-  - Nested: `/index/content.md` and `/<slug>/content.md`
+  - Flat: `/index.md` and `/<slug>.md`
 
 ### baseUrl vs origin
 

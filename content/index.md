@@ -7,7 +7,7 @@ order: 1
 
 # i don't care about markdown
 
-## i care about shipping a site
+## i care about shipping
 
 idcmd is a tiny docs-site system:
 
@@ -41,7 +41,7 @@ bun run build
 
 Create:
 
-`content/hello/content.md`
+`content/hello.md`
 
 ```md
 ---
@@ -64,7 +64,7 @@ Now it exists at:
 
 ## What you edit (90% of the time)
 
-- `content/**/content.md` (pages)
+- `content/*.md` (pages)
 - `content/styles.css` (the whole visual language)
 
 If you want to change layout/navigation/search UI, you edit Preact SSR:
@@ -80,7 +80,7 @@ The repo is designed to be maintained by an agent without drifting into chaos.
 
 Copy/paste prompt:
 
-> You’re my idcmd maintainer. Add or update pages in `content/<slug>/content.md`. Use YAML frontmatter for `title`, `group`, `order`, and `icon`. Do not add client-side JS to content pages. After changes, run `bun run check` and fix failures until it’s green.
+> You’re my idcmd maintainer. Add or update pages in `content/<slug>.md`. Use YAML frontmatter for `title`, `group`, `order`, and `icon`. Do not add client-side JS to content pages. After changes, run `bun run check` and fix failures until it’s green.
 
 ---
 

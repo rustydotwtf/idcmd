@@ -17,8 +17,8 @@ describe("url-policy", () => {
   it("does not canonicalize file-like paths", () => {
     expect(isFileLikePathname("/about.md")).toBe(true);
     expect(getRedirectForCanonicalHtmlPath("/about.md")).toBeNull();
-    expect(isFileLikePathname("/index/content.md")).toBe(true);
-    expect(getRedirectForCanonicalHtmlPath("/index/content.md")).toBeNull();
+    expect(isFileLikePathname("/index.md")).toBe(true);
+    expect(getRedirectForCanonicalHtmlPath("/index.md")).toBeNull();
     expect(isFileLikePathname("/styles.css")).toBe(true);
     expect(getRedirectForCanonicalHtmlPath("/styles.css")).toBeNull();
   });

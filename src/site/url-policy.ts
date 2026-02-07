@@ -18,7 +18,7 @@ export const isFileLikePathname = (pathname: string): boolean => {
   const segment = lastSegment(normalized);
 
   // Treat any last-path segment with an extension as file-like.
-  // Examples: /styles.css, /robots.txt, /index/content.md
+  // Examples: /styles.css, /robots.txt, /index.md
   const dotIndex = segment.lastIndexOf(".");
   return dotIndex > 0 && dotIndex < segment.length - 1;
 };

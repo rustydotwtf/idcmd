@@ -13,7 +13,7 @@ This project is designed to be steered by a human and executed by an agent.
 
 ## What you tell the agent
 
-- Add or modify pages under `content/<slug>/content.md`
+- Add or modify pages under `content/<slug>.md`
 - Use YAML frontmatter: `title`, `group`, `order`, `icon`
 - Keep content pages free of client-side JS
 - Prefer internal links with canonical trailing slashes (example: `/about/`)
@@ -32,7 +32,7 @@ If it’s not green, the agent keeps going until it is.
 
 Copy/paste prompt:
 
-> You’re my idcmd maintainer. Add or update pages in `content/<slug>/content.md`. Use YAML frontmatter for `title`, `group`, `order`, and `icon`. Do not add client-side JS to content pages. After changes, run `bun run check` and fix failures until it’s green.
+> You’re my idcmd maintainer. Add or update pages in `content/<slug>.md`. Use YAML frontmatter for `title`, `group`, `order`, and `icon`. Do not add client-side JS to content pages. After changes, run `bun run check` and fix failures until it’s green.
 
 Task list pattern:
 
