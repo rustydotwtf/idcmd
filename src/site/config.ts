@@ -1,24 +1,82 @@
-export type SearchScope = "full" | "title" | "title_and_description";
+import { ZodError, z } from "zod";
 
-export type RightRailVisibleFrom = "xl" | "lg" | "md" | "always" | "never";
-export type ScrollSpyUpdateHash = "never" | "replace" | "push";
+export const SearchScopeSchema = z.enum([
+  "full",
+  "title",
+  "title_and_description",
+]);
+export type SearchScope = z.infer<typeof SearchScopeSchema>;
 
-export type TocLevel = 1 | 2 | 3 | 4 | 5 | 6;
+export const RightRailVisibleFromSchema = z.enum([
+  "xl",
+  "lg",
+  "md",
+  "always",
+  "never",
+]);
+export type RightRailVisibleFrom = z.infer<typeof RightRailVisibleFromSchema>;
 
-export interface RightRailScrollSpyConfig {
-  enabled?: boolean;
-  centerActiveItem?: boolean;
-  updateHash?: ScrollSpyUpdateHash;
-}
+export const ScrollSpyUpdateHashSchema = z.enum(["never", "replace", "push"]);
+export type ScrollSpyUpdateHash = z.infer<typeof ScrollSpyUpdateHashSchema>;
 
-export interface RightRailConfig {
-  enabled?: boolean;
-  visibleFrom?: RightRailVisibleFrom;
-  placement?: "content" | "viewport";
-  tocLevels?: TocLevel[];
-  smoothScroll?: boolean;
-  scrollSpy?: RightRailScrollSpyConfig;
-}
+export const TocLevelSchema = z.union([
+  z.literal(1),
+  z.literal(2),
+  z.literal(3),
+  z.literal(4),
+  z.literal(5),
+  z.literal(6),
+]);
+export type TocLevel = z.infer<typeof TocLevelSchema>;
+
+export const RightRailScrollSpyConfigSchema = z
+  .object({
+    centerActiveItem: z.boolean().optional(),
+    enabled: z.boolean().optional(),
+    updateHash: ScrollSpyUpdateHashSchema.optional(),
+  })
+  .strict();
+export type RightRailScrollSpyConfig = z.infer<
+  typeof RightRailScrollSpyConfigSchema
+>;
+
+export const RightRailConfigSchema = z
+  .object({
+    enabled: z.boolean().optional(),
+    placement: z.enum(["content", "viewport"]).optional(),
+    scrollSpy: RightRailScrollSpyConfigSchema.optional(),
+    smoothScroll: z.boolean().optional(),
+    tocLevels: z.array(TocLevelSchema).optional(),
+    visibleFrom: RightRailVisibleFromSchema.optional(),
+  })
+  .strict();
+export type RightRailConfig = z.infer<typeof RightRailConfigSchema>;
+
+export const GroupConfigSchema = z
+  .object({
+    id: z.string().min(1),
+    label: z.string().min(1),
+    order: z.number().int(),
+  })
+  .strict();
+export type GroupConfig = z.infer<typeof GroupConfigSchema>;
+
+export const SiteConfigSchema = z
+  .object({
+    baseUrl: z.string().url().optional(),
+    description: z.string(),
+    groups: z.array(GroupConfigSchema).optional(),
+    name: z.string().min(1),
+    rightRail: RightRailConfigSchema.optional(),
+    search: z
+      .object({
+        scope: SearchScopeSchema.optional(),
+      })
+      .strict()
+      .optional(),
+  })
+  .strict();
+export type SiteConfig = z.infer<typeof SiteConfigSchema>;
 
 export interface ResolvedRightRailConfig {
   enabled: boolean;
@@ -31,23 +89,6 @@ export interface ResolvedRightRailConfig {
     centerActiveItem: boolean;
     updateHash: ScrollSpyUpdateHash;
   };
-}
-
-export interface GroupConfig {
-  id: string;
-  label: string;
-  order: number;
-}
-
-export interface SiteConfig {
-  name: string;
-  description: string;
-  baseUrl?: string;
-  groups?: GroupConfig[];
-  search?: {
-    scope?: SearchScope;
-  };
-  rightRail?: RightRailConfig;
 }
 
 const SITE_CONFIG_PATH = "site.jsonc";
@@ -136,15 +177,53 @@ const resolveBaseUrl = (baseUrl: string | undefined): string | undefined => {
   return envUrl ?? normalizedConfigUrl;
 };
 
+const formatZodIssuePath = (path: readonly (string | number)[]): string =>
+  path.length === 0 ? "(root)" : path.join(".");
+
+const formatSiteConfigZodError = (error: ZodError): string => {
+  const lines = error.issues.map(
+    (issue) => `${formatZodIssuePath(issue.path)}: ${issue.message}`
+  );
+  return `site.jsonc validation failed:\n${lines.join("\n")}`;
+};
+
+const DEFAULT_SITE_CONFIG: SiteConfig = { description: "", name: "idcmd" };
+
+const parseSiteConfigJsonc = (text: string): unknown => {
+  try {
+    return Bun.JSONC.parse(text) as unknown;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(
+      `Failed to parse ${SITE_CONFIG_PATH} as JSONC: ${message}`,
+      {
+        cause: error,
+      }
+    );
+  }
+};
+
+const parseSiteConfigUnknown = (raw: unknown): SiteConfig => {
+  try {
+    return SiteConfigSchema.parse(raw);
+  } catch (error) {
+    if (error instanceof ZodError) {
+      throw new TypeError(formatSiteConfigZodError(error), { cause: error });
+    }
+    throw error;
+  }
+};
+
 export const loadSiteConfig = async (): Promise<SiteConfig> => {
   const file = Bun.file(SITE_CONFIG_PATH);
-  if (await file.exists()) {
-    const text = await file.text();
-    const parsed = Bun.JSONC.parse(text) as SiteConfig;
-    return { ...parsed, baseUrl: resolveBaseUrl(parsed.baseUrl) };
+  if (!(await file.exists())) {
+    return DEFAULT_SITE_CONFIG;
   }
 
-  return { description: "", name: "idcmd" };
+  const text = await file.text();
+  const raw = parseSiteConfigJsonc(text);
+  const parsed = parseSiteConfigUnknown(raw);
+  return { ...parsed, baseUrl: resolveBaseUrl(parsed.baseUrl) };
 };
 
 export const getSearchScope = (siteConfig: SiteConfig): SearchScope =>
