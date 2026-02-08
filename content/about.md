@@ -31,8 +31,10 @@ When the rules are simple, agents can keep the system healthy.
 
 Markdown is the content model. Preact is the view engine.
 
-This is intentionally not MDX, and it’s intentionally not “React components in your docs”.
-Content stays boring. The app stays deterministic.
+This is intentionally not MDX. When you need richer blocks, you use constrained _doc components_ in Markdown (standalone lines like `<InstallTabs pkg="zod" />`).
+
+- HTML pages render components via SSR (no hydration by default)
+- `/<slug>.md` expands components to plain markdown so agents never see JSX/MDX
 
 ---
 

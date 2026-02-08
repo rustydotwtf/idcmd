@@ -86,7 +86,7 @@ Copy/paste prompt:
 
 ## The constraint (aka the point)
 
-No MDX. No components-in-content. No “framework inside your docs”.
+Markdown by default. Components are opt-in via standalone directives (no imports, no JS expressions).
 
 Just markdown in folders. Preact SSR wraps it. HTML comes out. Agents can reason about that.
 
@@ -99,3 +99,4 @@ Deterministic content checks (fail build on):
 - broken internal links/anchors
 - invalid frontmatter shapes (Zod)
 - unknown nav groups/icons
+- invalid doc components / expansion errors

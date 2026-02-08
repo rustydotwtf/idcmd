@@ -1,3 +1,4 @@
+import { expandMarkdownForAgent } from "./content/components/expand";
 import { generateLlmsTxt } from "./content/llms";
 import { discoverNavigation } from "./content/navigation";
 import {
@@ -71,7 +72,14 @@ const writeMarkdownOutputs = async (
   const flatMarkdownPath =
     slug === "index" ? "dist/index.md" : `dist/${slug}.md`;
 
-  await Bun.write(flatMarkdownPath, markdown);
+  const expanded = await expandMarkdownForAgent(markdown, {
+    currentPath: slug === "index" ? "/" : `/${slug}/`,
+    instanceId: `${slug}:build-md`,
+    isDev: false,
+    slug,
+  });
+
+  await Bun.write(flatMarkdownPath, expanded);
   console.log(`  markdown -> ${flatMarkdownPath}`);
 };
 

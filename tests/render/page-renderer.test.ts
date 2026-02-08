@@ -82,4 +82,21 @@ describe("page-renderer", () => {
       html.includes('<link rel="canonical" href="https://example.com/about/"')
     ).toBe(true);
   });
+
+  it("expands doc component tags into SSR html", async () => {
+    const html = await renderMarkdownPage(
+      ["# Install", "", '<InstallTabs pkg="zod" />', ""].join("\n"),
+      {
+        currentPath: "/install/",
+        navigation: [],
+        siteConfig: {
+          description: "Site description",
+          name: "Test Site",
+        },
+      }
+    );
+
+    expect(html.includes('data-doc-component="InstallTabs"')).toBe(true);
+    expect(html.includes("<InstallTabs")).toBe(false);
+  });
 });

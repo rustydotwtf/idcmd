@@ -381,3 +381,72 @@ body[data-toc-follow="1"] .toc-scroll > ul {
 .site-footer {
   @apply font-mono text-xs text-muted-foreground py-8 px-8 border-t border-border;
 }
+
+/* ============================================
+   DOC COMPONENTS - Errors + InstallTabs
+   ============================================ */
+
+.doc-component-error {
+  @apply my-6 border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm;
+}
+
+/* CSS-only tabs (used by <InstallTabs ... />) */
+.code-tabs {
+  @apply my-6 border border-border bg-card;
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-rows: auto auto;
+}
+
+.code-tabs__input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.code-tabs__label {
+  @apply text-xs font-semibold uppercase tracking-wider text-muted-foreground;
+  grid-row: 1;
+  border-bottom: 1px solid var(--border);
+  padding: 0.75rem 0.9rem;
+  cursor: pointer;
+  user-select: none;
+  text-align: center;
+}
+
+.code-tabs__label[data-pm="npm"] {
+  grid-column: 1;
+}
+.code-tabs__label[data-pm="pnpm"] {
+  grid-column: 2;
+}
+.code-tabs__label[data-pm="bun"] {
+  grid-column: 3;
+}
+.code-tabs__label[data-pm="yarn"] {
+  grid-column: 4;
+}
+
+.code-tabs__panel {
+  grid-row: 2;
+  grid-column: 1 / -1;
+  display: none;
+}
+
+.code-tabs__input:checked + .code-tabs__label {
+  color: var(--foreground);
+  background: color-mix(in oklab, var(--muted) 75%, transparent);
+  border-bottom-color: transparent;
+}
+
+.code-tabs__input:checked + .code-tabs__label + .code-tabs__panel {
+  display: block;
+}
+
+/* Remove extra chrome so the tabset reads as a single component. */
+.code-tabs__panel pre.shiki,
+.code-tabs__panel pre:not(.shiki) {
+  margin: 0;
+  border: none;
+}

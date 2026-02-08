@@ -5,6 +5,7 @@ import { createHighlighter } from "shiki";
 import type { NavGroup } from "@/content/navigation";
 import type { SiteConfig } from "@/site/config";
 
+import { expandMarkdownContentForHtml } from "@/content/components/expand";
 import { parseFrontmatter } from "@/content/frontmatter";
 import { derivePageMetaFromParsed } from "@/content/meta";
 import { discoverNavigation } from "@/content/navigation";
@@ -162,6 +163,16 @@ const resolveNavigationForPage = (
 const renderMarkdownContentToHtml = (markdown: string): Promise<string> =>
   highlightCodeBlocks(renderMarkdownToHtml(markdown));
 
+const slugFromCurrentPath = (currentPath: string): string => {
+  if (currentPath === "/") {
+    return "index";
+  }
+  if (currentPath.startsWith("/") && currentPath.endsWith("/")) {
+    return currentPath.slice(1, -1);
+  }
+  return currentPath.replaceAll("/", "");
+};
+
 const computeCanonicalUrlForPage = (options: {
   configuredBaseUrl: string | undefined;
   currentPath: string;
@@ -259,31 +270,31 @@ export const renderMarkdownPage = async (
     titleOverride: options.titleOverride,
   });
 
+  const slug = slugFromCurrentPath(options.currentPath);
+  const expandedMarkdown = await expandMarkdownContentForHtml(parsed.content, {
+    currentPath: options.currentPath,
+    instanceId: `${slug}:page`,
+    isDev: options.isDev ?? false,
+    slug,
+  });
+
   const [resolvedNavigation, contentHtml] = await Promise.all([
     resolveNavigationForPage(options.navigation, options.isDev ?? false),
-    renderMarkdownContentToHtml(parsed.content),
+    renderMarkdownContentToHtml(expandedMarkdown),
   ]);
   const tocItems = computeTocItems({
     contentHtml,
     rightRail,
     shouldShowRightRail,
   });
-  const scriptPaths = computeScriptPaths({
-    isDev: options.isDev ?? false,
-    rightRail,
-    shouldShowRightRail,
-    tocItems,
-  });
-
-  const canonicalUrl = computeCanonicalUrlForPage({
-    configuredBaseUrl: siteConfig.baseUrl,
-    currentPath: options.currentPath,
-    isDev: options.isDev ?? false,
-    requestOrigin: options.requestOrigin,
-  });
 
   return renderMarkdownPageShell({
-    canonicalUrl,
+    canonicalUrl: computeCanonicalUrlForPage({
+      configuredBaseUrl: siteConfig.baseUrl,
+      currentPath: options.currentPath,
+      isDev: options.isDev ?? false,
+      requestOrigin: options.requestOrigin,
+    }),
     contentHtml,
     cssPath: options.cssPath,
     currentPath: options.currentPath,
@@ -291,7 +302,12 @@ export const renderMarkdownPage = async (
     inlineCss: options.inlineCss,
     navigation: resolvedNavigation,
     rightRail,
-    scriptPaths,
+    scriptPaths: computeScriptPaths({
+      isDev: options.isDev ?? false,
+      rightRail,
+      shouldShowRightRail,
+      tocItems,
+    }),
     searchQuery: options.searchQuery,
     shouldShowRightRail,
     siteName: siteConfig.name,

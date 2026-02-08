@@ -1,5 +1,6 @@
 import type { SearchScope, SiteConfig } from "@/site/config";
 
+import { expandMarkdownForAgent } from "@/content/components/expand";
 import { parseFrontmatter } from "@/content/frontmatter";
 import { derivePageMetaFromParsed } from "@/content/meta";
 import {
@@ -96,8 +97,14 @@ const buildDocumentFromFile = async (
     fallbackTitle: slug,
     siteDefaultDescription: siteConfig.description,
   });
-  const body = markdownToPlainText(markdown).slice(0, bodyMaxChars);
   const url = pagePathFromContentSlug(slug);
+  const expandedForAgent = await expandMarkdownForAgent(markdown, {
+    currentPath: url,
+    instanceId: `${slug}:search`,
+    isDev: false,
+    slug,
+  });
+  const body = markdownToPlainText(expandedForAgent).slice(0, bodyMaxChars);
 
   return { body, description: meta.description, title: meta.title, url };
 };

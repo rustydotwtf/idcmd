@@ -1,5 +1,6 @@
 import type { Server } from "bun";
 
+import { expandMarkdownForAgent } from "./content/components/expand";
 import { generateLlmsTxt } from "./content/llms";
 import { getMarkdownFile } from "./content/store";
 import { renderMarkdownPage } from "./render/page-renderer";
@@ -73,7 +74,8 @@ const handleMarkdownRequest = async (
     return undefined;
   }
 
-  const slug = path.slice(1, -3);
+  const isRaw = path.endsWith(".raw.md");
+  const slug = isRaw ? path.slice(1, -".raw.md".length) : path.slice(1, -3);
   const markdown = await getMarkdownFile(slug);
 
   if (!markdown) {
@@ -83,7 +85,16 @@ const handleMarkdownRequest = async (
     });
   }
 
-  return new Response(markdown, {
+  const expanded = isRaw
+    ? markdown
+    : await expandMarkdownForAgent(markdown, {
+        currentPath: slug === "index" ? "/" : `/${slug}/`,
+        instanceId: `${slug}:md`,
+        isDev,
+        slug,
+      });
+
+  return new Response(expanded, {
     headers: {
       "Content-Type": "text/markdown; charset=utf-8",
       ...staticCacheHeaders,
