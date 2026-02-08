@@ -14,8 +14,8 @@ describe("page-renderer", () => {
     });
 
     expect(html.includes('data-toc-root="1"')).toBe(true);
-    expect(html.includes("/llm-menu.js")).toBe(true);
-    expect(html.includes("/right-rail-scrollspy.js")).toBe(true);
+    expect(html.includes("/_idcmd/llm-menu.js")).toBe(true);
+    expect(html.includes("/_idcmd/right-rail-scrollspy.js")).toBe(true);
   });
 
   it("does not include scrollspy script when TOC is empty", async () => {
@@ -28,8 +28,8 @@ describe("page-renderer", () => {
       },
     });
 
-    expect(html.includes("/llm-menu.js")).toBe(true);
-    expect(html.includes("/right-rail-scrollspy.js")).toBe(false);
+    expect(html.includes("/_idcmd/llm-menu.js")).toBe(true);
+    expect(html.includes("/_idcmd/right-rail-scrollspy.js")).toBe(false);
   });
 
   it("does not include llm-menu script when right rail is disabled", async () => {
@@ -43,8 +43,8 @@ describe("page-renderer", () => {
       },
     });
 
-    expect(html.includes("/llm-menu.js")).toBe(false);
-    expect(html.includes("/right-rail-scrollspy.js")).toBe(false);
+    expect(html.includes("/_idcmd/llm-menu.js")).toBe(false);
+    expect(html.includes("/_idcmd/right-rail-scrollspy.js")).toBe(false);
   });
 
   it("uses request origin for canonical URLs in dev mode", async () => {

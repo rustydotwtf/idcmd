@@ -1,8 +1,14 @@
-export const CONTENT_DIR = "./content";
+import { getProjectPaths } from "@/project/paths";
+
 const flatContentGlob = new Bun.Glob("*.md");
 
-export const getMarkdownFilePath = (slug: string): string =>
-  `${CONTENT_DIR}/${slug}.md`;
+export const getContentDir = async (): Promise<string> => {
+  const paths = await getProjectPaths();
+  return paths.contentDir;
+};
+
+export const getMarkdownFilePath = async (slug: string): Promise<string> =>
+  `${await getContentDir()}/${slug}.md`;
 
 export const slugFromContentFile = (file: string): string => {
   if (file.endsWith(".md")) {
@@ -14,8 +20,9 @@ export const slugFromContentFile = (file: string): string => {
 
 export const scanContentFiles =
   async function* scanContentFiles(): AsyncGenerator<string> {
+    const { contentDir } = await getProjectPaths();
     // `content/<slug>.md`
-    for await (const file of flatContentGlob.scan(CONTENT_DIR)) {
+    for await (const file of flatContentGlob.scan(contentDir)) {
       yield file;
     }
   };

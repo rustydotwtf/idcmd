@@ -5,7 +5,7 @@ import { loadSiteConfig } from "@/site/config";
 import { parseFrontmatter } from "./frontmatter";
 import { derivePageMetaFromParsed } from "./meta";
 import {
-  CONTENT_DIR,
+  getContentDir,
   pageSlugFromContentSlug,
   scanContentFiles,
   slugFromContentFile,
@@ -30,9 +30,10 @@ const sortPages = (pages: LlmsPage[]): LlmsPage[] =>
 
 const buildLlmsPage = async (
   file: string,
+  contentDir: string,
   siteConfig: SiteConfig
 ): Promise<LlmsPage | null> => {
-  const markdown = await Bun.file(`${CONTENT_DIR}/${file}`).text();
+  const markdown = await Bun.file(`${contentDir}/${file}`).text();
   const parsed = parseFrontmatter(markdown);
 
   if (parsed.frontmatter.hidden) {
@@ -54,9 +55,10 @@ const buildLlmsPage = async (
 
 const buildLlmsPages = async (siteConfig: SiteConfig): Promise<LlmsPage[]> => {
   const pages: LlmsPage[] = [];
+  const contentDir = await getContentDir();
 
   for await (const file of scanContentFiles()) {
-    const page = await buildLlmsPage(file, siteConfig);
+    const page = await buildLlmsPage(file, contentDir, siteConfig);
     if (page) {
       pages.push(page);
     }

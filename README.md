@@ -1,36 +1,37 @@
-# Markdown Site (Bun + SSR)
+# idcmd (Markdown Site CLI, Bun + SSR)
 
-## Quickstart
-
-Install dependencies:
+## Create A Site
 
 ```bash
+bunx idcmd@latest init my-docs
+cd my-docs
 bun install
-```
-
-Run the dev server:
-
-```bash
 bun run dev
 ```
 
-Build a production `dist/`:
+Everything you edit lives in `site/`.
+
+## CLI
 
 ```bash
-bun run build
+idcmd init [dir]   # scaffold a new site
+idcmd dev          # tailwind watch + SSR dev server
+idcmd build        # static dist/
+idcmd preview      # serve dist/ locally
+idcmd deploy       # build + validate Vercel static deploy config
 ```
 
-Preview the static output:
+## Layout (V1)
 
-```bash
-bun run preview
-```
+- `site/content/<slug>.md` -> `/<slug>/` (`index.md` -> `/`)
+- `site/styles/tailwind.css` -> `site/public/styles.css` (dev) / `dist/styles.css` (build)
+- `site/public/` static assets
+- `site/server/routes/**` file-based server routes (dev/server-host only)
+- `site/site.jsonc` site config
 
-## Example: add a page
+## Example: Add A Page
 
-Create:
-
-`content/hello.md`
+Create `site/content/hello.md`:
 
 ```md
 ---
@@ -45,17 +46,17 @@ icon: file
 This is a new page.
 ```
 
-Now it exists at:
+It renders at `/hello/`.
 
-- `/hello/`
+## Custom Server Routes (V1)
 
-## Customize the UI (Preact SSR)
+Add `site/server/routes/api/hello.ts`:
 
-Markdown is the content model. Preact SSR is the view engine.
+```ts
+export const GET = (): Response => Response.json({ ok: true });
+```
 
-- Edit `src/render/layout.tsx` to change the shell.
-- Edit `src/render/right-rail.tsx` for the LLM menu / TOC panel.
-- Edit `src/search/page.tsx` for the search UI.
+It responds at `/api/hello`.
 
 ## V1 Definition Of Done
 
@@ -74,7 +75,7 @@ Markdown is the content model. Preact SSR is the view engine.
 
 ### Slug and path rules
 
-- Content lives at `content/<slug>.md`.
+- Content lives at `site/content/<slug>.md` (or legacy `content/<slug>.md`).
 - `slug="index"` is the home page.
 - Canonical HTML paths are `/` for index and `/<slug>/` otherwise.
 - Markdown download paths exist in two forms:
@@ -91,6 +92,6 @@ Markdown is the content model. Preact SSR is the view engine.
 
 - Content routes ship `0` bytes of JavaScript by default.
 - Allowed scripts:
-  - Dev only: `/live-reload.js`
-  - Optional: `/right-rail-scrollspy.js` only when scrollspy is enabled and the computed TOC is non-empty
+  - Dev only: `/_idcmd/live-reload.js`
+  - Optional: `/_idcmd/right-rail-scrollspy.js` only when scrollspy is enabled and the computed TOC is non-empty
 - Search page is SSR-only by default (no client JS).

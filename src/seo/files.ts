@@ -1,6 +1,6 @@
 import { parseFrontmatter } from "@/content/frontmatter";
 import {
-  CONTENT_DIR,
+  getContentDir,
   pagePathFromContentSlug,
   scanContentFiles,
   slugFromContentFile,
@@ -88,10 +88,11 @@ const compareSitemapPages = (a: SitemapPage, b: SitemapPage): number => {
 };
 
 const collectSitemapPageFromFile = async (
-  file: string
+  file: string,
+  contentDir: string
 ): Promise<SitemapPage | null> => {
   const slug = slugFromContentFile(file);
-  const markdownFile = Bun.file(`${CONTENT_DIR}/${file}`);
+  const markdownFile = Bun.file(`${contentDir}/${file}`);
   const markdown = await markdownFile.text();
   const { frontmatter } = parseFrontmatter(markdown);
 
@@ -108,9 +109,10 @@ export const collectSitemapPagesFromContent = async (): Promise<
   SitemapPage[]
 > => {
   const pages: SitemapPage[] = [];
+  const contentDir = await getContentDir();
 
   for await (const file of scanContentFiles()) {
-    const page = await collectSitemapPageFromFile(file);
+    const page = await collectSitemapPageFromFile(file, contentDir);
     if (page) {
       pages.push(page);
     }

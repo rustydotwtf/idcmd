@@ -1,8 +1,21 @@
 {
   "name": "idcmd",
-  "private": true,
+  "version": "0.1.0",
+  "bin": {
+    "idcmd": "src/cli.ts"
+  },
+  "files": [
+    "src",
+    "templates",
+    "public",
+    "LICENSE",
+    "README.md"
+  ],
   "type": "module",
   "module": "src/server.ts",
+  "exports": {
+    "./client": "./src/client/index.ts"
+  },
   "scripts": {
     "dev": "concurrently -k -n css,server -c blue,green \"bun run dev:css\" \"bun run dev:server\"",
     "dev:css": "bunx @tailwindcss/cli -i content/styles.css -o public/styles.css --watch",

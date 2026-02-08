@@ -1,11 +1,8 @@
 import { expandMarkdownForAgent } from "./content/components/expand";
 import { generateLlmsTxt } from "./content/llms";
 import { discoverNavigation } from "./content/navigation";
-import {
-  CONTENT_DIR,
-  scanContentFiles,
-  slugFromContentFile,
-} from "./content/paths";
+import { scanContentFiles, slugFromContentFile } from "./content/paths";
+import { getProjectPaths } from "./project/paths";
 import { renderDocument, renderMarkdownPage } from "./render/page-renderer";
 import { generateSearchIndexFromContent } from "./search/index";
 import { renderSearchPageContent } from "./search/page";
@@ -20,6 +17,8 @@ import { resolveCanonicalUrl } from "./site/urls";
 const MAX_INDEX_BYTES = 5 * 1024 * 1024;
 const MAX_BUILD_SECONDS = 60;
 const MIN_SEARCH_QUERY_LENGTH = 2;
+
+const project = await getProjectPaths();
 
 // Find all content files in `content/` (`content/<slug>.md`).
 const contentFiles: string[] = [];
@@ -42,22 +41,22 @@ console.log(
 );
 
 // Ensure dist directory exists
-await Bun.write("dist/.gitkeep", "");
+await Bun.write(`${project.distDir}/.gitkeep`, "");
 
 const shouldCopyPublicPath = (relativePath: string): boolean =>
   // Do not overwrite the minified `dist/styles.css` produced by `build:css`.
   relativePath !== "styles.css";
 
 const copyPublicFileToDist = async (relativePath: string): Promise<void> => {
-  const file = Bun.file(`public/${relativePath}`);
+  const file = Bun.file(`${project.publicDir}/${relativePath}`);
   if (!(await file.exists())) {
     return;
   }
-  await Bun.write(`dist/${relativePath}`, file);
+  await Bun.write(`${project.distDir}/${relativePath}`, file);
 };
 
 const copyPublicToDist = async (): Promise<void> => {
-  const publicFiles = new Bun.Glob("**/*").scan("public");
+  const publicFiles = new Bun.Glob("**/*").scan(project.publicDir);
   for await (const relativePath of publicFiles) {
     if (shouldCopyPublicPath(relativePath)) {
       await copyPublicFileToDist(relativePath);
@@ -70,7 +69,9 @@ const writeMarkdownOutputs = async (
   markdown: string
 ): Promise<void> => {
   const flatMarkdownPath =
-    slug === "index" ? "dist/index.md" : `dist/${slug}.md`;
+    slug === "index"
+      ? `${project.distDir}/index.md`
+      : `${project.distDir}/${slug}.md`;
 
   const expanded = await expandMarkdownForAgent(markdown, {
     currentPath: slug === "index" ? "/" : `/${slug}/`,
@@ -86,11 +87,11 @@ const writeMarkdownOutputs = async (
 await copyPublicToDist();
 
 const resolveCssSource = async (): Promise<string | null> => {
-  if (await Bun.file("dist/styles.css").exists()) {
-    return "dist/styles.css";
+  if (await Bun.file(`${project.distDir}/styles.css`).exists()) {
+    return `${project.distDir}/styles.css`;
   }
-  if (await Bun.file("public/styles.css").exists()) {
-    return "public/styles.css";
+  if (await Bun.file(`${project.publicDir}/styles.css`).exists()) {
+    return `${project.publicDir}/styles.css`;
   }
   return null;
 };
@@ -99,7 +100,7 @@ const cssSource = await resolveCssSource();
 const inlineCss = cssSource ? await Bun.file(cssSource).text() : undefined;
 const cssPath = inlineCss ? undefined : "/styles.css";
 
-const renderStaticSearchPage = (): string => {
+const renderStaticSearchPage = (): Promise<string> => {
   const topPages = navigation
     .flatMap((group) => group.items)
     .slice(0, 8)
@@ -135,11 +136,14 @@ const renderStaticSearchPage = (): string => {
   });
 };
 
-await Bun.write("dist/search/index.html", renderStaticSearchPage());
-console.log("  generated dist/search/index.html");
+await Bun.write(
+  `${project.distDir}/search/index.html`,
+  await renderStaticSearchPage()
+);
+console.log(`  generated ${project.distDir}/search/index.html`);
 
 for (const file of contentFiles) {
-  const filePath = `${CONTENT_DIR}/${file}`;
+  const filePath = `${project.contentDir}/${file}`;
   const markdown = await Bun.file(filePath).text();
 
   const slug = slugFromContentFile(file);
@@ -155,11 +159,11 @@ for (const file of contentFiles) {
 
   let outPath: string;
   if (slug === "index") {
-    outPath = "dist/index.html";
+    outPath = `${project.distDir}/index.html`;
   } else if (slug === "404") {
-    outPath = "dist/404.html";
+    outPath = `${project.distDir}/404.html`;
   } else {
-    outPath = `dist/${slug}/index.html`;
+    outPath = `${project.distDir}/${slug}/index.html`;
   }
 
   await Bun.write(outPath, html);
@@ -167,19 +171,22 @@ for (const file of contentFiles) {
   await writeMarkdownOutputs(slug, markdown);
 
   if (slug === "404") {
-    const nested404Path = "dist/404/index.html";
+    const nested404Path = `${project.distDir}/404/index.html`;
     await Bun.write(nested404Path, html);
     console.log(`  ${filePath} -> ${nested404Path}`);
   }
 }
 
 const llmsTxt = await generateLlmsTxt();
-await Bun.write("dist/llms.txt", llmsTxt);
-console.log("  generated dist/llms.txt");
+await Bun.write(`${project.distDir}/llms.txt`, llmsTxt);
+console.log(`  generated ${project.distDir}/llms.txt`);
 
 const searchIndex = await generateSearchIndexFromContent({ siteConfig });
-await Bun.write("dist/search-index.json", JSON.stringify(searchIndex));
-const searchIndexBytes = Bun.file("dist/search-index.json").size;
+await Bun.write(
+  `${project.distDir}/search-index.json`,
+  JSON.stringify(searchIndex)
+);
+const searchIndexBytes = Bun.file(`${project.distDir}/search-index.json`).size;
 console.log(
   `  generated dist/search-index.json (${(searchIndexBytes / (1024 * 1024)).toFixed(2)} MB)`
 );
@@ -192,13 +199,16 @@ if (searchIndexBytes > MAX_INDEX_BYTES) {
 if (siteConfig.baseUrl) {
   const sitemapPages = await collectSitemapPagesFromContent();
   await Bun.write(
-    "dist/sitemap.xml",
+    `${project.distDir}/sitemap.xml`,
     generateSitemapXml(sitemapPages, siteConfig.baseUrl)
   );
-  console.log("  generated dist/sitemap.xml");
+  console.log(`  generated ${project.distDir}/sitemap.xml`);
 
-  await Bun.write("dist/robots.txt", generateRobotsTxt(siteConfig.baseUrl));
-  console.log("  generated dist/robots.txt");
+  await Bun.write(
+    `${project.distDir}/robots.txt`,
+    generateRobotsTxt(siteConfig.baseUrl)
+  );
+  console.log(`  generated ${project.distDir}/robots.txt`);
 } else {
   console.log(
     "Warning: site.jsonc missing baseUrl; skipping sitemap.xml and robots.txt."

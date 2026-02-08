@@ -12,9 +12,11 @@ import { discoverNavigation } from "@/content/navigation";
 import { loadSiteConfig, resolveRightRailConfig } from "@/site/config";
 import { resolveCanonicalUrl } from "@/site/urls";
 
-import { renderLayout } from "./layout";
+import { getRenderLayout } from "./layout-loader";
 import { renderMarkdownToHtml } from "./markdown";
 import { extractTocFromHtml } from "./toc";
+
+const ASSET_PREFIX = "/_idcmd";
 
 // Initialize shiki highlighter (cached singleton)
 let highlighterPromise: Promise<Highlighter> | null = null;
@@ -101,7 +103,7 @@ export const getNavigation = async (
  * Render a full HTML document around already-rendered HTML content.
  * This is the only module that should call `renderLayout()` directly.
  */
-export const renderDocument = (options: {
+export const renderDocument = async (options: {
   canonicalUrl?: string;
   contentHtml: string;
   cssPath?: string;
@@ -116,8 +118,9 @@ export const renderDocument = (options: {
   siteName: string;
   title: string;
   tocItems: ReturnType<typeof extractTocFromHtml>;
-}): string =>
-  renderLayout({
+}): Promise<string> => {
+  const renderLayout = await getRenderLayout();
+  return renderLayout({
     canonicalUrl: options.canonicalUrl,
     content: options.contentHtml,
     cssPath: options.cssPath,
@@ -133,6 +136,7 @@ export const renderDocument = (options: {
     title: options.title,
     tocItems: options.tocItems,
   });
+};
 
 export interface RenderMarkdownPageOptions {
   cssPath?: string;
@@ -203,7 +207,7 @@ const renderMarkdownPageShell = (options: {
   siteName: string;
   title: string;
   tocItems: ReturnType<typeof extractTocFromHtml>;
-}): string =>
+}): Promise<string> =>
   renderDocument({
     canonicalUrl: options.canonicalUrl,
     contentHtml: options.contentHtml,
@@ -241,12 +245,12 @@ const computeScriptPaths = (options: {
   shouldShowRightRail: boolean;
   tocItems: readonly unknown[];
 }): string[] => [
-  ...(options.isDev ? ["/live-reload.js"] : []),
-  ...(options.shouldShowRightRail ? ["/llm-menu.js"] : []),
+  ...(options.isDev ? [`${ASSET_PREFIX}/live-reload.js`] : []),
+  ...(options.shouldShowRightRail ? [`${ASSET_PREFIX}/llm-menu.js`] : []),
   ...(options.shouldShowRightRail &&
   options.rightRail.scrollSpy.enabled &&
   options.tocItems.length > 0
-    ? ["/right-rail-scrollspy.js"]
+    ? [`${ASSET_PREFIX}/right-rail-scrollspy.js`]
     : []),
 ];
 

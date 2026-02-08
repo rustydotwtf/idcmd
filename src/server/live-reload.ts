@@ -1,6 +1,6 @@
 import type { Server } from "bun";
 
-import { CONTENT_DIR, scanContentFiles } from "@/content/paths";
+import { getContentDir, scanContentFiles } from "@/content/paths";
 
 interface LiveReloadClient {
   close: () => void;
@@ -12,6 +12,7 @@ type ServerInstance = Server<undefined>;
 export interface LiveReloadEnv {
   isDev: boolean;
   pollMs: number;
+  websocketPath: string;
 }
 
 export interface LiveReloadController {
@@ -42,9 +43,10 @@ export const createLiveReload = (env: LiveReloadEnv): LiveReloadController => {
   };
 
   const getContentSnapshot = async (): Promise<string> => {
+    const contentDir = await getContentDir();
     const entries: string[] = [];
     for await (const file of scanContentFiles()) {
-      const filePath = `${CONTENT_DIR}/${file}`;
+      const filePath = `${contentDir}/${file}`;
       const { lastModified } = Bun.file(filePath);
       entries.push(`${file}:${lastModified}`);
     }
@@ -83,7 +85,11 @@ export const createLiveReload = (env: LiveReloadEnv): LiveReloadController => {
     server: ServerInstance,
     pathname: string
   ): "handled" | Response | undefined => {
-    if (!env.isDev || pathname !== "/__live-reload") {
+    // Backward compatible: accept both legacy and new websocket paths.
+    if (
+      !env.isDev ||
+      (pathname !== env.websocketPath && pathname !== "/__live-reload")
+    ) {
       return undefined;
     }
 

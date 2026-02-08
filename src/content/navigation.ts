@@ -11,7 +11,7 @@ import type { PageMeta } from "./frontmatter";
 
 import { parseFrontmatter, extractTitleFromContent } from "./frontmatter";
 import { resolveIconSvg } from "./icons";
-import { CONTENT_DIR, scanContentFiles, slugFromContentFile } from "./paths";
+import { getContentDir, scanContentFiles, slugFromContentFile } from "./paths";
 
 export interface NavItem {
   title: string;
@@ -97,10 +97,11 @@ const addNavItemToGroups = (
 const addFileToNavigation = async (
   file: string,
   groupsMap: Map<string, NavGroup>,
-  defaultGroup: NavGroup
+  defaultGroup: NavGroup,
+  contentDir: string
 ): Promise<void> => {
   const slug = slugFromContentFile(file);
-  const markdown = await Bun.file(`${CONTENT_DIR}/${file}`).text();
+  const markdown = await Bun.file(`${contentDir}/${file}`).text();
   const { frontmatter, content } = parseFrontmatter(markdown);
 
   if (frontmatter.hidden) {
@@ -140,6 +141,7 @@ const finalizeGroups = (
  */
 export const discoverNavigation = async (): Promise<NavGroup[]> => {
   const siteConfig = await loadSiteConfig();
+  const contentDir = await getContentDir();
 
   // Map of group ID -> NavGroup
   const groupsMap = buildGroupsMap(siteConfig.groups ?? []);
@@ -147,7 +149,7 @@ export const discoverNavigation = async (): Promise<NavGroup[]> => {
 
   // Scan all content files
   for await (const file of scanContentFiles()) {
-    await addFileToNavigation(file, groupsMap, defaultGroup);
+    await addFileToNavigation(file, groupsMap, defaultGroup, contentDir);
   }
 
   return finalizeGroups(groupsMap, defaultGroup);

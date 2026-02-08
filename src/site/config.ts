@@ -91,7 +91,8 @@ export interface ResolvedRightRailConfig {
   };
 }
 
-const SITE_CONFIG_PATH = "site.jsonc";
+const LEGACY_SITE_CONFIG_PATH = "site.jsonc";
+const NEW_SITE_CONFIG_PATH = "site/site.jsonc";
 const LOCALHOST_HOSTNAMES = new Set(["localhost", "127.0.0.1", "::1"]);
 
 const DEFAULT_RIGHT_RAIL_CONFIG: ResolvedRightRailConfig = {
@@ -180,49 +181,62 @@ const resolveBaseUrl = (baseUrl: string | undefined): string | undefined => {
 const formatZodIssuePath = (path: readonly (string | number)[]): string =>
   path.length === 0 ? "(root)" : path.join(".");
 
-const formatSiteConfigZodError = (error: ZodError): string => {
+const formatSiteConfigZodError = (
+  configPath: string,
+  error: ZodError
+): string => {
   const lines = error.issues.map(
     (issue) => `${formatZodIssuePath(issue.path)}: ${issue.message}`
   );
-  return `site.jsonc validation failed:\n${lines.join("\n")}`;
+  return `${configPath} validation failed:\n${lines.join("\n")}`;
 };
 
 const DEFAULT_SITE_CONFIG: SiteConfig = { description: "", name: "idcmd" };
 
-const parseSiteConfigJsonc = (text: string): unknown => {
+const parseSiteConfigJsonc = (configPath: string, text: string): unknown => {
   try {
     return Bun.JSONC.parse(text) as unknown;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    throw new Error(
-      `Failed to parse ${SITE_CONFIG_PATH} as JSONC: ${message}`,
-      {
-        cause: error,
-      }
-    );
+    throw new Error(`Failed to parse ${configPath} as JSONC: ${message}`, {
+      cause: error,
+    });
   }
 };
 
-const parseSiteConfigUnknown = (raw: unknown): SiteConfig => {
+const parseSiteConfigUnknown = (
+  configPath: string,
+  raw: unknown
+): SiteConfig => {
   try {
     return SiteConfigSchema.parse(raw);
   } catch (error) {
     if (error instanceof ZodError) {
-      throw new TypeError(formatSiteConfigZodError(error), { cause: error });
+      throw new TypeError(formatSiteConfigZodError(configPath, error), {
+        cause: error,
+      });
     }
     throw error;
   }
 };
 
+const resolveSiteConfigPath = async (): Promise<string> => {
+  if (await Bun.file(NEW_SITE_CONFIG_PATH).exists()) {
+    return NEW_SITE_CONFIG_PATH;
+  }
+  return LEGACY_SITE_CONFIG_PATH;
+};
+
 export const loadSiteConfig = async (): Promise<SiteConfig> => {
-  const file = Bun.file(SITE_CONFIG_PATH);
+  const configPath = await resolveSiteConfigPath();
+  const file = Bun.file(configPath);
   if (!(await file.exists())) {
     return DEFAULT_SITE_CONFIG;
   }
 
   const text = await file.text();
-  const raw = parseSiteConfigJsonc(text);
-  const parsed = parseSiteConfigUnknown(raw);
+  const raw = parseSiteConfigJsonc(configPath, text);
+  const parsed = parseSiteConfigUnknown(configPath, raw);
   return { ...parsed, baseUrl: resolveBaseUrl(parsed.baseUrl) };
 };
 

@@ -1,0 +1,29 @@
+{
+  "name": "__IDCMD_PACKAGE_NAME__",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "idcmd dev --port __IDCMD_DEV_PORT__",
+    "build": "idcmd build",
+    "preview": "idcmd preview",
+    "deploy": "idcmd deploy",
+    "check": "ultracite check && bun run typecheck && bun run test",
+    "test": "bun test",
+    "typecheck": "tsgo --noEmit -p tsconfig.json",
+    "fix": "ultracite fix"
+  },
+  "dependencies": {
+    "idcmd": "__IDCMD_IDCMD_VERSION__"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.1.18",
+    "@types/bun": "latest",
+    "@typescript/native-preview": "latest",
+    "lefthook": "^2.1.0",
+    "oxfmt": "^0.28.0",
+    "oxlint": "^1.43.0",
+    "tailwindcss": "^4.1.18",
+    "typescript": "^5",
+    "ultracite": "7.1.4"
+  }
+}

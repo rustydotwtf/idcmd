@@ -3,6 +3,7 @@ import type { Server } from "bun";
 import { expandMarkdownForAgent } from "./content/components/expand";
 import { generateLlmsTxt } from "./content/llms";
 import { getMarkdownFile } from "./content/store";
+import { getProjectPaths } from "./project/paths";
 import { renderMarkdownPage } from "./render/page-renderer";
 import { handleSearchRequest } from "./search/api";
 import { handleSearchPageRequest } from "./search/server-page";
@@ -13,6 +14,7 @@ import {
 } from "./server/headers";
 import { createLiveReload } from "./server/live-reload";
 import { serveStaticFile } from "./server/static";
+import { handleUserRouteRequest } from "./server/user-routes";
 import {
   getRedirectForCanonicalHtmlPath,
   isFileLikePathname,
@@ -21,8 +23,9 @@ import {
 
 type ServerInstance = Server<undefined>;
 
-const PUBLIC_DIR = "./public";
-const DIST_DIR = "./dist";
+const project = await getProjectPaths();
+const PUBLIC_DIR = project.publicDir;
+const DIST_DIR = project.distDir;
 const isDev = process.env.NODE_ENV !== "production";
 const LIVE_RELOAD_POLL_MS = 250;
 const MIN_SEARCH_QUERY_LENGTH = 2;
@@ -43,7 +46,11 @@ const createRedirectResponse = (pathname: string, url: URL): Response =>
     status: 308,
   });
 
-const liveReload = createLiveReload({ isDev, pollMs: LIVE_RELOAD_POLL_MS });
+const liveReload = createLiveReload({
+  isDev,
+  pollMs: LIVE_RELOAD_POLL_MS,
+  websocketPath: `${project.assetPrefix}/live-reload`,
+});
 
 if (isDev) {
   try {
@@ -147,7 +154,11 @@ const handlePageRequest = async (url: URL): Promise<Response> => {
 const maybeHandleCanonicalRedirect = (url: URL): Response | undefined => {
   const { pathname } = url;
 
-  if (pathname === "/__live-reload" || pathname.startsWith("/api/")) {
+  if (
+    pathname === "/__live-reload" ||
+    pathname === `${project.assetPrefix}/live-reload` ||
+    pathname.startsWith("/api/")
+  ) {
     return undefined;
   }
 
@@ -188,6 +199,7 @@ const handleRequest = async (
     publicDir: PUBLIC_DIR,
     staticCacheHeaders,
   };
+  const userRoutesEnv = { isDev, routesDir: project.routesDir };
 
   return (
     liveReloadUpgrade ??
@@ -195,6 +207,7 @@ const handleRequest = async (
     (await handleRobotsTxt(url, seoEnv)) ??
     (await handleSitemapXml(url, seoEnv)) ??
     (await handleSearchRequest(url)) ??
+    (await handleUserRouteRequest(url, req, userRoutesEnv)) ??
     (await serveStaticFile(path, staticEnv)) ??
     (await handleMarkdownRequest(path)) ??
     (await (maybeHandleCanonicalRedirect(url) ??

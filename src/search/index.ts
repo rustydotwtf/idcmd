@@ -4,7 +4,7 @@ import { expandMarkdownForAgent } from "@/content/components/expand";
 import { parseFrontmatter } from "@/content/frontmatter";
 import { derivePageMetaFromParsed } from "@/content/meta";
 import {
-  CONTENT_DIR,
+  getContentDir,
   pagePathFromContentSlug,
   scanContentFiles,
   slugFromContentFile,
@@ -83,10 +83,11 @@ const sortDocuments = (documents: SearchIndexDocumentV1[]): void => {
 const buildDocumentFromFile = async (
   file: string,
   bodyMaxChars: number,
+  contentDir: string,
   siteConfig: SiteConfig
 ): Promise<SearchIndexDocumentV1 | null> => {
   const slug = slugFromContentFile(file);
-  const markdown = await Bun.file(`${CONTENT_DIR}/${file}`).text();
+  const markdown = await Bun.file(`${contentDir}/${file}`).text();
   const parsed = parseFrontmatter(markdown);
 
   if (!isEligibleDocument(slug, parsed.frontmatter.hidden)) {
@@ -122,11 +123,13 @@ export const generateSearchIndexFromContent = async (
   const generatedAt = options.generatedAt ?? new Date().toISOString();
 
   const documents: SearchIndexDocumentV1[] = [];
+  const contentDir = await getContentDir();
 
   for await (const file of scanContentFiles()) {
     const document = await buildDocumentFromFile(
       file,
       bodyMaxChars,
+      contentDir,
       siteConfig
     );
     if (document) {

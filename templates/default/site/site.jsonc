@@ -1,0 +1,21 @@
+{
+  "name": "__IDCMD_SITE_NAME__",
+  "description": "__IDCMD_SITE_DESCRIPTION__",
+  "baseUrl": "__IDCMD_SITE_BASE_URL__",
+  "groups": [{ "id": "main", "label": "Navigation", "order": 1 }],
+  "search": {
+    "scope": "full",
+  },
+  "rightRail": {
+    "enabled": true,
+    "visibleFrom": "xl",
+    "placement": "viewport",
+    "tocLevels": [2, 3],
+    "smoothScroll": false,
+    "scrollSpy": {
+      "enabled": true,
+      "centerActiveItem": true,
+      "updateHash": "never",
+    },
+  },
+}

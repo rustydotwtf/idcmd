@@ -1,6 +1,5 @@
-import { CONTENT_DIR } from "./paths";
+import { getProjectPaths } from "@/project/paths";
 
-const ICONS_DIR = "./icons";
 const FALLBACK_ICON_NAME = "file";
 const FALLBACK_ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/></svg>`;
 
@@ -25,13 +24,17 @@ const getCachedSvgFile = (path: string): Promise<string | undefined> => {
   return pending;
 };
 
-const getNamedIconPath = (name: string): string => `${ICONS_DIR}/${name}.svg`;
+const getNamedIconPath = async (name: string): Promise<string> => {
+  const { iconsDir } = await getProjectPaths();
+  return `${iconsDir}/${name}.svg`;
+};
 
 const loadCustomIcon = async (
   slug: string,
   iconPath: string
 ): Promise<string | undefined> => {
-  const resolvedPath = `${CONTENT_DIR}/${slug}/${iconPath.slice(2)}`;
+  const { contentDir } = await getProjectPaths();
+  const resolvedPath = `${contentDir}/${slug}/${iconPath.slice(2)}`;
   const svg = await getCachedSvgFile(resolvedPath);
   if (!svg) {
     console.warn(`Custom icon not found: ${resolvedPath}`);
@@ -40,7 +43,9 @@ const loadCustomIcon = async (
 };
 
 const getFallbackIcon = async (): Promise<string> => {
-  const svg = await getCachedSvgFile(getNamedIconPath(FALLBACK_ICON_NAME));
+  const svg = await getCachedSvgFile(
+    await getNamedIconPath(FALLBACK_ICON_NAME)
+  );
   return svg ?? FALLBACK_ICON_SVG;
 };
 
@@ -63,7 +68,7 @@ export const resolveIconSvg = async (
     return customSvg ?? (await getFallbackIcon());
   }
 
-  const namedSvg = await getCachedSvgFile(getNamedIconPath(icon));
+  const namedSvg = await getCachedSvgFile(await getNamedIconPath(icon));
   if (namedSvg) {
     return namedSvg;
   }
