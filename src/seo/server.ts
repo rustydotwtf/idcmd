@@ -1,6 +1,5 @@
-import { loadSiteConfig } from "@/site/config";
-import { resolveCanonicalBaseUrl } from "@/site/urls";
-
+import { loadSiteConfig } from "../site/config";
+import { resolveCanonicalBaseUrl } from "../site/urls";
 import {
   collectSitemapPagesFromContent,
   generateRobotsTxt,

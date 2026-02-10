@@ -30,7 +30,7 @@
     "start": "bun src/server.ts",
     "check": "ultracite check && bun run typecheck && bun run test",
     "test": "bun test",
-    "typecheck": "tsgo --noEmit -p tsconfig.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
     "fix": "ultracite fix",
     "prepare": "lefthook install"
   },
@@ -49,6 +49,7 @@
     "oxfmt": "^0.28.0",
     "oxlint": "^1.43.0",
     "tailwindcss": "^4.1.18",
+    "typescript": "^5",
     "ultracite": "7.1.4"
   },
   "peerDependencies": {

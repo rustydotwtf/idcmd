@@ -1,15 +1,15 @@
 /* eslint-disable no-console */
 
-import type { ParsedArgs } from "@/cli/args";
+import type { ParsedArgs } from "./args";
 
-import { parseArgs } from "@/cli/args";
-import { buildCommand } from "@/cli/commands/build";
-import { deployCommand } from "@/cli/commands/deploy";
-import { devCommand } from "@/cli/commands/dev";
-import { initCommand } from "@/cli/commands/init";
-import { previewCommand } from "@/cli/commands/preview";
-import { parsePort } from "@/cli/normalize";
-import { readPackageVersion } from "@/cli/version";
+import { parseArgs } from "./args";
+import { buildCommand } from "./commands/build";
+import { deployCommand } from "./commands/deploy";
+import { devCommand } from "./commands/dev";
+import { initCommand } from "./commands/init";
+import { previewCommand } from "./commands/preview";
+import { parsePort } from "./normalize";
+import { readPackageVersion } from "./version";
 
 const DEFAULT_PREVIEW_PORT = 4173;
 

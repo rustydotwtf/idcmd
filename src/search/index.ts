@@ -1,16 +1,15 @@
-import type { SearchScope, SiteConfig } from "@/site/config";
+import type { SearchScope, SiteConfig } from "../site/config";
+import type { SearchResult } from "./contract";
 
-import { expandMarkdownForAgent } from "@/content/components/expand";
-import { parseFrontmatter } from "@/content/frontmatter";
-import { derivePageMetaFromParsed } from "@/content/meta";
+import { expandMarkdownForAgent } from "../content/components/expand";
+import { parseFrontmatter } from "../content/frontmatter";
+import { derivePageMetaFromParsed } from "../content/meta";
 import {
   getContentDir,
   pagePathFromContentSlug,
   scanContentFiles,
   slugFromContentFile,
-} from "@/content/paths";
-
-import type { SearchResult } from "./contract";
+} from "../content/paths";
 
 export const SEARCH_INDEX_VERSION = 1 as const;
 

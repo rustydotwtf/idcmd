@@ -1,7 +1,6 @@
-import { getSearchScope, loadSiteConfig } from "@/site/config";
-
 import type { SearchResult } from "./contract";
 
+import { getSearchScope, loadSiteConfig } from "../site/config";
 import { toSearchResultJsonLine } from "./contract";
 import { loadSearchIndex, search } from "./index";
 

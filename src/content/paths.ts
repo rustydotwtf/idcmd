@@ -1,4 +1,4 @@
-import { getProjectPaths } from "@/project/paths";
+import { getProjectPaths } from "../project/paths";
 
 const flatContentGlob = new Bun.Glob("*.md");
 

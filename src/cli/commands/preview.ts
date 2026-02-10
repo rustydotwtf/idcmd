@@ -1,4 +1,7 @@
-import { isFileLikePathname, toCanonicalHtmlPathname } from "@/site/url-policy";
+import {
+  isFileLikePathname,
+  toCanonicalHtmlPathname,
+} from "../../site/url-policy";
 
 const stripLeadingSlash = (pathname: string): string =>
   pathname.startsWith("/") ? pathname.slice(1) : pathname;

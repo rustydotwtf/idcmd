@@ -2,16 +2,15 @@ import type { Highlighter } from "shiki";
 
 import { createHighlighter } from "shiki";
 
-import type { NavGroup } from "@/content/navigation";
-import type { SiteConfig } from "@/site/config";
+import type { NavGroup } from "../content/navigation";
+import type { SiteConfig } from "../site/config";
 
-import { expandMarkdownContentForHtml } from "@/content/components/expand";
-import { parseFrontmatter } from "@/content/frontmatter";
-import { derivePageMetaFromParsed } from "@/content/meta";
-import { discoverNavigation } from "@/content/navigation";
-import { loadSiteConfig, resolveRightRailConfig } from "@/site/config";
-import { resolveCanonicalUrl } from "@/site/urls";
-
+import { expandMarkdownContentForHtml } from "../content/components/expand";
+import { parseFrontmatter } from "../content/frontmatter";
+import { derivePageMetaFromParsed } from "../content/meta";
+import { discoverNavigation } from "../content/navigation";
+import { loadSiteConfig, resolveRightRailConfig } from "../site/config";
+import { resolveCanonicalUrl } from "../site/urls";
 import { getRenderLayout } from "./layout-loader";
 import { renderMarkdownToHtml } from "./markdown";
 import { extractTocFromHtml } from "./toc";

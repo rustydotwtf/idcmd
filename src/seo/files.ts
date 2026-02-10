@@ -1,11 +1,11 @@
-import { parseFrontmatter } from "@/content/frontmatter";
+import { parseFrontmatter } from "../content/frontmatter";
 import {
   getContentDir,
   pagePathFromContentSlug,
   scanContentFiles,
   slugFromContentFile,
-} from "@/content/paths";
-import { resolveAbsoluteUrl } from "@/site/urls";
+} from "../content/paths";
+import { resolveAbsoluteUrl } from "../site/urls";
 
 export interface SitemapPage {
   pathname: string;

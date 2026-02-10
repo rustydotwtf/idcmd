@@ -1,4 +1,4 @@
-import { parsePort } from "@/cli/normalize";
+import { parsePort } from "../normalize";
 
 const DEFAULT_PORT = 4000;
 

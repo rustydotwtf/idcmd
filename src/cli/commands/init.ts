@@ -1,13 +1,13 @@
-import { copyDir, isDirEmpty, replaceInFile } from "@/cli/fs";
+import { copyDir, isDirEmpty, replaceInFile } from "../fs";
 import {
   normalizeOptionalString,
   parsePort,
   toPackageName,
-} from "@/cli/normalize";
-import { basename, joinPath } from "@/cli/path";
-import { promptOptionalText, promptText } from "@/cli/prompt";
-import { run } from "@/cli/run";
-import { readPackageVersion } from "@/cli/version";
+} from "../normalize";
+import { basename, joinPath } from "../path";
+import { promptOptionalText, promptText } from "../prompt";
+import { run } from "../run";
+import { readPackageVersion } from "../version";
 
 const DEFAULT_PORT = 4000;
 

@@ -1,16 +1,14 @@
-import type { NavGroup } from "@/content/navigation";
-import type { SearchScope } from "@/site/config";
+import type { NavGroup } from "../content/navigation";
+import type { SearchScope } from "../site/config";
+import type { SearchResult } from "./contract";
 
-import { getNavigation, renderDocument } from "@/render/page-renderer";
+import { getNavigation, renderDocument } from "../render/page-renderer";
 import {
   getSearchScope,
   loadSiteConfig,
   resolveRightRailConfig,
-} from "@/site/config";
-import { resolveCanonicalUrl } from "@/site/urls";
-
-import type { SearchResult } from "./contract";
-
+} from "../site/config";
+import { resolveCanonicalUrl } from "../site/urls";
 import { loadSearchIndex, search as runSearch } from "./index";
 import { renderSearchPageContent } from "./page";
 

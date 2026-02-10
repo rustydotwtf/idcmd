@@ -3,9 +3,8 @@ import type { JSX } from "preact";
 
 import { render } from "preact-render-to-string";
 
-import type { NavGroup, NavItem } from "@/content/navigation";
-import type { ResolvedRightRailConfig } from "@/site/config";
-
+import type { NavGroup, NavItem } from "../content/navigation";
+import type { ResolvedRightRailConfig } from "../site/config";
 import type { TocItem } from "./toc";
 
 import { RightRail } from "./right-rail";

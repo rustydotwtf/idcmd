@@ -18,6 +18,12 @@
   },
   "overrides": [
     {
+      "files": ["src/**/*.ts", "src/**/*.tsx"],
+      "rules": {
+        "import/no-relative-parent-imports": "off"
+      }
+    },
+    {
       "files": ["src/layout.tsx"],
       "rules": {
         "react/no-danger": "off"

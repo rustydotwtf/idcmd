@@ -1,7 +1,6 @@
 import type { JSX } from "preact";
 
-import type { ResolvedRightRailConfig } from "@/site/config";
-
+import type { ResolvedRightRailConfig } from "../site/config";
 import type { TocItem } from "./toc";
 
 const CaretDownIcon = (): JSX.Element => (

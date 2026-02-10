@@ -1,6 +1,6 @@
 import type { Server } from "bun";
 
-import { getContentDir, scanContentFiles } from "@/content/paths";
+import { getContentDir, scanContentFiles } from "../content/paths";
 
 interface LiveReloadClient {
   close: () => void;

@@ -9,7 +9,7 @@
     "deploy": "idcmd deploy",
     "check": "ultracite check && bun run typecheck && bun run test",
     "test": "bun test",
-    "typecheck": "tsgo --noEmit -p tsconfig.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
     "fix": "ultracite fix"
   },
   "dependencies": {

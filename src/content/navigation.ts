@@ -3,12 +3,10 @@
  * Scans content folders and builds navigation structure from frontmatter.
  */
 
-import type { GroupConfig } from "@/site/config";
-
-import { loadSiteConfig } from "@/site/config";
-
+import type { GroupConfig } from "../site/config";
 import type { PageMeta } from "./frontmatter";
 
+import { loadSiteConfig } from "../site/config";
 import { parseFrontmatter, extractTitleFromContent } from "./frontmatter";
 import { resolveIconSvg } from "./icons";
 import { getContentDir, scanContentFiles, slugFromContentFile } from "./paths";

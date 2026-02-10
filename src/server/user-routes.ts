@@ -1,6 +1,9 @@
-import type { ProjectPaths } from "@/project/paths";
+import type { ProjectPaths } from "../project/paths";
 
-import { isFileLikePathname, toCanonicalHtmlPathname } from "@/site/url-policy";
+import {
+  isFileLikePathname,
+  toCanonicalHtmlPathname,
+} from "../site/url-policy";
 
 export type RouteHandler = (req: Request) => Response | Promise<Response>;
 

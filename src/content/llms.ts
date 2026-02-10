@@ -1,7 +1,6 @@
-import type { SiteConfig } from "@/site/config";
+import type { SiteConfig } from "../site/config";
 
-import { loadSiteConfig } from "@/site/config";
-
+import { loadSiteConfig } from "../site/config";
 import { parseFrontmatter } from "./frontmatter";
 import { derivePageMetaFromParsed } from "./meta";
 import {
