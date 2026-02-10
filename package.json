@@ -1,6 +1,10 @@
 {
   "name": "idcmd",
   "version": "0.1.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rustydotwtf/idcmd"
+  },
   "bin": {
     "idcmd": "src/cli.ts"
   },
