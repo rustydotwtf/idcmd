@@ -46,7 +46,8 @@ export const devCommand = async (flags: DevFlags): Promise<number> => {
       tailwindInput,
       "-o",
       tailwindOutput,
-      "--watch",
+      // Tailwind v4 exits watch mode when stdin is closed unless `always` is specified.
+      "--watch=always",
     ],
     { stderr: "inherit", stdout: "inherit" }
   );
