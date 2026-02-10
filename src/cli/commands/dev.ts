@@ -25,7 +25,8 @@ const resolveTailwindOutput = async (): Promise<string> => {
 };
 
 const idcmdServerEntry = (): string =>
-  Bun.fileURLToPath(new URL("../server.ts", import.meta.url));
+  // `src/server.ts` lives two levels up from `src/cli/commands/*`.
+  Bun.fileURLToPath(new URL("../../server.ts", import.meta.url));
 
 const installSignalHandlers = (shutdown: () => void): void => {
   process.on("SIGINT", shutdown);

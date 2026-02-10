@@ -12,7 +12,8 @@ const findTailwindInput = async (): Promise<string> => {
 };
 
 const idcmdBuildEntry = (): string =>
-  Bun.fileURLToPath(new URL("../build.ts", import.meta.url));
+  // `src/build.ts` lives two levels up from `src/cli/commands/*`.
+  Bun.fileURLToPath(new URL("../../build.ts", import.meta.url));
 
 export const buildCommand = async (): Promise<number> => {
   const tailwindInput = await findTailwindInput();
