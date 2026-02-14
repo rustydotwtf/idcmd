@@ -104,7 +104,7 @@ const TopNavbar = ({
       <div class="flex items-center gap-4">
         <a
           href="/"
-          class="text-sm font-mono font-medium tracking-tight md:hidden"
+          class="text-sm font-mono font-medium tracking-tight lg:hidden"
           data-prefetch="hover"
         >
           <span class="text-muted-foreground">~/</span>
