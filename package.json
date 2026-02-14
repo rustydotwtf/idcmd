@@ -22,9 +22,9 @@
   },
   "scripts": {
     "dev": "concurrently -k -n css,server -c blue,green \"bun run dev:css\" \"bun run dev:server\"",
-    "dev:css": "bunx @tailwindcss/cli -i content/styles.css -o public/styles.css --watch",
+    "dev:css": "bunx @tailwindcss/cli -i site/styles/tailwind.css -o public/styles.css --watch",
     "dev:server": "bun --hot src/server.ts",
-    "build:css": "bunx @tailwindcss/cli -i content/styles.css -o public/styles.css --minify",
+    "build:css": "bunx @tailwindcss/cli -i site/styles/tailwind.css -o public/styles.css --minify",
     "build": "bun run build:css && bun src/build.ts",
     "preview": "bunx serve public",
     "start": "bun src/server.ts",

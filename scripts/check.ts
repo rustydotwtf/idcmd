@@ -27,6 +27,19 @@ interface StepCounts {
 const LINT_CONFIG_ERROR =
   "No linter configuration found. Run `bun x ultracite init` once in this project.";
 const MAX_OUTPUT_LINES = 120;
+const LINT_TARGETS = [
+  "README.md",
+  "package.json",
+  "tsconfig.json",
+  "vercel.json",
+  ".oxlintrc.json",
+  ".oxfmtrc.jsonc",
+  "scripts",
+  "site",
+  "src",
+  "tests",
+  "templates",
+];
 
 const steps: CheckStep[] = [
   {
@@ -35,7 +48,7 @@ const steps: CheckStep[] = [
     name: "Internal",
   },
   {
-    command: [process.execPath, "x", "ultracite", "check"],
+    command: [process.execPath, "x", "ultracite", "check", ...LINT_TARGETS],
     id: "lint",
     name: "Lint",
   },
