@@ -45,7 +45,13 @@ const scaffoldProject = async (): Promise<string> => {
 describe("cli client", () => {
   it("adds missing local client files from templates", async () => {
     const target = await scaffoldProject();
-    const rightRailPath = joinPath(target, "site", "client", "right-rail.tsx");
+    const rightRailPath = joinPath(
+      target,
+      "site",
+      "code",
+      "ui",
+      "right-rail.tsx"
+    );
 
     await deleteFile(rightRailPath);
     expect(await fileExists(rightRailPath)).toBe(false);
@@ -63,7 +69,8 @@ describe("cli client", () => {
     const searchPagePath = joinPath(
       target,
       "site",
-      "client",
+      "code",
+      "ui",
       "search-page.tsx"
     );
 
@@ -80,7 +87,7 @@ describe("cli client", () => {
 
   it("requires --yes before overwriting local client files", async () => {
     const target = await scaffoldProject();
-    const layoutPath = joinPath(target, "site", "client", "layout.tsx");
+    const layoutPath = joinPath(target, "site", "code", "ui", "layout.tsx");
 
     await writeTextFile(layoutPath, "// custom layout\n");
 
@@ -105,7 +112,7 @@ describe("cli client", () => {
     const runtimePath = joinPath(
       target,
       "site",
-      "client",
+      "code",
       "runtime",
       "nav-prefetch.ts"
     );
@@ -126,7 +133,7 @@ describe("cli client", () => {
     const runtimePath = joinPath(
       target,
       "site",
-      "client",
+      "code",
       "runtime",
       "llm-menu.ts"
     );

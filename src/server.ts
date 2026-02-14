@@ -155,7 +155,6 @@ const maybeHandleCanonicalRedirect = (url: URL): Response | undefined => {
   const { pathname } = url;
 
   if (
-    pathname === "/__live-reload" ||
     pathname === `${project.assetPrefix}/live-reload` ||
     pathname.startsWith("/api/")
   ) {

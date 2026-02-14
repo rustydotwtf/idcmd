@@ -1,15 +1,12 @@
 import { compileRuntimeAssetsOnce } from "../runtime-assets";
 
 const findTailwindInput = async (): Promise<string> => {
-  const candidates = ["site/styles/tailwind.css", "content/styles.css"];
-  for (const path of candidates) {
-    // eslint-disable-next-line no-await-in-loop
-    if (await Bun.file(path).exists()) {
-      return path;
-    }
+  const path = "site/styles/tailwind.css";
+  if (await Bun.file(path).exists()) {
+    return path;
   }
   throw new Error(
-    "Could not find Tailwind input. Expected site/styles/tailwind.css (new layout) or content/styles.css (legacy)."
+    "Could not find Tailwind input. Expected site/styles/tailwind.css."
   );
 };
 

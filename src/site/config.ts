@@ -91,8 +91,7 @@ export interface ResolvedRightRailConfig {
   };
 }
 
-const LEGACY_SITE_CONFIG_PATH = "site.jsonc";
-const NEW_SITE_CONFIG_PATH = "site/site.jsonc";
+const SITE_CONFIG_PATH = "site/site.jsonc";
 const LOCALHOST_HOSTNAMES = new Set(["localhost", "127.0.0.1", "::1"]);
 
 const DEFAULT_RIGHT_RAIL_CONFIG: ResolvedRightRailConfig = {
@@ -220,15 +219,8 @@ const parseSiteConfigUnknown = (
   }
 };
 
-const resolveSiteConfigPath = async (): Promise<string> => {
-  if (await Bun.file(NEW_SITE_CONFIG_PATH).exists()) {
-    return NEW_SITE_CONFIG_PATH;
-  }
-  return LEGACY_SITE_CONFIG_PATH;
-};
-
 export const loadSiteConfig = async (): Promise<SiteConfig> => {
-  const configPath = await resolveSiteConfigPath();
+  const configPath = SITE_CONFIG_PATH;
   const file = Bun.file(configPath);
   if (!(await file.exists())) {
     return DEFAULT_SITE_CONFIG;

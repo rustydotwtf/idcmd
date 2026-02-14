@@ -20,13 +20,16 @@ bun run smoke
 
 ## Layout
 
-- `site/content/` markdown pages (`index.md` -> `/`, `about.md` -> `/about/`)
-- `site/client/` local UI implementation (`layout.tsx`, `right-rail.tsx`, `search-page.tsx`)
-- `site/client/runtime/` local browser runtime TS (`*_idcmd` scripts compile from here)
-- `site/styles/tailwind.css` Tailwind entrypoint (compiled to `site/public/styles.css`)
-- `site/public/` static assets
-- `site/server/routes/` file-based server routes (dev/server-host only)
-- `site/site.jsonc` site configuration
+- Content: `site/content/` markdown pages (`index.md` -> `/`, `about.md` -> `/about/`)
+- Code: `site/code/ui/` (`layout.tsx`, `right-rail.tsx`, `search-page.tsx`)
+- Code: `site/code/runtime/` browser runtime TS (`*_idcmd` scripts compile from here)
+- Code: `site/code/routes/` file-based server routes (dev/server-host only)
+- Assets: `site/assets/` static files you own (icons, images, favicon, etc.)
+- Styles source: `site/styles/tailwind.css`
+- Config: `site/site.jsonc`
+- Generated output: `dist/` (`dist/styles.css`, `dist/_idcmd/*.js`, built pages)
+
+The mental model is simple: edit `site/content` and `site/code`, treat `dist/` as generated output.
 
 ## Sync Local Client Files
 
@@ -37,8 +40,8 @@ idcmd client update layout --yes
 idcmd client update runtime --yes
 ```
 
-These commands copy the latest baseline implementations from `idcmd` into `site/client/`.
-Runtime files in `site/client/runtime/` are compiled automatically by `idcmd dev` and `idcmd build`.
+These commands copy the latest baseline implementations from `idcmd` into `site/code/ui/` and `site/code/runtime/`.
+Runtime files in `site/code/runtime/` are compiled automatically by `idcmd dev` and `idcmd build`.
 
 ## Deploy (Vercel static)
 

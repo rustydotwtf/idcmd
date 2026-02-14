@@ -1,6 +1,11 @@
 const DEFAULT_SITE_DIR = "site";
 const DEFAULT_DIST_DIR = "dist";
 const ASSET_PREFIX = "/_idcmd" as const;
+const CONTENT_DIR = "content";
+const PUBLIC_DIR = "assets";
+const ICONS_DIR = "assets/icons";
+const ROUTES_DIR = "code/routes";
+const SITE_CONFIG_FILE = "site.jsonc";
 
 export interface ProjectPaths {
   assetPrefix: typeof ASSET_PREFIX;
@@ -37,45 +42,31 @@ const joinPath = (...parts: string[]): string => {
   return normalized.join("/");
 };
 
-const hasNewLayout = (cwd: string, siteDirName: string): Promise<boolean> =>
-  Bun.file(joinPath(cwd, siteDirName, "site.jsonc")).exists();
-
-const buildPaths = (
-  cwd: string,
-  rootDir: string,
-  distDirName: string
-): ProjectPaths => {
-  const distDir = joinPath(cwd, distDirName);
-  const contentDir = joinPath(rootDir, "content");
-  const publicDir = joinPath(rootDir, "public");
-  const iconsDir = joinPath(rootDir, "icons");
-  const routesDir = joinPath(rootDir, "server", "routes");
-  const siteConfigPath = joinPath(rootDir, "site.jsonc");
-
-  const siteDir = rootDir === cwd ? null : rootDir;
-
+const buildPaths = (args: {
+  cwd: string;
+  distDirName: string;
+  siteDirName: string;
+}): ProjectPaths => {
+  const siteRoot = joinPath(args.cwd, args.siteDirName);
   return {
     assetPrefix: ASSET_PREFIX,
-    contentDir,
-    distDir,
-    iconsDir,
-    publicDir,
-    routesDir,
-    siteConfigPath,
-    siteDir,
+    contentDir: joinPath(siteRoot, CONTENT_DIR),
+    distDir: joinPath(args.cwd, args.distDirName),
+    iconsDir: joinPath(siteRoot, ICONS_DIR),
+    publicDir: joinPath(siteRoot, PUBLIC_DIR),
+    routesDir: joinPath(siteRoot, ROUTES_DIR),
+    siteConfigPath: joinPath(siteRoot, SITE_CONFIG_FILE),
+    siteDir: siteRoot,
   };
 };
 
-export const resolveProjectPaths = async (
+export const resolveProjectPaths = (
   options: ResolveProjectPathsOptions = {}
 ): Promise<ProjectPaths> => {
   const cwd = trimTrailingSlash(options.cwd ?? process.cwd());
   const distDirName = options.distDir ?? DEFAULT_DIST_DIR;
   const siteDirName = options.siteDir ?? DEFAULT_SITE_DIR;
-
-  const siteRoot = joinPath(cwd, siteDirName);
-  const rootDir = (await hasNewLayout(cwd, siteDirName)) ? siteRoot : cwd;
-  return buildPaths(cwd, rootDir, distDirName);
+  return Promise.resolve(buildPaths({ cwd, distDirName, siteDirName }));
 };
 
 let cached: Promise<ProjectPaths> | null = null;

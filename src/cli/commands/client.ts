@@ -1,7 +1,7 @@
 import { ensureDir } from "../fs";
 import { dirname, joinPath } from "../path";
 
-const TEMPLATE_CLIENT_DIR = joinPath(
+const TEMPLATE_UI_DIR = joinPath(
   import.meta.dir,
   "..",
   "..",
@@ -9,12 +9,23 @@ const TEMPLATE_CLIENT_DIR = joinPath(
   "templates",
   "default",
   "site",
-  "client"
+  "code",
+  "ui"
 );
-const TEMPLATE_RUNTIME_DIR = joinPath(TEMPLATE_CLIENT_DIR, "runtime");
+const TEMPLATE_RUNTIME_DIR = joinPath(
+  import.meta.dir,
+  "..",
+  "..",
+  "..",
+  "templates",
+  "default",
+  "site",
+  "code",
+  "runtime"
+);
 
-const SITE_CLIENT_DIR = joinPath("site", "client");
-const SITE_RUNTIME_DIR = joinPath(SITE_CLIENT_DIR, "runtime");
+const SITE_UI_DIR = joinPath("site", "code", "ui");
+const SITE_RUNTIME_DIR = joinPath("site", "code", "runtime");
 const SITE_CONFIG_PATH = joinPath("site", "site.jsonc");
 
 const CLIENT_PARTS = [
@@ -63,8 +74,8 @@ const getFileSpecsForPart = (part: ClientPart): ClientFileSpec[] => {
     return [
       {
         fileName: "layout.tsx",
-        targetPath: joinPath(SITE_CLIENT_DIR, "layout.tsx"),
-        templatePath: joinPath(TEMPLATE_CLIENT_DIR, "layout.tsx"),
+        targetPath: joinPath(SITE_UI_DIR, "layout.tsx"),
+        templatePath: joinPath(TEMPLATE_UI_DIR, "layout.tsx"),
       },
     ];
   }
@@ -73,8 +84,8 @@ const getFileSpecsForPart = (part: ClientPart): ClientFileSpec[] => {
     return [
       {
         fileName: "right-rail.tsx",
-        targetPath: joinPath(SITE_CLIENT_DIR, "right-rail.tsx"),
-        templatePath: joinPath(TEMPLATE_CLIENT_DIR, "right-rail.tsx"),
+        targetPath: joinPath(SITE_UI_DIR, "right-rail.tsx"),
+        templatePath: joinPath(TEMPLATE_UI_DIR, "right-rail.tsx"),
       },
     ];
   }
@@ -83,8 +94,8 @@ const getFileSpecsForPart = (part: ClientPart): ClientFileSpec[] => {
     return [
       {
         fileName: "search-page.tsx",
-        targetPath: joinPath(SITE_CLIENT_DIR, "search-page.tsx"),
-        templatePath: joinPath(TEMPLATE_CLIENT_DIR, "search-page.tsx"),
+        targetPath: joinPath(SITE_UI_DIR, "search-page.tsx"),
+        templatePath: joinPath(TEMPLATE_UI_DIR, "search-page.tsx"),
       },
     ];
   }

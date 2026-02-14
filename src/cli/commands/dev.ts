@@ -11,22 +11,16 @@ export interface DevFlags {
 }
 
 const findTailwindInput = async (): Promise<string> => {
-  const candidates = ["site/styles/tailwind.css", "content/styles.css"];
-  for (const path of candidates) {
-    // eslint-disable-next-line no-await-in-loop
-    if (await Bun.file(path).exists()) {
-      return path;
-    }
+  const path = "site/styles/tailwind.css";
+  if (await Bun.file(path).exists()) {
+    return path;
   }
   throw new Error(
-    "Could not find Tailwind input. Expected site/styles/tailwind.css (new layout) or content/styles.css (legacy)."
+    "Could not find Tailwind input. Expected site/styles/tailwind.css."
   );
 };
 
-const resolveTailwindOutput = async (): Promise<string> => {
-  const hasSite = await Bun.file("site/site.jsonc").exists();
-  return hasSite ? "site/public/styles.css" : "public/styles.css";
-};
+const resolveTailwindOutput = (): string => "dist/styles.css";
 
 const idcmdServerEntry = (): string =>
   // `src/server.ts` lives two levels up from `src/cli/commands/*`.
@@ -135,7 +129,7 @@ export const devCommand = async (flags: DevFlags): Promise<number> => {
   }
 
   const tailwindInput = await findTailwindInput();
-  const tailwindOutput = await resolveTailwindOutput();
+  const tailwindOutput = resolveTailwindOutput();
   const cssProc = spawnCssProcess(tailwindInput, tailwindOutput);
   const serverProc = spawnServerProcess(port);
   installDevSignalHandlers({ cssProc, runtimeProc, serverProc });

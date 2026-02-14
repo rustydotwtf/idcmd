@@ -19,18 +19,19 @@ idcmd dev          # tailwind watch + SSR dev server
 idcmd build        # static dist/
 idcmd preview      # serve dist/ locally
 idcmd deploy       # build + validate Vercel static deploy config
-idcmd client ...   # add/update local site/client implementations
+idcmd client ...   # add/update local site/code implementations
 ```
 
 ## Layout (V1)
 
 - `site/content/<slug>.md` -> `/<slug>/` (`index.md` -> `/`)
-- `site/client/*` is local source code (you own and edit these files)
-- `site/client/runtime/*.ts` is local browser runtime code (compiled to `site/public/_idcmd/*.js`)
-- `site/styles/tailwind.css` -> `site/public/styles.css` (dev) / `dist/styles.css` (build)
-- `site/public/` static assets
-- `site/server/routes/**` file-based server routes (dev/server-host only)
+- `site/code/ui/*` is local UI source code (you own and edit these files)
+- `site/code/runtime/*.ts` is local browser runtime code (compiled to `dist/_idcmd/*.js`)
+- `site/code/routes/**` file-based server routes (dev/server-host only)
+- `site/styles/tailwind.css` -> `dist/styles.css`
+- `site/assets/` static assets
 - `site/site.jsonc` site config
+- `dist/` generated output (gitignored)
 
 ## Syncing Local Client Code
 
@@ -44,7 +45,7 @@ idcmd client update runtime --yes
 ```
 
 `add` creates missing files. `update` overwrites changed files and requires `--yes` unless `--dry-run` is used.
-Runtime files in `site/client/runtime/` are compiled automatically by `idcmd dev` and `idcmd build`.
+Runtime files in `site/code/runtime/` are compiled automatically by `idcmd dev` and `idcmd build`.
 
 ## Example: Add A Page
 
@@ -67,7 +68,7 @@ It renders at `/hello/`.
 
 ## Custom Server Routes (V1)
 
-Add `site/server/routes/api/hello.ts`:
+Add `site/code/routes/api/hello.ts`:
 
 ```ts
 export const GET = (): Response => Response.json({ ok: true });
@@ -93,7 +94,7 @@ It responds at `/api/hello`.
 
 ### Slug and path rules
 
-- Content lives at `site/content/<slug>.md` (or legacy `content/<slug>.md`).
+- Content lives at `site/content/<slug>.md`.
 - `slug="index"` is the home page.
 - Canonical HTML paths are `/` for index and `/<slug>/` otherwise.
 - Markdown download paths exist in two forms:

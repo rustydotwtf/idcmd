@@ -2,7 +2,7 @@ import type { RightRailComponent } from "./right-rail";
 
 import { RightRail as defaultRightRail } from "./right-rail";
 
-const USER_RIGHT_RAIL_PATH = "site/client/right-rail.tsx";
+const USER_RIGHT_RAIL_PATH = "site/code/ui/right-rail.tsx";
 
 const loadUserRightRail = async (
   filePath: string

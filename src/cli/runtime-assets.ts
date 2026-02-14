@@ -1,7 +1,7 @@
 import { joinPath } from "./path";
 
-const RUNTIME_SOURCE_DIR = joinPath("site", "client", "runtime");
-const RUNTIME_OUTPUT_DIR = joinPath("site", "public", "_idcmd");
+const RUNTIME_SOURCE_DIR = joinPath("site", "code", "runtime");
+const RUNTIME_OUTPUT_DIR = joinPath("dist", "_idcmd");
 
 const RUNTIME_ENTRY_FILES = [
   "live-reload.ts",
@@ -37,17 +37,14 @@ const scanRuntimeEntrypoints = async (
 const getRuntimeEntrypoints = async (): Promise<string[]> => {
   const entries = runtimeEntryPaths();
   const { existing, missing } = await scanRuntimeEntrypoints(entries);
-
   if (existing.length === 0) {
     return [];
   }
-
   if (missing.length > 0) {
     throw new Error(
       `Incomplete runtime scripts in ${RUNTIME_SOURCE_DIR}. Missing: ${missing.join(", ")}`
     );
   }
-
   return existing;
 };
 

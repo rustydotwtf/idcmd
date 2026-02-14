@@ -59,7 +59,7 @@ export const createLiveReload = (env: LiveReloadEnv): LiveReloadController => {
       return;
     }
 
-    console.log("Watching content/ for changes...");
+    console.log("Watching site/content/ for changes...");
     let snapshot = await getContentSnapshot();
 
     const poll = async (): Promise<void> => {
@@ -85,11 +85,7 @@ export const createLiveReload = (env: LiveReloadEnv): LiveReloadController => {
     server: ServerInstance,
     pathname: string
   ): "handled" | Response | undefined => {
-    // Backward compatible: accept both legacy and new websocket paths.
-    if (
-      !env.isDev ||
-      (pathname !== env.websocketPath && pathname !== "/__live-reload")
-    ) {
+    if (!env.isDev || pathname !== env.websocketPath) {
       return undefined;
     }
 

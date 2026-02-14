@@ -46,7 +46,7 @@ export const serveStaticFile = async (
   pathname: string,
   env: ServeStaticEnv
 ): Promise<Response | null> => {
-  const roots = env.isDev ? [env.publicDir] : [env.distDir, env.publicDir];
+  const roots = [env.distDir, env.publicDir];
 
   for (const root of roots) {
     const served = await tryServeFileFromRoot(root, pathname, env);

@@ -36,7 +36,7 @@ const seedClientFile = async (
   fileName: string,
   text: string
 ): Promise<void> => {
-  await writeTextFile(joinPath(root, "site", "client", fileName), text);
+  await writeTextFile(joinPath(root, "site", "code", "ui", fileName), text);
 };
 
 const withClientFile = async (
@@ -71,7 +71,7 @@ afterEach(() => {
 });
 
 describe("client loaders", () => {
-  it("loads custom layout from site/client/layout.tsx", async () => {
+  it("loads custom layout from site/code/ui/layout.tsx", async () => {
     await withClientFile(
       "idcmd-layout-loader-",
       "layout.tsx",
@@ -96,7 +96,7 @@ describe("client loaders", () => {
     expect(html.includes("<!DOCTYPE html>")).toBe(true);
   });
 
-  it("loads custom right rail from site/client/right-rail.tsx", async () => {
+  it("loads custom right rail from site/code/ui/right-rail.tsx", async () => {
     await withClientFile(
       "idcmd-right-rail-loader-",
       "right-rail.tsx",
@@ -113,7 +113,7 @@ describe("client loaders", () => {
     expect(node).toBe(null);
   });
 
-  it("loads custom search-page renderer from site/client/search-page.tsx", async () => {
+  it("loads custom search-page renderer from site/code/ui/search-page.tsx", async () => {
     await withClientFile(
       "idcmd-search-page-loader-",
       "search-page.tsx",

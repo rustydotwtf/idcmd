@@ -73,6 +73,6 @@ export const resolveIconSvg = async (
     return namedSvg;
   }
 
-  console.warn(`Icon "${icon}" not found in icons/ folder for ${slug}`);
+  console.warn(`Icon "${icon}" not found in icons directory for ${slug}`);
   return getFallbackIcon();
 };

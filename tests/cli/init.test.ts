@@ -44,16 +44,19 @@ const assertRequiredFiles = async (target: string): Promise<void> => {
     joinPath(target, "scripts", "smoke.ts"),
     joinPath(target, "vercel.json"),
     joinPath(target, "site", "site.jsonc"),
-    joinPath(target, "site", "client", "layout.tsx"),
-    joinPath(target, "site", "client", "right-rail.tsx"),
-    joinPath(target, "site", "client", "search-page.tsx"),
-    joinPath(target, "site", "client", "runtime", "live-reload.ts"),
-    joinPath(target, "site", "client", "runtime", "llm-menu.ts"),
-    joinPath(target, "site", "client", "runtime", "nav-prefetch.ts"),
-    joinPath(target, "site", "client", "runtime", "right-rail-scrollspy.ts"),
+    joinPath(target, "site", "code", "ui", "layout.tsx"),
+    joinPath(target, "site", "code", "ui", "right-rail.tsx"),
+    joinPath(target, "site", "code", "ui", "search-page.tsx"),
+    joinPath(target, "site", "code", "runtime", "live-reload.ts"),
+    joinPath(target, "site", "code", "runtime", "llm-menu.ts"),
+    joinPath(target, "site", "code", "runtime", "nav-prefetch.ts"),
+    joinPath(target, "site", "code", "runtime", "right-rail-scrollspy.ts"),
+    joinPath(target, "site", "code", "routes", "api", "hello.ts"),
+    joinPath(target, "site", "code", "server.ts"),
     joinPath(target, "site", "content", "index.md"),
+    joinPath(target, "site", "assets", "favicon.svg"),
+    joinPath(target, "site", "assets", "icons", "home.svg"),
     joinPath(target, "site", "styles", "tailwind.css"),
-    joinPath(target, "site", "public", "_idcmd", "live-reload.js"),
   ];
 
   for (const file of requiredFiles) {
@@ -80,7 +83,7 @@ const assertSiteConfig = async (target: string): Promise<void> => {
 
 const assertClientLayout = async (target: string): Promise<void> => {
   const layoutClient = await readTextFile(
-    joinPath(target, "site", "client", "layout.tsx")
+    joinPath(target, "site", "code", "ui", "layout.tsx")
   );
   expect(
     layoutClient.includes('import type { LayoutProps } from "idcmd/client"')
@@ -98,7 +101,7 @@ const assertReadme = async (target: string): Promise<void> => {
 
 const assertGitignore = async (target: string): Promise<void> => {
   const gitignore = await readTextFile(joinPath(target, ".gitignore"));
-  expect(gitignore.includes("site/public/_idcmd/*.js")).toBe(true);
+  expect(gitignore.includes("dist/")).toBe(true);
 };
 
 const assertScaffolded = async (target: string): Promise<void> => {

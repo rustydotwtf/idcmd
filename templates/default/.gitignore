@@ -1,4 +1,3 @@
 node_modules/
 dist/
-site/public/_idcmd/*.js
 .DS_Store

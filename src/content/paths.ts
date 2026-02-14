@@ -21,7 +21,7 @@ export const slugFromContentFile = (file: string): string => {
 export const scanContentFiles =
   async function* scanContentFiles(): AsyncGenerator<string> {
     const { contentDir } = await getProjectPaths();
-    // `content/<slug>.md`
+    // `site/content/<slug>.md`
     for await (const file of flatContentGlob.scan(contentDir)) {
       yield file;
     }
