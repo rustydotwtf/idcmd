@@ -1,10 +1,37 @@
-import { describe, expect, it } from "bun:test";
-import { requireResponse } from "tests/test-utils";
+import { afterEach, beforeEach, describe, expect, it } from "bun:test";
+import {
+  createTempDir,
+  joinPath,
+  requireResponse,
+  writeTextFile,
+} from "tests/test-utils";
 
 import { handleSearchRequest } from "@/search/api";
 import { parseSearchResultsJsonLines } from "@/search/contract";
 
 const SEARCH_QUERY = "markdown";
+const ORIGINAL_CWD = process.cwd();
+
+const seedSiteProject = async (): Promise<void> => {
+  const root = await createTempDir("idcmd-search-api-");
+  await writeTextFile(
+    joinPath(root, "site", "site.jsonc"),
+    '{ "name": "Docs", "description": "Markdown site" }'
+  );
+  await writeTextFile(
+    joinPath(root, "site", "content", "index.md"),
+    ["---", "title: Home", "---", "", "# Home", "", "Markdown site docs."].join(
+      "\n"
+    )
+  );
+  await writeTextFile(
+    joinPath(root, "site", "content", "about.md"),
+    ["---", "title: About", "---", "", "# About", "", "About this site."].join(
+      "\n"
+    )
+  );
+  process.chdir(root);
+};
 
 const expectValidResults = (jsonl: string): void => {
   const results = parseSearchResultsJsonLines(jsonl);
@@ -19,6 +46,14 @@ const expectValidResults = (jsonl: string): void => {
 };
 
 describe("/api/search", () => {
+  beforeEach(async () => {
+    await seedSiteProject();
+  });
+
+  afterEach(() => {
+    process.chdir(ORIGINAL_CWD);
+  });
+
   it("returns JSONL records matching the shared search contract", async () => {
     const response = await handleSearchRequest(
       new URL(

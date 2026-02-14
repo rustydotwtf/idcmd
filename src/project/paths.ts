@@ -70,8 +70,13 @@ export const resolveProjectPaths = (
 };
 
 let cached: Promise<ProjectPaths> | null = null;
+let cachedCwd: string | null = null;
 
 export const getProjectPaths = (): Promise<ProjectPaths> => {
-  cached ??= resolveProjectPaths();
+  const cwd = trimTrailingSlash(process.cwd());
+  if (!cached || cachedCwd !== cwd) {
+    cachedCwd = cwd;
+    cached = resolveProjectPaths({ cwd });
+  }
   return cached;
 };

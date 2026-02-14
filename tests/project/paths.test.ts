@@ -1,7 +1,15 @@
-import { describe, expect, it } from "bun:test";
+import { afterEach, describe, expect, it } from "bun:test";
 import { createTempDir, joinPath } from "tests/test-utils";
 
-import { resolveProjectPaths } from "@/project/paths";
+import { getProjectPaths, resolveProjectPaths } from "@/project/paths";
+
+const ORIGINAL_CWD = process.cwd();
+const normalizeTmpRealpath = (path: string): string =>
+  path.startsWith("/private/") ? path.slice("/private".length) : path;
+
+afterEach(() => {
+  process.chdir(ORIGINAL_CWD);
+});
 
 describe("project paths", () => {
   it("always resolves to site/ layout paths", async () => {
@@ -20,5 +28,22 @@ describe("project paths", () => {
     for (const [actual, expected] of assertions) {
       expect(actual).toBe(expected);
     }
+  });
+
+  it("refreshes cached paths when cwd changes", async () => {
+    const firstDir = await createTempDir("idcmd-paths-cwd-a-");
+    const secondDir = await createTempDir("idcmd-paths-cwd-b-");
+
+    process.chdir(firstDir);
+    const firstPaths = await getProjectPaths();
+    expect(normalizeTmpRealpath(firstPaths.contentDir)).toBe(
+      normalizeTmpRealpath(joinPath(firstDir, "site", "content"))
+    );
+
+    process.chdir(secondDir);
+    const secondPaths = await getProjectPaths();
+    expect(normalizeTmpRealpath(secondPaths.contentDir)).toBe(
+      normalizeTmpRealpath(joinPath(secondDir, "site", "content"))
+    );
   });
 });
