@@ -11,12 +11,12 @@ const checks: InternalCheck[] = [
     run: () => fileExists("package.json"),
   },
   {
-    description: "site config must exist (site/site.jsonc)",
-    run: () => fileExists("site/site.jsonc"),
+    description: "site config must exist (site.jsonc)",
+    run: () => fileExists("site.jsonc"),
   },
   {
-    description: "tailwind input must exist (site/styles/tailwind.css)",
-    run: () => fileExists("site/styles/tailwind.css"),
+    description: "tailwind input must exist (styles/tailwind.css)",
+    run: () => fileExists("styles/tailwind.css"),
   },
 ];
 

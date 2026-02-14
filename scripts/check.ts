@@ -35,8 +35,11 @@ const LINT_TARGETS = [
   ".oxlintrc.json",
   ".oxfmtrc.jsonc",
   "scripts",
-  "site",
   "src",
+  "content",
+  "assets",
+  "styles",
+  "site.jsonc",
   "tests",
   "templates",
 ];

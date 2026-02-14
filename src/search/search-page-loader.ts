@@ -2,7 +2,7 @@ import type { RenderSearchPageContent } from "./page";
 
 import { renderSearchPageContent as defaultRenderSearchPageContent } from "./page";
 
-const USER_SEARCH_PAGE_PATH = "site/src/ui/search-page.tsx";
+const USER_SEARCH_PAGE_PATH = "src/ui/search-page.tsx";
 
 const loadUserSearchPage = async (
   filePath: string

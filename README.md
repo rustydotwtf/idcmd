@@ -9,7 +9,7 @@ bun install
 bun run dev
 ```
 
-Everything you edit lives in `site/`.
+Everything you edit lives at the project root-level source folders (`content/`, `src/`, `styles/`, `assets/`, `site.jsonc`).
 
 ## CLI
 
@@ -19,18 +19,18 @@ idcmd dev          # tailwind watch + SSR dev server
 idcmd build        # static public/
 idcmd preview      # serve public/ locally
 idcmd deploy       # build + validate Vercel static deploy config
-idcmd client ...   # add/update local site/src implementations
+idcmd client ...   # add/update local src implementations
 ```
 
 ## Layout (V1)
 
-- `site/content/<slug>.md` -> `/<slug>/` (`index.md` -> `/`)
-- `site/src/ui/*` is local UI source code (you own and edit these files)
-- `site/src/runtime/*.ts` is local browser runtime code (compiled to `public/_idcmd/*.js`)
-- `site/src/routes/**` file-based server routes (dev/server-host only)
-- `site/styles/tailwind.css` -> `public/styles.css`
-- `site/assets/` static assets
-- `site/site.jsonc` site config
+- `content/<slug>.md` -> `/<slug>/` (`index.md` -> `/`)
+- `src/ui/*` is local UI source code (you own and edit these files)
+- `src/runtime/*.ts` is local browser runtime code (compiled to `public/_idcmd/*.js`)
+- `src/routes/**` file-based server routes (dev/server-host only)
+- `styles/tailwind.css` -> `public/styles.css`
+- `assets/` static assets
+- `site.jsonc` site config
 - `public/` generated output (gitignored)
 
 ## Syncing Local Client Code
@@ -45,11 +45,11 @@ idcmd client update runtime --yes
 ```
 
 `add` creates missing files. `update` overwrites changed files and requires `--yes` unless `--dry-run` is used.
-Runtime files in `site/src/runtime/` are compiled automatically by `idcmd dev` and `idcmd build`.
+Runtime files in `src/runtime/` are compiled automatically by `idcmd dev` and `idcmd build`.
 
 ## Example: Add A Page
 
-Create `site/content/hello.md`:
+Create `content/hello.md`:
 
 ```md
 ---
@@ -68,7 +68,7 @@ It renders at `/hello/`.
 
 ## Custom Server Routes (V1)
 
-Add `site/src/routes/api/hello.ts`:
+Add `src/routes/api/hello.ts`:
 
 ```ts
 export const GET = (): Response => Response.json({ ok: true });
@@ -94,7 +94,7 @@ It responds at `/api/hello`.
 
 ### Slug and path rules
 
-- Content lives at `site/content/<slug>.md`.
+- Content lives at `content/<slug>.md`.
 - `slug="index"` is the home page.
 - Canonical HTML paths are `/` for index and `/<slug>/` otherwise.
 - Markdown download paths exist in two forms:

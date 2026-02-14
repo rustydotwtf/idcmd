@@ -59,7 +59,7 @@ export const createLiveReload = (env: LiveReloadEnv): LiveReloadController => {
       return;
     }
 
-    console.log("Watching site/content/ for changes...");
+    console.log("Watching content/ for changes...");
     let snapshot = await getContentSnapshot();
 
     const poll = async (): Promise<void> => {

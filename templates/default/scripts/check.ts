@@ -36,11 +36,11 @@ const LINT_TARGETS = [
   ".oxlintrc.json",
   ".oxfmtrc.jsonc",
   "scripts",
-  "site/src",
-  "site/content",
-  "site/assets",
-  "site/styles",
-  "site/site.jsonc",
+  "src",
+  "content",
+  "assets",
+  "styles",
+  "site.jsonc",
 ];
 const ROOT_TEST_FILE_PATTERNS = [
   "*.test.ts",
@@ -78,7 +78,7 @@ const NESTED_TEST_FILE_PATTERNS = [
   "**/*_spec_*.js",
   "**/*_spec_*.jsx",
 ];
-const TEST_SOURCE_DIRS = ["site", "scripts", "src", "tests"];
+const TEST_SOURCE_DIRS = ["content", "scripts", "src", "tests"];
 
 const buildScopedTestFilePatterns = (): string[] => {
   const patterns = [...ROOT_TEST_FILE_PATTERNS];

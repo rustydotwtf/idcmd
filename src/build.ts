@@ -20,7 +20,7 @@ const MIN_SEARCH_QUERY_LENGTH = 2;
 
 const project = await getProjectPaths();
 
-// Find all content files in `site/content/` (`site/content/<slug>.md`).
+// Find all content files in `content/` (`content/<slug>.md`).
 const contentFiles: string[] = [];
 
 const buildStart = performance.now();
@@ -214,7 +214,7 @@ if (siteConfig.baseUrl) {
   console.log(`  generated ${project.outputDir}/robots.txt`);
 } else {
   console.log(
-    "Warning: site/site.jsonc missing baseUrl; skipping sitemap.xml and robots.txt."
+    "Warning: site.jsonc missing baseUrl; skipping sitemap.xml and robots.txt."
   );
 }
 

@@ -1,4 +1,3 @@
-const DEFAULT_SITE_DIR = "site";
 const DEFAULT_OUTPUT_DIR = "public";
 const ASSET_PREFIX = "/_idcmd" as const;
 const CONTENT_DIR = "content";
@@ -15,13 +14,11 @@ export interface ProjectPaths {
   assetsDir: string;
   routesDir: string;
   siteConfigPath: string;
-  siteDir: string | null;
 }
 
 export interface ResolveProjectPathsOptions {
   cwd?: string;
   outputDir?: string;
-  siteDir?: string;
 }
 
 const trimTrailingSlash = (value: string): string =>
@@ -45,28 +42,22 @@ const joinPath = (...parts: string[]): string => {
 const buildPaths = (args: {
   cwd: string;
   outputDirName: string;
-  siteDirName: string;
-}): ProjectPaths => {
-  const siteRoot = joinPath(args.cwd, args.siteDirName);
-  return {
-    assetPrefix: ASSET_PREFIX,
-    assetsDir: joinPath(siteRoot, ASSETS_DIR),
-    contentDir: joinPath(siteRoot, CONTENT_DIR),
-    iconsDir: joinPath(siteRoot, ICONS_DIR),
-    outputDir: joinPath(args.cwd, args.outputDirName),
-    routesDir: joinPath(siteRoot, ROUTES_DIR),
-    siteConfigPath: joinPath(siteRoot, SITE_CONFIG_FILE),
-    siteDir: siteRoot,
-  };
-};
+}): ProjectPaths => ({
+  assetPrefix: ASSET_PREFIX,
+  assetsDir: joinPath(args.cwd, ASSETS_DIR),
+  contentDir: joinPath(args.cwd, CONTENT_DIR),
+  iconsDir: joinPath(args.cwd, ICONS_DIR),
+  outputDir: joinPath(args.cwd, args.outputDirName),
+  routesDir: joinPath(args.cwd, ROUTES_DIR),
+  siteConfigPath: joinPath(args.cwd, SITE_CONFIG_FILE),
+});
 
 export const resolveProjectPaths = (
   options: ResolveProjectPathsOptions = {}
 ): Promise<ProjectPaths> => {
   const cwd = trimTrailingSlash(options.cwd ?? process.cwd());
   const outputDirName = options.outputDir ?? DEFAULT_OUTPUT_DIR;
-  const siteDirName = options.siteDir ?? DEFAULT_SITE_DIR;
-  return Promise.resolve(buildPaths({ cwd, outputDirName, siteDirName }));
+  return Promise.resolve(buildPaths({ cwd, outputDirName }));
 };
 
 let cached: Promise<ProjectPaths> | null = null;

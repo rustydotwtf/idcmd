@@ -8,7 +8,6 @@ const TEMPLATE_UI_DIR = joinPath(
   "..",
   "templates",
   "default",
-  "site",
   "src",
   "ui"
 );
@@ -19,14 +18,13 @@ const TEMPLATE_RUNTIME_DIR = joinPath(
   "..",
   "templates",
   "default",
-  "site",
   "src",
   "runtime"
 );
 
-const SITE_UI_DIR = joinPath("site", "src", "ui");
-const SITE_RUNTIME_DIR = joinPath("site", "src", "runtime");
-const SITE_CONFIG_PATH = joinPath("site", "site.jsonc");
+const SITE_UI_DIR = joinPath("src", "ui");
+const SITE_RUNTIME_DIR = joinPath("src", "runtime");
+const SITE_CONFIG_PATH = "site.jsonc";
 
 const CLIENT_PARTS = [
   "layout",
@@ -144,7 +142,7 @@ const parseClientArgs = (positionals: string[]): ParsedClientArgs => {
 const ensureSiteLayout = async (): Promise<void> => {
   if (!(await Bun.file(SITE_CONFIG_PATH).exists())) {
     throw new Error(
-      `Could not find ${SITE_CONFIG_PATH}. Run this command from an idcmd site project root.`
+      `Could not find ${SITE_CONFIG_PATH}. Run this command from an idcmd project root.`
     );
   }
 };

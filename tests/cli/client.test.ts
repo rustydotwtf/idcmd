@@ -45,13 +45,7 @@ const scaffoldProject = async (): Promise<string> => {
 describe("cli client", () => {
   it("adds missing local client files from templates", async () => {
     const target = await scaffoldProject();
-    const rightRailPath = joinPath(
-      target,
-      "site",
-      "src",
-      "ui",
-      "right-rail.tsx"
-    );
+    const rightRailPath = joinPath(target, "src", "ui", "right-rail.tsx");
 
     await deleteFile(rightRailPath);
     expect(await fileExists(rightRailPath)).toBe(false);
@@ -66,13 +60,7 @@ describe("cli client", () => {
 
   it("supports dry-run updates without overwriting files", async () => {
     const target = await scaffoldProject();
-    const searchPagePath = joinPath(
-      target,
-      "site",
-      "src",
-      "ui",
-      "search-page.tsx"
-    );
+    const searchPagePath = joinPath(target, "src", "ui", "search-page.tsx");
 
     await writeTextFile(searchPagePath, "// local customization\n");
     const dryRunCode = await runCli(
@@ -87,7 +75,7 @@ describe("cli client", () => {
 
   it("requires --yes before overwriting local client files", async () => {
     const target = await scaffoldProject();
-    const layoutPath = joinPath(target, "site", "src", "ui", "layout.tsx");
+    const layoutPath = joinPath(target, "src", "ui", "layout.tsx");
 
     await writeTextFile(layoutPath, "// custom layout\n");
 
@@ -109,13 +97,7 @@ describe("cli client", () => {
 
   it("adds missing runtime files from templates", async () => {
     const target = await scaffoldProject();
-    const runtimePath = joinPath(
-      target,
-      "site",
-      "src",
-      "runtime",
-      "nav-prefetch.ts"
-    );
+    const runtimePath = joinPath(target, "src", "runtime", "nav-prefetch.ts");
 
     await deleteFile(runtimePath);
     expect(await fileExists(runtimePath)).toBe(false);
@@ -130,13 +112,7 @@ describe("cli client", () => {
 
   it("requires --yes before overwriting runtime files", async () => {
     const target = await scaffoldProject();
-    const runtimePath = joinPath(
-      target,
-      "site",
-      "src",
-      "runtime",
-      "llm-menu.ts"
-    );
+    const runtimePath = joinPath(target, "src", "runtime", "llm-menu.ts");
 
     await writeTextFile(runtimePath, "// custom runtime\n");
 

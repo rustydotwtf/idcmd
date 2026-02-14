@@ -91,7 +91,7 @@ export interface ResolvedRightRailConfig {
   };
 }
 
-const SITE_CONFIG_PATH = "site/site.jsonc";
+const SITE_CONFIG_PATH = "site.jsonc";
 const LOCALHOST_HOSTNAMES = new Set(["localhost", "127.0.0.1", "::1"]);
 
 const DEFAULT_RIGHT_RAIL_CONFIG: ResolvedRightRailConfig = {

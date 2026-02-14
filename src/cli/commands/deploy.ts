@@ -30,7 +30,7 @@ const warnIfVercelMisconfigured = async (): Promise<void> => {
 };
 
 const warnIfBaseUrlMissing = async (): Promise<void> => {
-  const file = Bun.file("site/site.jsonc");
+  const file = Bun.file("site.jsonc");
   if (!(await file.exists())) {
     return;
   }
@@ -42,13 +42,13 @@ const warnIfBaseUrlMissing = async (): Promise<void> => {
     if (!cfg.baseUrl) {
       // eslint-disable-next-line no-console
       console.warn(
-        "Warning: site/site.jsonc missing baseUrl; sitemap.xml and robots.txt will be skipped."
+        "Warning: site.jsonc missing baseUrl; sitemap.xml and robots.txt will be skipped."
       );
     }
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     // eslint-disable-next-line no-console
-    console.warn(`Warning: Failed to parse site/site.jsonc: ${message}`);
+    console.warn(`Warning: Failed to parse site.jsonc: ${message}`);
   }
 };
 

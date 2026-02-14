@@ -1,6 +1,6 @@
 import { joinPath } from "./path";
 
-const RUNTIME_SOURCE_DIR = joinPath("site", "src", "runtime");
+const RUNTIME_SOURCE_DIR = joinPath("src", "runtime");
 const RUNTIME_OUTPUT_DIR = joinPath("public", "_idcmd");
 
 const RUNTIME_ENTRY_FILES = [

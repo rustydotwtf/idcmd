@@ -43,20 +43,20 @@ const assertRequiredFiles = async (target: string): Promise<void> => {
     joinPath(target, "scripts", "check-internal.ts"),
     joinPath(target, "scripts", "smoke.ts"),
     joinPath(target, "vercel.json"),
-    joinPath(target, "site", "site.jsonc"),
-    joinPath(target, "site", "src", "ui", "layout.tsx"),
-    joinPath(target, "site", "src", "ui", "right-rail.tsx"),
-    joinPath(target, "site", "src", "ui", "search-page.tsx"),
-    joinPath(target, "site", "src", "runtime", "live-reload.ts"),
-    joinPath(target, "site", "src", "runtime", "llm-menu.ts"),
-    joinPath(target, "site", "src", "runtime", "nav-prefetch.ts"),
-    joinPath(target, "site", "src", "runtime", "right-rail-scrollspy.ts"),
-    joinPath(target, "site", "src", "routes", "api", "hello.ts"),
-    joinPath(target, "site", "src", "server.ts"),
-    joinPath(target, "site", "content", "index.md"),
-    joinPath(target, "site", "assets", "favicon.svg"),
-    joinPath(target, "site", "assets", "icons", "home.svg"),
-    joinPath(target, "site", "styles", "tailwind.css"),
+    joinPath(target, "site.jsonc"),
+    joinPath(target, "src", "ui", "layout.tsx"),
+    joinPath(target, "src", "ui", "right-rail.tsx"),
+    joinPath(target, "src", "ui", "search-page.tsx"),
+    joinPath(target, "src", "runtime", "live-reload.ts"),
+    joinPath(target, "src", "runtime", "llm-menu.ts"),
+    joinPath(target, "src", "runtime", "nav-prefetch.ts"),
+    joinPath(target, "src", "runtime", "right-rail-scrollspy.ts"),
+    joinPath(target, "src", "routes", "api", "hello.ts"),
+    joinPath(target, "src", "server.ts"),
+    joinPath(target, "content", "index.md"),
+    joinPath(target, "assets", "favicon.svg"),
+    joinPath(target, "assets", "icons", "home.svg"),
+    joinPath(target, "styles", "tailwind.css"),
   ];
 
   for (const file of requiredFiles) {
@@ -73,7 +73,7 @@ const assertPackageJson = async (target: string): Promise<void> => {
 };
 
 const assertSiteConfig = async (target: string): Promise<void> => {
-  const siteConfig = await readTextFile(joinPath(target, "site", "site.jsonc"));
+  const siteConfig = await readTextFile(joinPath(target, "site.jsonc"));
   expect(siteConfig.includes('"name": "My Docs"')).toBe(true);
   expect(siteConfig.includes('"description": "Test description"')).toBe(true);
   expect(siteConfig.includes('// "baseUrl": "https://example.com",')).toBe(
@@ -83,7 +83,7 @@ const assertSiteConfig = async (target: string): Promise<void> => {
 
 const assertClientLayout = async (target: string): Promise<void> => {
   const layoutClient = await readTextFile(
-    joinPath(target, "site", "src", "ui", "layout.tsx")
+    joinPath(target, "src", "ui", "layout.tsx")
   );
   expect(
     layoutClient.includes('import type { LayoutProps } from "idcmd/client"')
@@ -104,6 +104,10 @@ const assertGitignore = async (target: string): Promise<void> => {
   expect(gitignore.includes("public/")).toBe(true);
 };
 
+const assertNoLegacySiteDir = async (target: string): Promise<void> => {
+  expect(await fileExists(joinPath(target, "site"))).toBe(false);
+};
+
 const assertScaffolded = async (target: string): Promise<void> => {
   await assertRequiredFiles(target);
   await assertPackageJson(target);
@@ -111,10 +115,11 @@ const assertScaffolded = async (target: string): Promise<void> => {
   await assertClientLayout(target);
   await assertReadme(target);
   await assertGitignore(target);
+  await assertNoLegacySiteDir(target);
 };
 
 describe("cli init", () => {
-  it("scaffolds the site/ layout with required files", async () => {
+  it("scaffolds the root layout with required files", async () => {
     const root = await createTempDir("idcmd-init-");
     const target = joinPath(root, "my-docs");
 

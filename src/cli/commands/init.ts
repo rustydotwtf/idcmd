@@ -200,7 +200,7 @@ const applySubstitutions = async (args: {
   siteName: string;
   targetDir: string;
 }): Promise<void> => {
-  await replaceInFile(joinPath(args.targetDir, "site", "site.jsonc"), (text) =>
+  await replaceInFile(joinPath(args.targetDir, "site.jsonc"), (text) =>
     fillSiteJsonc({
       baseUrl: args.baseUrl,
       description: args.description,

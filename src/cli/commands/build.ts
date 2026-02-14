@@ -1,12 +1,12 @@
 import { compileRuntimeAssetsOnce } from "../runtime-assets";
 
 const findTailwindInput = async (): Promise<string> => {
-  const path = "site/styles/tailwind.css";
+  const path = "styles/tailwind.css";
   if (await Bun.file(path).exists()) {
     return path;
   }
   throw new Error(
-    "Could not find Tailwind input. Expected site/styles/tailwind.css."
+    "Could not find Tailwind input. Expected styles/tailwind.css."
   );
 };
 

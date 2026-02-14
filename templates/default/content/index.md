@@ -7,4 +7,4 @@ icon: home
 
 # **IDCMD_SITE_NAME**
 
-Edit markdown in `site/content/`.
+Edit markdown in `content/`.
