@@ -5,6 +5,7 @@ import { render } from "preact-render-to-string";
 
 import type { NavGroup, NavItem } from "../content/navigation";
 import type { ResolvedRightRailConfig } from "../site/config";
+import type { RightRailComponent } from "./right-rail";
 import type { TocItem } from "./toc";
 
 import { RightRail } from "./right-rail";
@@ -22,9 +23,12 @@ export interface LayoutProps {
   scriptPaths?: string[];
   searchQuery?: string;
   showRightRail?: boolean;
+  rightRailComponent?: RightRailComponent;
   rightRail: ResolvedRightRailConfig;
   tocItems: TocItem[];
 }
+
+export type RenderLayout = (props: LayoutProps) => string;
 
 const Icon = ({ svg }: { svg: string }): JSX.Element => (
   <span
@@ -231,6 +235,7 @@ interface DocumentBodyProps {
   shouldShowRightRail: boolean;
   siteName: string;
   tocItems: TocItem[];
+  rightRailComponent: RightRailComponent;
 }
 
 const DocumentBody = ({
@@ -245,6 +250,7 @@ const DocumentBody = ({
   shouldShowRightRail,
   siteName,
   tocItems,
+  rightRailComponent: RightRailComponent,
 }: DocumentBodyProps): JSX.Element => (
   <body
     class="bg-background text-foreground font-sans"
@@ -266,7 +272,7 @@ const DocumentBody = ({
             dangerouslySetInnerHTML={{ __html: content }}
           />
           {shouldShowRightRail ? (
-            <RightRail
+            <RightRailComponent
               canonicalUrl={canonicalUrl}
               currentPath={currentPath}
               tocItems={tocItems}
@@ -299,6 +305,7 @@ const Layout = ({
   scriptPaths = [],
   searchQuery,
   showRightRail = true,
+  rightRailComponent = RightRail,
   rightRail,
   tocItems,
 }: LayoutProps): JSX.Element => {
@@ -330,10 +337,11 @@ const Layout = ({
         shouldShowRightRail={shouldShowRightRail}
         siteName={siteName}
         tocItems={tocItems}
+        rightRailComponent={rightRailComponent}
       />
     </html>
   );
 };
 
-export const renderLayout = (props: LayoutProps): string =>
+export const renderLayout: RenderLayout = (props) =>
   `<!DOCTYPE html>${render(<Layout {...props} />)}`;

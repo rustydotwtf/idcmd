@@ -216,17 +216,21 @@ const getPanelClass = (
     ? "fixed top-24 bottom-0 right-8 z-20 w-64 flex flex-col gap-6 min-h-0"
     : "sticky top-24 h-[calc(100vh-6rem)] flex flex-col gap-6 min-h-0";
 
+export interface RightRailProps {
+  canonicalUrl?: string;
+  currentPath: string;
+  tocItems: TocItem[];
+  rightRailConfig: ResolvedRightRailConfig;
+}
+
+export type RightRailComponent = (props: RightRailProps) => JSX.Element | null;
+
 export const RightRail = ({
   canonicalUrl,
   currentPath,
   tocItems,
   rightRailConfig,
-}: {
-  canonicalUrl?: string;
-  currentPath: string;
-  tocItems: TocItem[];
-  rightRailConfig: ResolvedRightRailConfig;
-}): JSX.Element => {
+}: RightRailProps): JSX.Element => {
   const { chatgptUrl, claudeUrl, markdownPath } = buildAskUrls({
     canonicalUrl,
     currentPath,

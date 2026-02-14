@@ -19,15 +19,29 @@ idcmd dev          # tailwind watch + SSR dev server
 idcmd build        # static dist/
 idcmd preview      # serve dist/ locally
 idcmd deploy       # build + validate Vercel static deploy config
+idcmd client ...   # add/update local site/client implementations
 ```
 
 ## Layout (V1)
 
 - `site/content/<slug>.md` -> `/<slug>/` (`index.md` -> `/`)
+- `site/client/*` is local source code (you own and edit these files)
 - `site/styles/tailwind.css` -> `site/public/styles.css` (dev) / `dist/styles.css` (build)
 - `site/public/` static assets
 - `site/server/routes/**` file-based server routes (dev/server-host only)
 - `site/site.jsonc` site config
+
+## Syncing Local Client Code
+
+Use these commands to pull baseline UI implementations into your project:
+
+```bash
+idcmd client add all
+idcmd client update all --dry-run
+idcmd client update layout --yes
+```
+
+`add` creates missing files. `update` overwrites changed files and requires `--yes` unless `--dry-run` is used.
 
 ## Example: Add A Page
 

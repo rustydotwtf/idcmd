@@ -10,7 +10,7 @@ import {
 } from "../site/config";
 import { resolveCanonicalUrl } from "../site/urls";
 import { loadSearchIndex, search as runSearch } from "./index";
-import { renderSearchPageContent } from "./page";
+import { getRenderSearchPageContent } from "./search-page-loader";
 
 export interface SearchPageHandlerEnv {
   cacheHeaders: HeadersInit;
@@ -37,40 +37,74 @@ const getResults = (
     ? runSearch(index, query, scope).slice(0, env.maxResults)
     : [];
 
+const getSearchQuery = (url: URL): string =>
+  url.searchParams.get("q")?.trim() ?? "";
+
+const loadSearchPageDependencies = async (options: {
+  isDev: boolean;
+  siteConfig: Awaited<ReturnType<typeof loadSiteConfig>>;
+}): Promise<{
+  navigation: Awaited<ReturnType<typeof getNavigation>>;
+  index: Awaited<ReturnType<typeof loadSearchIndex>>;
+  renderSearchPageContent: Awaited<
+    ReturnType<typeof getRenderSearchPageContent>
+  >;
+}> => {
+  const [navigation, index, renderSearchPageContent] = await Promise.all([
+    getNavigation(options.isDev),
+    loadSearchIndex({
+      forceRefresh: options.isDev,
+      siteConfig: options.siteConfig,
+    }),
+    getRenderSearchPageContent(),
+  ]);
+
+  return { index, navigation, renderSearchPageContent };
+};
+
+const getCanonicalSearchPageUrl = (options: {
+  baseUrl?: string;
+  env: SearchPageHandlerEnv;
+  url: URL;
+}): string | undefined =>
+  resolveCanonicalUrl(
+    {
+      configuredBaseUrl: options.baseUrl,
+      isDev: options.env.isDev,
+      requestOrigin: options.url.origin,
+    },
+    "/search/"
+  );
+
 const buildSearchPageHtml = async (
   url: URL,
   env: SearchPageHandlerEnv
 ): Promise<string> => {
   const siteConfig = await loadSiteConfig();
   const scope = getSearchScope(siteConfig);
-  const query = url.searchParams.get("q")?.trim() ?? "";
+  const query = getSearchQuery(url);
   const rightRail = resolveRightRailConfig(siteConfig.rightRail);
 
-  const [navigation, index] = await Promise.all([
-    getNavigation(env.isDev),
-    loadSearchIndex({ forceRefresh: env.isDev, siteConfig }),
-  ]);
+  const { index, navigation, renderSearchPageContent } =
+    await loadSearchPageDependencies({
+      isDev: env.isDev,
+      siteConfig,
+    });
 
   const results = getResults(index, query, scope, env);
-  const topPages = getTopPages(navigation);
   const content = renderSearchPageContent({
     minQueryLength: env.minQueryLength,
     query,
     results,
-    topPages,
+    topPages: getTopPages(navigation),
   });
 
-  const canonicalUrl = resolveCanonicalUrl(
-    {
-      configuredBaseUrl: siteConfig.baseUrl,
-      isDev: env.isDev,
-      requestOrigin: url.origin,
-    },
-    "/search/"
-  );
-
   return renderDocument({
-    canonicalUrl,
+    canonicalUrl: getCanonicalSearchPageUrl({
+      baseUrl: siteConfig.baseUrl,
+      env,
+      url,
+    }),
     contentHtml: content,
     currentPath: "/search/",
     description: siteConfig.description,

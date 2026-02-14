@@ -13,6 +13,7 @@ import { loadSiteConfig, resolveRightRailConfig } from "../site/config";
 import { resolveCanonicalUrl } from "../site/urls";
 import { getRenderLayout } from "./layout-loader";
 import { renderMarkdownToHtml } from "./markdown";
+import { getRightRail } from "./right-rail-loader";
 import { extractTocFromHtml } from "./toc";
 
 const ASSET_PREFIX = "/_idcmd";
@@ -118,7 +119,10 @@ export const renderDocument = async (options: {
   title: string;
   tocItems: ReturnType<typeof extractTocFromHtml>;
 }): Promise<string> => {
-  const renderLayout = await getRenderLayout();
+  const [renderLayout, rightRailComponent] = await Promise.all([
+    getRenderLayout(),
+    getRightRail(),
+  ]);
   return renderLayout({
     canonicalUrl: options.canonicalUrl,
     content: options.contentHtml,
@@ -128,6 +132,7 @@ export const renderDocument = async (options: {
     inlineCss: options.inlineCss,
     navigation: options.navigation,
     rightRail: options.rightRail,
+    rightRailComponent,
     scriptPaths: options.scriptPaths,
     searchQuery: options.searchQuery,
     showRightRail: options.showRightRail,

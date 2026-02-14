@@ -9,12 +9,14 @@ export interface TopPageLink {
   title: string;
 }
 
-interface SearchPageProps {
+export interface SearchPageProps {
   query: string;
   minQueryLength: number;
   results: SearchResult[];
   topPages: TopPageLink[];
 }
+
+export type RenderSearchPageContent = (props: SearchPageProps) => string;
 
 const ResultItem = ({ result }: { result: SearchResult }): JSX.Element => (
   <li class="rounded-md border border-border p-3">
@@ -92,5 +94,5 @@ const SearchPage = ({
   );
 };
 
-export const renderSearchPageContent = (props: SearchPageProps): string =>
+export const renderSearchPageContent: RenderSearchPageContent = (props) =>
   renderToString(<SearchPage {...props} />);

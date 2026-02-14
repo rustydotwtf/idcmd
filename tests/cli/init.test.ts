@@ -32,29 +32,64 @@ const runInit = (target: string): Promise<number> => {
   return proc.exited;
 };
 
-const assertScaffolded = async (target: string): Promise<void> => {
+const assertRequiredFiles = async (target: string): Promise<void> => {
   const requiredFiles = [
+    joinPath(target, ".gitignore"),
     joinPath(target, "package.json"),
     joinPath(target, "vercel.json"),
     joinPath(target, "site", "site.jsonc"),
+    joinPath(target, "site", "client", "layout.tsx"),
+    joinPath(target, "site", "client", "right-rail.tsx"),
+    joinPath(target, "site", "client", "search-page.tsx"),
     joinPath(target, "site", "content", "index.md"),
     joinPath(target, "site", "styles", "tailwind.css"),
     joinPath(target, "site", "public", "_idcmd", "live-reload.js"),
   ];
+
   for (const file of requiredFiles) {
     await expectFile(file);
   }
+};
 
+const assertPackageJson = async (target: string): Promise<void> => {
   const pkg = await readTextFile(joinPath(target, "package.json"));
   expect(pkg.includes('"name": "my-docs"')).toBe(true);
   expect(pkg.includes('"dev": "idcmd dev --port 4001"')).toBe(true);
+};
 
+const assertSiteConfig = async (target: string): Promise<void> => {
   const siteConfig = await readTextFile(joinPath(target, "site", "site.jsonc"));
   expect(siteConfig.includes('"name": "My Docs"')).toBe(true);
   expect(siteConfig.includes('"description": "Test description"')).toBe(true);
   expect(siteConfig.includes('// "baseUrl": "https://example.com",')).toBe(
     true
   );
+};
+
+const assertClientLayout = async (target: string): Promise<void> => {
+  const layoutClient = await readTextFile(
+    joinPath(target, "site", "client", "layout.tsx")
+  );
+  expect(
+    layoutClient.includes('import type { LayoutProps } from "idcmd/client"')
+  ).toBe(true);
+  expect(layoutClient.includes("export const renderLayout")).toBe(true);
+};
+
+const assertReadme = async (target: string): Promise<void> => {
+  const readme = await readTextFile(joinPath(target, "README.md"));
+  expect(readme.includes("My Docs")).toBe(true);
+  expect(readme.includes("intentionally opinionated for AI-friendly")).toBe(
+    true
+  );
+};
+
+const assertScaffolded = async (target: string): Promise<void> => {
+  await assertRequiredFiles(target);
+  await assertPackageJson(target);
+  await assertSiteConfig(target);
+  await assertClientLayout(target);
+  await assertReadme(target);
 };
 
 describe("cli init", () => {

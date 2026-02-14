@@ -1,8 +1,6 @@
-import type { LayoutProps } from "./layout";
+import type { RenderLayout } from "./layout";
 
 import { renderLayout as defaultRenderLayout } from "./layout";
-
-export type RenderLayout = (props: LayoutProps) => string;
 
 const USER_LAYOUT_PATH = "site/client/layout.tsx";
 
@@ -43,4 +41,9 @@ export const getRenderLayout = async (): Promise<RenderLayout> => {
   attempted = true;
   cached = await tryLoadUserRenderLayout();
   return cached ?? defaultRenderLayout;
+};
+
+export const resetLayoutLoaderForTests = (): void => {
+  cached = null;
+  attempted = false;
 };

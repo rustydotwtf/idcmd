@@ -4,6 +4,7 @@ import type { ParsedArgs } from "./args";
 
 import { parseArgs } from "./args";
 import { buildCommand } from "./commands/build";
+import { clientCommand } from "./commands/client";
 import { deployCommand } from "./commands/deploy";
 import { devCommand } from "./commands/dev";
 import { initCommand } from "./commands/init";
@@ -23,11 +24,15 @@ const usage = (): string =>
     "  idcmd build",
     "  idcmd preview [--port <port>]",
     "  idcmd deploy",
+    "  idcmd client <add|update> <layout|right-rail|search-page|all> [--dry-run] [--yes]",
     "",
   ].join("\n");
 
 const asStringFlag = (value: unknown): string | undefined =>
   typeof value === "string" ? value : undefined;
+
+const asBooleanFlag = (value: unknown): boolean =>
+  value === true || value === "true";
 
 const handleInit = (parsed: ParsedArgs): Promise<number> => {
   const [dir] = parsed.positionals;
@@ -46,8 +51,15 @@ const handlePreview = (parsed: ParsedArgs): Promise<number> => {
 
 const handleDeploy = (): Promise<number> => deployCommand();
 
+const handleClient = (parsed: ParsedArgs): Promise<number> =>
+  clientCommand(parsed.positionals, {
+    dryRun: asBooleanFlag(parsed.flags["dry-run"]),
+    yes: asBooleanFlag(parsed.flags.yes),
+  });
+
 const handlers: Record<string, (parsed: ParsedArgs) => Promise<number>> = {
   build: () => handleBuild(),
+  client: (parsed) => handleClient(parsed),
   deploy: () => handleDeploy(),
   dev: (parsed) => handleDev(parsed),
   init: (parsed) => handleInit(parsed),

@@ -23,6 +23,8 @@ export interface InitFlags {
 const resolveTemplateDir = (): string =>
   joinPath(import.meta.dir, "..", "..", "..", "templates", "default");
 
+const TEMPLATE_ROOT_DOTFILES = [".gitignore"];
+
 const commentOutBaseUrl = (text: string): string =>
   text.replace(
     '"baseUrl": "__IDCMD_SITE_BASE_URL__",',
@@ -55,6 +57,11 @@ const fillPackageJson = (args: {
     .replaceAll("__IDCMD_PACKAGE_NAME__", args.packageName)
     .replaceAll("__IDCMD_IDCMD_VERSION__", `^${args.idcmdVersion}`)
     .replaceAll("__IDCMD_DEV_PORT__", String(args.port));
+
+const fillReadme = (args: { siteName: string; text: string }): string =>
+  args.text
+    .replaceAll("__IDCMD_SITE_NAME__", args.siteName)
+    .replaceAll("IDCMD_SITE_NAME", args.siteName);
 
 interface InitDefaults {
   defaultPort: number;
@@ -105,6 +112,21 @@ const readInitInputs = async (
 const scaffoldFromTemplate = async (targetDir: string): Promise<void> => {
   const templateDir = resolveTemplateDir();
   await copyDir(templateDir, targetDir);
+  await copyTemplateRootDotfiles({ targetDir, templateDir });
+};
+
+const copyTemplateRootDotfiles = async (args: {
+  targetDir: string;
+  templateDir: string;
+}): Promise<void> => {
+  for (const fileName of TEMPLATE_ROOT_DOTFILES) {
+    const srcPath = joinPath(args.templateDir, fileName);
+    if (!(await Bun.file(srcPath).exists())) {
+      continue;
+    }
+    // eslint-disable-next-line no-await-in-loop
+    await Bun.write(joinPath(args.targetDir, fileName), Bun.file(srcPath));
+  }
 };
 
 const applySubstitutions = async (args: {
@@ -130,6 +152,13 @@ const applySubstitutions = async (args: {
       idcmdVersion: args.idcmdVersion,
       packageName: args.packageName,
       port: args.port,
+      text,
+    })
+  );
+
+  await replaceInFile(joinPath(args.targetDir, "README.md"), (text) =>
+    fillReadme({
+      siteName: args.siteName,
       text,
     })
   );

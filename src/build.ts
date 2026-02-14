@@ -5,7 +5,7 @@ import { scanContentFiles, slugFromContentFile } from "./content/paths";
 import { getProjectPaths } from "./project/paths";
 import { renderDocument, renderMarkdownPage } from "./render/page-renderer";
 import { generateSearchIndexFromContent } from "./search/index";
-import { renderSearchPageContent } from "./search/page";
+import { getRenderSearchPageContent } from "./search/search-page-loader";
 import {
   collectSitemapPagesFromContent,
   generateRobotsTxt,
@@ -100,13 +100,14 @@ const cssSource = await resolveCssSource();
 const inlineCss = cssSource ? await Bun.file(cssSource).text() : undefined;
 const cssPath = inlineCss ? undefined : "/styles.css";
 
-const renderStaticSearchPage = (): Promise<string> => {
+const renderStaticSearchPage = async (): Promise<string> => {
+  const renderSearchPage = await getRenderSearchPageContent();
   const topPages = navigation
     .flatMap((group) => group.items)
     .slice(0, 8)
     .map((item) => ({ href: item.href, title: item.title }));
 
-  const contentHtml = renderSearchPageContent({
+  const contentHtml = renderSearchPage({
     minQueryLength: MIN_SEARCH_QUERY_LENGTH,
     query: "",
     results: [],
