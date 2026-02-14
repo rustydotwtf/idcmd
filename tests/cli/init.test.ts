@@ -35,7 +35,11 @@ const runInit = (target: string): Promise<number> => {
 const assertRequiredFiles = async (target: string): Promise<void> => {
   const requiredFiles = [
     joinPath(target, ".gitignore"),
+    joinPath(target, ".oxlintrc.json"),
+    joinPath(target, ".oxfmtrc.jsonc"),
     joinPath(target, "package.json"),
+    joinPath(target, "scripts", "check.ts"),
+    joinPath(target, "scripts", "check-internal.ts"),
     joinPath(target, "vercel.json"),
     joinPath(target, "site", "site.jsonc"),
     joinPath(target, "site", "client", "layout.tsx"),
@@ -59,6 +63,7 @@ const assertPackageJson = async (target: string): Promise<void> => {
   const pkg = await readTextFile(joinPath(target, "package.json"));
   expect(pkg.includes('"name": "my-docs"')).toBe(true);
   expect(pkg.includes('"dev": "idcmd dev --port 4001"')).toBe(true);
+  expect(pkg.includes('"check": "bun run scripts/check.ts"')).toBe(true);
 };
 
 const assertSiteConfig = async (target: string): Promise<void> => {

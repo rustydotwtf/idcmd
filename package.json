@@ -28,7 +28,7 @@
     "build": "bun run build:css && bun src/build.ts",
     "preview": "bunx serve dist",
     "start": "bun src/server.ts",
-    "check": "ultracite check && bun run typecheck && bun run test",
+    "check": "bun run scripts/check.ts",
     "test": "bun test",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "fix": "ultracite fix",

@@ -24,6 +24,38 @@ const resolveTemplateDir = (): string =>
   joinPath(import.meta.dir, "..", "..", "..", "templates", "default");
 
 const TEMPLATE_ROOT_DOTFILES = [".gitignore"];
+const DEFAULT_OXLINT_CONFIG = `{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "extends": [
+    "./node_modules/ultracite/config/oxlint/core/.oxlintrc.json",
+    "./node_modules/ultracite/config/oxlint/react/.oxlintrc.json"
+  ]
+}
+`;
+const DEFAULT_OXFMT_CONFIG = `// Ultracite oxfmt Configuration
+// https://oxc.rs/docs/guide/usage/formatter/config-file-reference.html
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "printWidth": 80,
+  "tabWidth": 2,
+  "useTabs": false,
+  "semi": true,
+  "singleQuote": false,
+  "quoteProps": "as-needed",
+  "jsxSingleQuote": false,
+  "trailingComma": "es5",
+  "bracketSpacing": true,
+  "bracketSameLine": false,
+  "arrowParens": "always",
+  "endOfLine": "lf",
+  "experimentalSortPackageJson": true,
+  "experimentalSortImports": {
+    "ignoreCase": true,
+    "newlinesBetween": true,
+    "order": "asc",
+  },
+}
+`;
 
 const commentOutBaseUrl = (text: string): string =>
   text.replace(
@@ -113,6 +145,7 @@ const scaffoldFromTemplate = async (targetDir: string): Promise<void> => {
   const templateDir = resolveTemplateDir();
   await copyDir(templateDir, targetDir);
   await copyTemplateRootDotfiles({ targetDir, templateDir });
+  await writeDefaultLintConfigs(targetDir);
 };
 
 const copyTemplateRootDotfiles = async (args: {
@@ -127,6 +160,11 @@ const copyTemplateRootDotfiles = async (args: {
     // eslint-disable-next-line no-await-in-loop
     await Bun.write(joinPath(args.targetDir, fileName), Bun.file(srcPath));
   }
+};
+
+const writeDefaultLintConfigs = async (targetDir: string): Promise<void> => {
+  await Bun.write(joinPath(targetDir, ".oxlintrc.json"), DEFAULT_OXLINT_CONFIG);
+  await Bun.write(joinPath(targetDir, ".oxfmtrc.jsonc"), DEFAULT_OXFMT_CONFIG);
 };
 
 const applySubstitutions = async (args: {
