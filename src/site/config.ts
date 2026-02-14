@@ -1,5 +1,9 @@
 import { ZodError, z } from "zod";
 
+import type { CacheConfig } from "./cache";
+
+import { CacheConfigSchema } from "./cache";
+
 export const SearchScopeSchema = z.enum([
   "full",
   "title",
@@ -64,6 +68,7 @@ export type GroupConfig = z.infer<typeof GroupConfigSchema>;
 export const SiteConfigSchema = z
   .object({
     baseUrl: z.string().url().optional(),
+    cache: CacheConfigSchema.optional(),
     description: z.string(),
     groups: z.array(GroupConfigSchema).optional(),
     name: z.string().min(1),
@@ -146,12 +151,31 @@ const normalizeBaseUrl = (baseUrl: string): string | undefined => {
   }
 };
 
-const resolveBaseUrlFromEnv = (): string | undefined => {
+const resolveExplicitBaseUrlFromEnv = (): string | undefined => {
   const explicit = process.env.SITE_BASE_URL;
   if (explicit) {
     return normalizeBaseUrl(explicit);
   }
+  return undefined;
+};
 
+const resolveRailwayBaseUrlFromEnv = (): string | undefined => {
+  const railwayDomain = process.env.RAILWAY_PUBLIC_DOMAIN;
+  if (railwayDomain) {
+    return normalizeBaseUrl(`https://${railwayDomain}`);
+  }
+  return undefined;
+};
+
+const resolveFlyBaseUrlFromEnv = (): string | undefined => {
+  const flyApp = process.env.FLY_APP_NAME;
+  if (flyApp) {
+    return normalizeBaseUrl(`https://${flyApp}.fly.dev`);
+  }
+  return undefined;
+};
+
+const resolveVercelBaseUrlFromEnv = (): string | undefined => {
   // Vercel provides hostnames without protocol.
   const vercelUrl =
     process.env.VERCEL_URL ??
@@ -161,9 +185,14 @@ const resolveBaseUrlFromEnv = (): string | undefined => {
   if (vercelUrl) {
     return normalizeBaseUrl(`https://${vercelUrl}`);
   }
-
   return undefined;
 };
+
+const resolveBaseUrlFromEnv = (): string | undefined =>
+  resolveExplicitBaseUrlFromEnv() ??
+  resolveRailwayBaseUrlFromEnv() ??
+  resolveFlyBaseUrlFromEnv() ??
+  resolveVercelBaseUrlFromEnv();
 
 const resolveBaseUrl = (baseUrl: string | undefined): string | undefined => {
   const normalizedConfigUrl = baseUrl ? normalizeBaseUrl(baseUrl) : undefined;
@@ -190,7 +219,11 @@ const formatSiteConfigZodError = (
   return `${configPath} validation failed:\n${lines.join("\n")}`;
 };
 
-const DEFAULT_SITE_CONFIG: SiteConfig = { description: "", name: "idcmd" };
+const DEFAULT_SITE_CONFIG: SiteConfig = {
+  cache: { preset: "static" },
+  description: "",
+  name: "idcmd",
+};
 
 const parseSiteConfigJsonc = (configPath: string, text: string): unknown => {
   try {
@@ -229,8 +262,17 @@ export const loadSiteConfig = async (): Promise<SiteConfig> => {
   const text = await file.text();
   const raw = parseSiteConfigJsonc(configPath, text);
   const parsed = parseSiteConfigUnknown(configPath, raw);
-  return { ...parsed, baseUrl: resolveBaseUrl(parsed.baseUrl) };
+  return {
+    ...parsed,
+    baseUrl: resolveBaseUrl(parsed.baseUrl),
+    cache: resolveCacheConfig(parsed.cache),
+  };
 };
 
 export const getSearchScope = (siteConfig: SiteConfig): SearchScope =>
   siteConfig.search?.scope ?? "full";
+
+const resolveCacheConfig = (cache: CacheConfig | undefined): CacheConfig => ({
+  html: cache?.html,
+  preset: cache?.preset ?? "static",
+});

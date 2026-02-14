@@ -9,6 +9,7 @@ const BASE_URL = "http://127.0.0.1:4000";
 const READY_TIMEOUT_MS = 60_000;
 const READY_INTERVAL_MS = 500;
 const SHUTDOWN_TIMEOUT_MS = 5000;
+const isCi = process.env.CI === "true";
 
 interface CommandResult {
   code: number;
@@ -184,11 +185,18 @@ const assertApiEndpoint = async (target: string): Promise<void> => {
   assertApiResponse(api.stdout);
 };
 
+const assertHealthEndpoint = async (target: string): Promise<void> => {
+  const health = await runCurl("/health", target);
+  assertSuccess("curl /health", health);
+  expect(health.stdout.trim()).toBe("ok");
+};
+
 const assertEndpoints = async (target: string): Promise<void> => {
   await assertHomeEndpoint(target);
   await assertAboutEndpoint(target);
   await assertLlmsEndpoint(target);
   await assertApiEndpoint(target);
+  await assertHealthEndpoint(target);
 };
 
 const assertCheckPasses = async (
@@ -248,19 +256,26 @@ const withDevLogs = async (error: unknown, dev: DevProcess): Promise<Error> => {
 };
 
 describe("cli default flow", () => {
-  it("scaffolds, installs, checks, runs dev, and serves core endpoints", async () => {
-    const target = await scaffoldInstallAndCheck();
-    const dev = startDev(target);
+  if (isCi) {
+    it("scaffolds, installs, checks, runs dev, and serves core endpoints", async () => {
+      const target = await scaffoldInstallAndCheck();
+      const dev = startDev(target);
 
-    try {
-      await waitForReady(target);
-      await assertEndpoints(target);
-    } catch (error) {
-      throw await withDevLogs(error, dev);
-    } finally {
-      await stopDev(dev.proc);
-    }
+      try {
+        await waitForReady(target);
+        await assertEndpoints(target);
+      } catch (error) {
+        throw await withDevLogs(error, dev);
+      } finally {
+        await stopDev(dev.proc);
+      }
 
-    await assertCheckPasses(target, "bun run check (post-dev)");
+      await assertCheckPasses(target, "bun run check (post-dev)");
+    }, 240_000);
+    return;
+  }
+
+  it.skip("scaffolds, installs, checks, runs dev, and serves core endpoints", async () => {
+    await Bun.sleep(0);
   }, 240_000);
 });

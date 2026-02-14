@@ -1,10 +1,29 @@
-export const createHtmlCacheHeaders = (isDev: boolean): HeadersInit => ({
+import type { ResolvedCachePolicy } from "../site/cache";
+
+const combineCacheControl = (args: {
+  browserCacheControl: string;
+  edgeCacheControl: string | null;
+}): string =>
+  args.edgeCacheControl
+    ? `${args.browserCacheControl}, ${args.edgeCacheControl}`
+    : args.browserCacheControl;
+
+export const createHtmlCacheHeaders = (
+  isDev: boolean,
+  cachePolicy: ResolvedCachePolicy
+): HeadersInit => ({
   "Cache-Control": isDev
     ? "no-cache"
-    : "s-maxage=60, stale-while-revalidate=3600",
+    : combineCacheControl({
+        browserCacheControl: cachePolicy.html.browserCacheControl,
+        edgeCacheControl: cachePolicy.html.edgeCacheControl,
+      }),
   "Content-Type": "text/html; charset=utf-8",
 });
 
-export const createStaticCacheHeaders = (isDev: boolean): HeadersInit => ({
-  "Cache-Control": isDev ? "no-cache" : "public, max-age=31536000, immutable",
+export const createStaticCacheHeaders = (
+  isDev: boolean,
+  cachePolicy: ResolvedCachePolicy
+): HeadersInit => ({
+  "Cache-Control": isDev ? "no-cache" : cachePolicy.static.cacheControl,
 });

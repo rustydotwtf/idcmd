@@ -1,3 +1,4 @@
+import { resolveCachePolicy } from "../../site/cache";
 import { copyDir, ensureDir, isDirEmpty, replaceInFile } from "../fs";
 import {
   normalizeOptionalString,
@@ -5,7 +6,9 @@ import {
   toPackageName,
 } from "../normalize";
 import { basename, dirname, joinPath } from "../path";
-import { promptOptionalText, promptText } from "../prompt";
+import { promptOptionalText, promptSelect, promptText } from "../prompt";
+import { isDeployProvider, resolveProviderFromFlags } from "../provider";
+import { generateProviderFiles } from "../provider-files";
 import { run } from "../run";
 import { readPackageVersion } from "../version";
 
@@ -14,9 +17,12 @@ const DEFAULT_PORT = 4000;
 export interface InitFlags {
   "base-url"?: string;
   description?: string;
+  fly?: boolean;
   git?: boolean;
   name?: string;
   port?: string;
+  railway?: boolean;
+  vercel?: boolean;
   yes?: boolean;
 }
 
@@ -125,14 +131,41 @@ interface InitInputs {
   baseUrl: string | null;
   description: string;
   port: number;
+  provider: "none" | "vercel" | "fly" | "railway";
   siteName: string;
 }
+
+const promptProviderChoice = (): Promise<
+  "none" | "vercel" | "fly" | "railway"
+> =>
+  promptSelect(
+    "Deploy provider (optional)",
+    [
+      { label: "None (self-host / decide later)", value: "none" },
+      { label: "Vercel", value: "vercel" },
+      { label: "Fly.io", value: "fly" },
+      { label: "Railway", value: "railway" },
+    ],
+    "none"
+  );
+
+const resolveInitProvider = (
+  flags: InitFlags,
+  yes: boolean
+): Promise<"none" | "vercel" | "fly" | "railway"> => {
+  const provider = resolveProviderFromFlags(flags);
+  if (provider !== "none" || yes) {
+    return Promise.resolve(provider);
+  }
+  return promptProviderChoice();
+};
 
 const readInitInputs = async (
   flags: InitFlags,
   defaults: InitDefaults
 ): Promise<InitInputs> => {
   const yes = flags.yes === true;
+  const provider = await resolveInitProvider(flags, yes);
 
   const siteName = yes
     ? (flags.name ?? defaults.defaultSiteName)
@@ -157,6 +190,7 @@ const readInitInputs = async (
     baseUrl: normalizeOptionalString(baseUrlRaw),
     description,
     port,
+    provider,
     siteName,
   };
 };
@@ -280,6 +314,15 @@ const scaffoldAndConfigure = async (args: {
     siteName: args.inputs.siteName,
     targetDir: args.targetDir,
   });
+
+  if (isDeployProvider(args.inputs.provider)) {
+    await generateProviderFiles({
+      cachePolicy: resolveCachePolicy(),
+      packageName: args.defaults.packageName,
+      provider: args.inputs.provider,
+      targetDir: args.targetDir,
+    });
+  }
 };
 
 export const initCommand = async (

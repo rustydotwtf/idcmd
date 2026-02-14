@@ -1,6 +1,16 @@
 {
   "name": "__IDCMD_SITE_NAME__",
   "description": "__IDCMD_SITE_DESCRIPTION__",
+  "cache": {
+    // "fresh" | "balanced" | "static"
+    "preset": "static",
+
+    // Optional HTML edge cache overrides
+    // "html": {
+    //   "sMaxAgeSeconds": 60,
+    //   "staleWhileRevalidateSeconds": 3600,
+    // },
+  },
   "baseUrl": "__IDCMD_SITE_BASE_URL__",
   "groups": [{ "id": "main", "label": "Navigation", "order": 1 }],
   "search": {

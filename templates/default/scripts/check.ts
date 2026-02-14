@@ -32,7 +32,6 @@ const LINT_TARGETS = [
   "README.md",
   "package.json",
   "tsconfig.json",
-  "vercel.json",
   ".oxlintrc.json",
   ".oxfmtrc.jsonc",
   "scripts",

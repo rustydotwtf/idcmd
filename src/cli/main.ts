@@ -19,11 +19,11 @@ const usage = (): string =>
     "idcmd",
     "",
     "Usage:",
-    "  idcmd init [dir] [--yes] [--name <name>] [--description <text>] [--base-url <url>] [--port <port>] [--no-git]",
+    "  idcmd init [dir] [--yes] [--name <name>] [--description <text>] [--base-url <url>] [--port <port>] [--no-git] [--vercel|--fly|--railway]",
     "  idcmd dev [--port <port>]",
     "  idcmd build",
     "  idcmd preview [--port <port>]",
-    "  idcmd deploy",
+    "  idcmd deploy [--vercel|--fly|--railway]",
     "  idcmd client <add|update> <layout|right-rail|search-page|runtime|all> [--dry-run] [--yes]",
     "",
   ].join("\n");
@@ -34,9 +34,26 @@ const asStringFlag = (value: unknown): string | undefined =>
 const asBooleanFlag = (value: unknown): boolean =>
   value === true || value === "true";
 
+const asOptionalBooleanFlag = (value: unknown): boolean | undefined => {
+  if (value === false || value === "false") {
+    return false;
+  }
+  return asBooleanFlag(value) ? true : undefined;
+};
+
 const handleInit = (parsed: ParsedArgs): Promise<number> => {
   const [dir] = parsed.positionals;
-  return initCommand(dir, parsed.flags);
+  return initCommand(dir, {
+    "base-url": asStringFlag(parsed.flags["base-url"]),
+    description: asStringFlag(parsed.flags.description),
+    fly: asBooleanFlag(parsed.flags.fly),
+    git: asOptionalBooleanFlag(parsed.flags.git),
+    name: asStringFlag(parsed.flags.name),
+    port: asStringFlag(parsed.flags.port),
+    railway: asBooleanFlag(parsed.flags.railway),
+    vercel: asBooleanFlag(parsed.flags.vercel),
+    yes: asBooleanFlag(parsed.flags.yes),
+  });
 };
 
 const handleDev = (parsed: ParsedArgs): Promise<number> =>
@@ -49,7 +66,12 @@ const handlePreview = (parsed: ParsedArgs): Promise<number> => {
   return previewCommand(port);
 };
 
-const handleDeploy = (): Promise<number> => deployCommand();
+const handleDeploy = (parsed: ParsedArgs): Promise<number> =>
+  deployCommand({
+    fly: asBooleanFlag(parsed.flags.fly),
+    railway: asBooleanFlag(parsed.flags.railway),
+    vercel: asBooleanFlag(parsed.flags.vercel),
+  });
 
 const handleClient = (parsed: ParsedArgs): Promise<number> =>
   clientCommand(parsed.positionals, {
@@ -60,7 +82,7 @@ const handleClient = (parsed: ParsedArgs): Promise<number> =>
 const handlers: Record<string, (parsed: ParsedArgs) => Promise<number>> = {
   build: () => handleBuild(),
   client: (parsed) => handleClient(parsed),
-  deploy: () => handleDeploy(),
+  deploy: (parsed) => handleDeploy(parsed),
   dev: (parsed) => handleDev(parsed),
   init: (parsed) => handleInit(parsed),
   preview: (parsed) => handlePreview(parsed),

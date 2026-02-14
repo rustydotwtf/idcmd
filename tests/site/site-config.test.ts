@@ -59,4 +59,46 @@ describe("site-config", () => {
 
     expect(() => SiteConfigSchema.parse(raw)).toThrow();
   });
+
+  it("accepts cache preset and html overrides", () => {
+    const raw: unknown = Bun.JSONC.parse(`{
+      "name": "idcmd",
+      "description": "Docs site",
+      "cache": {
+        "preset": "balanced",
+        "html": {
+          "sMaxAgeSeconds": 120,
+          "staleWhileRevalidateSeconds": 7200
+        }
+      }
+    }`);
+
+    expect(() => SiteConfigSchema.parse(raw)).not.toThrow();
+  });
+
+  it("rejects unknown cache preset values", () => {
+    const raw: unknown = Bun.JSONC.parse(`{
+      "name": "idcmd",
+      "description": "Docs site",
+      "cache": {
+        "preset": "turbo"
+      }
+    }`);
+
+    expect(() => SiteConfigSchema.parse(raw)).toThrow();
+  });
+
+  it("rejects cache html overrides above max bounds", () => {
+    const raw: unknown = Bun.JSONC.parse(`{
+      "name": "idcmd",
+      "description": "Docs site",
+      "cache": {
+        "html": {
+          "sMaxAgeSeconds": 999999999
+        }
+      }
+    }`);
+
+    expect(() => SiteConfigSchema.parse(raw)).toThrow();
+  });
 });

@@ -18,9 +18,23 @@ idcmd init [dir]   # scaffold a new site
 idcmd dev          # tailwind watch + SSR dev server
 idcmd build        # static public/
 idcmd preview      # serve public/ locally
-idcmd deploy       # build + validate Vercel static deploy config
+idcmd deploy       # build + generate deploy files (Vercel/Fly/Railway)
 idcmd client ...   # add/update local src implementations
 ```
+
+### Deploy targets
+
+```bash
+idcmd init my-docs --fly
+idcmd init my-docs --railway
+idcmd init my-docs --vercel
+
+idcmd deploy --fly
+idcmd deploy --railway
+idcmd deploy --vercel
+```
+
+`idcmd init --yes` is provider-neutral by default (no provider files generated).
 
 ## Layout (V1)
 

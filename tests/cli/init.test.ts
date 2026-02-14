@@ -10,7 +10,7 @@ const expectFile = async (path: string): Promise<void> => {
   expect(await fileExists(path)).toBe(true);
 };
 
-const runInit = (target: string): Promise<number> => {
+const runInit = (target: string, extraArgs: string[] = []): Promise<number> => {
   const proc = Bun.spawn(
     [
       process.execPath,
@@ -25,6 +25,7 @@ const runInit = (target: string): Promise<number> => {
       "--port",
       "4001",
       "--no-git",
+      ...extraArgs,
     ],
     { stderr: "pipe", stdout: "pipe" }
   );
@@ -42,7 +43,6 @@ const assertRequiredFiles = async (target: string): Promise<void> => {
     joinPath(target, "scripts", "check.ts"),
     joinPath(target, "scripts", "check-internal.ts"),
     joinPath(target, "scripts", "smoke.ts"),
-    joinPath(target, "vercel.json"),
     joinPath(target, "site.jsonc"),
     joinPath(target, "src", "ui", "layout.tsx"),
     joinPath(target, "src", "ui", "right-rail.tsx"),
@@ -108,6 +108,14 @@ const assertNoLegacySiteDir = async (target: string): Promise<void> => {
   expect(await fileExists(joinPath(target, "site"))).toBe(false);
 };
 
+const assertNoProviderFiles = async (target: string): Promise<void> => {
+  expect(await fileExists(joinPath(target, "vercel.json"))).toBe(false);
+  expect(await fileExists(joinPath(target, "fly.toml"))).toBe(false);
+  expect(await fileExists(joinPath(target, "railway.json"))).toBe(false);
+  expect(await fileExists(joinPath(target, "Dockerfile"))).toBe(false);
+  expect(await fileExists(joinPath(target, ".dockerignore"))).toBe(false);
+};
+
 const assertScaffolded = async (target: string): Promise<void> => {
   await assertRequiredFiles(target);
   await assertPackageJson(target);
@@ -116,6 +124,7 @@ const assertScaffolded = async (target: string): Promise<void> => {
   await assertReadme(target);
   await assertGitignore(target);
   await assertNoLegacySiteDir(target);
+  await assertNoProviderFiles(target);
 };
 
 describe("cli init", () => {
@@ -126,5 +135,33 @@ describe("cli init", () => {
     const code = await runInit(target);
     expect(code).toBe(0);
     await assertScaffolded(target);
+  });
+
+  it("generates vercel config when --vercel is provided", async () => {
+    const root = await createTempDir("idcmd-init-vercel-");
+    const target = joinPath(root, "my-docs");
+
+    expect(await runInit(target, ["--vercel"])).toBe(0);
+    await expectFile(joinPath(target, "vercel.json"));
+  });
+
+  it("generates fly files when --fly is provided", async () => {
+    const root = await createTempDir("idcmd-init-fly-");
+    const target = joinPath(root, "my-docs");
+
+    expect(await runInit(target, ["--fly"])).toBe(0);
+    await expectFile(joinPath(target, "fly.toml"));
+    await expectFile(joinPath(target, "Dockerfile"));
+    await expectFile(joinPath(target, ".dockerignore"));
+  });
+
+  it("generates railway files when --railway is provided", async () => {
+    const root = await createTempDir("idcmd-init-railway-");
+    const target = joinPath(root, "my-docs");
+
+    expect(await runInit(target, ["--railway"])).toBe(0);
+    await expectFile(joinPath(target, "railway.json"));
+    await expectFile(joinPath(target, "Dockerfile"));
+    await expectFile(joinPath(target, ".dockerignore"));
   });
 });

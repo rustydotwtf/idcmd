@@ -43,10 +43,12 @@ idcmd client update runtime --yes
 These commands copy the latest baseline implementations from `idcmd` into `src/ui/` and `src/runtime/`.
 Runtime files in `src/runtime/` are compiled automatically by `idcmd dev` and `idcmd build`.
 
-## Deploy (Vercel static)
+## Deploy
 
 ```bash
-bun run build
+idcmd deploy --vercel
+idcmd deploy --fly
+idcmd deploy --railway
 ```
 
-This produces a static `public/` directory for Vercel.
+Use one provider flag at a time to generate deployment files.

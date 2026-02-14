@@ -15,6 +15,8 @@ import {
 import { createLiveReload } from "./server/live-reload";
 import { serveStaticFile } from "./server/static";
 import { handleUserRouteRequest } from "./server/user-routes";
+import { resolveCachePolicy } from "./site/cache";
+import { loadSiteConfig } from "./site/config";
 import {
   getRedirectForCanonicalHtmlPath,
   isFileLikePathname,
@@ -30,9 +32,12 @@ const isDev = process.env.NODE_ENV !== "production";
 const LIVE_RELOAD_POLL_MS = 250;
 const MIN_SEARCH_QUERY_LENGTH = 2;
 const MAX_SEARCH_RESULTS = 50;
+const HEALTHCHECK_PATH = "/health";
 
-const cacheHeaders = createHtmlCacheHeaders(isDev);
-const staticCacheHeaders = createStaticCacheHeaders(isDev);
+const siteConfig = await loadSiteConfig();
+const cachePolicy = resolveCachePolicy(siteConfig.cache);
+const cacheHeaders = createHtmlCacheHeaders(isDev, cachePolicy);
+const staticCacheHeaders = createStaticCacheHeaders(isDev, cachePolicy);
 
 const withQueryString = (pathname: string, search: string): string =>
   search ? `${pathname}${search}` : pathname;
@@ -71,6 +76,20 @@ const handleLlmsTxt = async (path: string): Promise<Response | undefined> => {
       "Content-Type": "text/plain; charset=utf-8",
       ...staticCacheHeaders,
     },
+  });
+};
+
+const handleHealthRequest = (path: string): Response | undefined => {
+  if (path !== HEALTHCHECK_PATH) {
+    return undefined;
+  }
+
+  return new Response("ok", {
+    headers: {
+      "Cache-Control": "no-cache",
+      "Content-Type": "text/plain; charset=utf-8",
+    },
+    status: 200,
   });
 };
 
@@ -202,6 +221,7 @@ const handleRequest = async (
 
   return (
     liveReloadUpgrade ??
+    handleHealthRequest(path) ??
     (await handleLlmsTxt(path)) ??
     (await handleRobotsTxt(url, seoEnv)) ??
     (await handleSitemapXml(url, seoEnv)) ??
