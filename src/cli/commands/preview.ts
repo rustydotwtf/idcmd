@@ -7,7 +7,7 @@ const stripLeadingSlash = (pathname: string): string =>
   pathname.startsWith("/") ? pathname.slice(1) : pathname;
 
 const tryServeFile = async (relativePath: string): Promise<Response | null> => {
-  const file = Bun.file(`dist/${stripLeadingSlash(relativePath)}`);
+  const file = Bun.file(`public/${stripLeadingSlash(relativePath)}`);
   if (!(await file.exists())) {
     return null;
   }
@@ -37,9 +37,9 @@ const serveHtml = async (pathname: string): Promise<Response> => {
 };
 
 export const previewCommand = async (port: number): Promise<number> => {
-  const exists = await Bun.file("dist/index.html").exists();
+  const exists = await Bun.file("public/index.html").exists();
   if (!exists) {
-    throw new Error("dist/ not found. Run `idcmd build` first.");
+    throw new Error("public/ not found. Run `idcmd build` first.");
   }
 
   const server = Bun.serve({

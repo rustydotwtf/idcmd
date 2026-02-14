@@ -16,22 +16,22 @@ Everything you edit lives in `site/`.
 ```bash
 idcmd init [dir]   # scaffold a new site
 idcmd dev          # tailwind watch + SSR dev server
-idcmd build        # static dist/
-idcmd preview      # serve dist/ locally
+idcmd build        # static public/
+idcmd preview      # serve public/ locally
 idcmd deploy       # build + validate Vercel static deploy config
-idcmd client ...   # add/update local site/code implementations
+idcmd client ...   # add/update local site/src implementations
 ```
 
 ## Layout (V1)
 
 - `site/content/<slug>.md` -> `/<slug>/` (`index.md` -> `/`)
-- `site/code/ui/*` is local UI source code (you own and edit these files)
-- `site/code/runtime/*.ts` is local browser runtime code (compiled to `dist/_idcmd/*.js`)
-- `site/code/routes/**` file-based server routes (dev/server-host only)
-- `site/styles/tailwind.css` -> `dist/styles.css`
+- `site/src/ui/*` is local UI source code (you own and edit these files)
+- `site/src/runtime/*.ts` is local browser runtime code (compiled to `public/_idcmd/*.js`)
+- `site/src/routes/**` file-based server routes (dev/server-host only)
+- `site/styles/tailwind.css` -> `public/styles.css`
 - `site/assets/` static assets
 - `site/site.jsonc` site config
-- `dist/` generated output (gitignored)
+- `public/` generated output (gitignored)
 
 ## Syncing Local Client Code
 
@@ -45,7 +45,7 @@ idcmd client update runtime --yes
 ```
 
 `add` creates missing files. `update` overwrites changed files and requires `--yes` unless `--dry-run` is used.
-Runtime files in `site/code/runtime/` are compiled automatically by `idcmd dev` and `idcmd build`.
+Runtime files in `site/src/runtime/` are compiled automatically by `idcmd dev` and `idcmd build`.
 
 ## Example: Add A Page
 
@@ -68,7 +68,7 @@ It renders at `/hello/`.
 
 ## Custom Server Routes (V1)
 
-Add `site/code/routes/api/hello.ts`:
+Add `site/src/routes/api/hello.ts`:
 
 ```ts
 export const GET = (): Response => Response.json({ ok: true });

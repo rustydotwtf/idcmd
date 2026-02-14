@@ -19,8 +19,8 @@ const checks: InternalCheck[] = [
     run: () => fileExists("site/styles/tailwind.css"),
   },
   {
-    description: "site code UI entry must exist (site/code/ui/layout.tsx)",
-    run: () => fileExists("site/code/ui/layout.tsx"),
+    description: "site source UI entry must exist (site/src/ui/layout.tsx)",
+    run: () => fileExists("site/src/ui/layout.tsx"),
   },
 ];
 

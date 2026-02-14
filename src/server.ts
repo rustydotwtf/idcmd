@@ -24,8 +24,8 @@ import {
 type ServerInstance = Server<undefined>;
 
 const project = await getProjectPaths();
-const PUBLIC_DIR = project.publicDir;
-const DIST_DIR = project.distDir;
+const ASSETS_DIR = project.assetsDir;
+const OUTPUT_DIR = project.outputDir;
 const isDev = process.env.NODE_ENV !== "production";
 const LIVE_RELOAD_POLL_MS = 250;
 const MIN_SEARCH_QUERY_LENGTH = 2;
@@ -185,7 +185,7 @@ const handleRequest = async (
     return undefined;
   }
 
-  const seoEnv = { distDir: DIST_DIR, isDev, staticCacheHeaders };
+  const seoEnv = { isDev, outputDir: OUTPUT_DIR, staticCacheHeaders };
   const searchPageEnv = {
     cacheHeaders,
     isDev,
@@ -193,9 +193,9 @@ const handleRequest = async (
     minQueryLength: MIN_SEARCH_QUERY_LENGTH,
   };
   const staticEnv = {
-    distDir: DIST_DIR,
+    assetsDir: ASSETS_DIR,
     isDev,
-    publicDir: PUBLIC_DIR,
+    outputDir: OUTPUT_DIR,
     staticCacheHeaders,
   };
   const userRoutesEnv = { isDev, routesDir: project.routesDir };

@@ -20,7 +20,7 @@ const findTailwindInput = async (): Promise<string> => {
   );
 };
 
-const resolveTailwindOutput = (): string => "dist/styles.css";
+const resolveTailwindOutput = (): string => "public/styles.css";
 
 const idcmdServerEntry = (): string =>
   // `src/server.ts` lives two levels up from `src/cli/commands/*`.

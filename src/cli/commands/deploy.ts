@@ -14,17 +14,17 @@ const warnIfVercelMisconfigured = async (): Promise<void> => {
   if (!raw) {
     // eslint-disable-next-line no-console
     console.warn(
-      "Warning: vercel.json not found. Vercel static deploy expects dist/ output."
+      "Warning: vercel.json not found. Vercel static deploy expects public/ output."
     );
     return;
   }
 
   const record = raw as Record<string, unknown>;
   const out = record.outputDirectory;
-  if (out !== "dist") {
+  if (out !== "public") {
     // eslint-disable-next-line no-console
     console.warn(
-      `Warning: vercel.json outputDirectory is not "dist" (got ${JSON.stringify(out)}).`
+      `Warning: vercel.json outputDirectory is not "public" (got ${JSON.stringify(out)}).`
     );
   }
 };
@@ -76,7 +76,7 @@ const printDeployInstructions = (): void => {
   // eslint-disable-next-line no-console
   console.log("  2. Import the repo in Vercel");
   // eslint-disable-next-line no-console
-  console.log("  3. Vercel will run `bun run build` and serve `dist/`");
+  console.log("  3. Vercel will run `bun run build` and serve `public/`");
   // eslint-disable-next-line no-console
   console.log("");
 };

@@ -29,7 +29,7 @@ export const buildCommand = async (): Promise<number> => {
       "-i",
       tailwindInput,
       "-o",
-      "dist/styles.css",
+      "public/styles.css",
       "--minify",
     ],
     { stderr: "inherit", stdout: "inherit" }

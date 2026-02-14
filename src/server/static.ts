@@ -13,9 +13,9 @@ const mimeTypes: Record<string, string> = {
 };
 
 export interface ServeStaticEnv {
-  distDir: string;
+  outputDir: string;
   isDev: boolean;
-  publicDir: string;
+  assetsDir: string;
   staticCacheHeaders: HeadersInit;
 }
 
@@ -46,7 +46,7 @@ export const serveStaticFile = async (
   pathname: string,
   env: ServeStaticEnv
 ): Promise<Response | null> => {
-  const roots = [env.distDir, env.publicDir];
+  const roots = [env.outputDir, env.assetsDir];
 
   for (const root of roots) {
     const served = await tryServeFileFromRoot(root, pathname, env);

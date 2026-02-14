@@ -26,7 +26,7 @@ export interface SearchIndexV1 {
   documents: SearchIndexDocumentV1[];
 }
 
-const SEARCH_INDEX_PATH = "dist/search-index.json";
+const SEARCH_INDEX_PATH = "public/search-index.json";
 const MIN_QUERY_TOKEN_LENGTH = 2;
 const DEFAULT_BODY_MAX_CHARS = 2000;
 

@@ -18,9 +18,9 @@ describe("user routes", () => {
     expect(routePathnameFromFile("/tmp/routes/index.ts", routesDir)).toBe("/");
   });
 
-  it("loads GET handler modules from site/code/routes", async () => {
+  it("loads GET handler modules from site/src/routes", async () => {
     const root = await createTempDir("idcmd-routes-");
-    const routesDir = joinPath(root, "site", "code", "routes");
+    const routesDir = joinPath(root, "site", "src", "routes");
     await writeTextFile(
       joinPath(routesDir, "api", "hello.ts"),
       'export const GET = () => new Response("ok");\n'

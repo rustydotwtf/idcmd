@@ -7,12 +7,12 @@ import {
 } from "./files";
 
 export interface SeoHandlerEnv {
-  distDir: string;
+  outputDir: string;
   isDev: boolean;
   staticCacheHeaders: HeadersInit;
 }
 
-const tryServeDistFile = async (
+const tryServeOutputFile = async (
   filePath: string,
   contentType: string,
   env: SeoHandlerEnv
@@ -42,8 +42,8 @@ export const handleRobotsTxt = async (
     return undefined;
   }
 
-  const served = await tryServeDistFile(
-    `${env.distDir}/robots.txt`,
+  const served = await tryServeOutputFile(
+    `${env.outputDir}/robots.txt`,
     "text/plain; charset=utf-8",
     env
   );
@@ -75,8 +75,8 @@ export const handleSitemapXml = async (
     return undefined;
   }
 
-  const served = await tryServeDistFile(
-    `${env.distDir}/sitemap.xml`,
+  const served = await tryServeOutputFile(
+    `${env.outputDir}/sitemap.xml`,
     "application/xml; charset=utf-8",
     env
   );

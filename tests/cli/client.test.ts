@@ -48,7 +48,7 @@ describe("cli client", () => {
     const rightRailPath = joinPath(
       target,
       "site",
-      "code",
+      "src",
       "ui",
       "right-rail.tsx"
     );
@@ -69,7 +69,7 @@ describe("cli client", () => {
     const searchPagePath = joinPath(
       target,
       "site",
-      "code",
+      "src",
       "ui",
       "search-page.tsx"
     );
@@ -87,7 +87,7 @@ describe("cli client", () => {
 
   it("requires --yes before overwriting local client files", async () => {
     const target = await scaffoldProject();
-    const layoutPath = joinPath(target, "site", "code", "ui", "layout.tsx");
+    const layoutPath = joinPath(target, "site", "src", "ui", "layout.tsx");
 
     await writeTextFile(layoutPath, "// custom layout\n");
 
@@ -112,7 +112,7 @@ describe("cli client", () => {
     const runtimePath = joinPath(
       target,
       "site",
-      "code",
+      "src",
       "runtime",
       "nav-prefetch.ts"
     );
@@ -133,7 +133,7 @@ describe("cli client", () => {
     const runtimePath = joinPath(
       target,
       "site",
-      "code",
+      "src",
       "runtime",
       "llm-menu.ts"
     );

@@ -35,5 +35,5 @@
     "noUnusedParameters": false,
     "noPropertyAccessFromIndexSignature": false
   },
-  "exclude": ["dist", "node_modules", "templates"]
+  "exclude": ["public", "node_modules", "templates"]
 }

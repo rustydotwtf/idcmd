@@ -19,11 +19,11 @@ describe("project paths", () => {
     const assertions: [unknown, unknown][] = [
       [paths.siteDir, joinPath(dir, "site")],
       [paths.contentDir, joinPath(dir, "site", "content")],
-      [paths.publicDir, joinPath(dir, "site", "assets")],
+      [paths.assetsDir, joinPath(dir, "site", "assets")],
       [paths.iconsDir, joinPath(dir, "site", "assets", "icons")],
-      [paths.routesDir, joinPath(dir, "site", "code", "routes")],
+      [paths.routesDir, joinPath(dir, "site", "src", "routes")],
       [paths.siteConfigPath, joinPath(dir, "site", "site.jsonc")],
-      [paths.distDir, joinPath(dir, "dist")],
+      [paths.outputDir, joinPath(dir, "public")],
     ];
     for (const [actual, expected] of assertions) {
       expect(actual).toBe(expected);

@@ -40,26 +40,26 @@ console.log(
   `Found ${navigation.length} groups with ${navigation.reduce((acc, g) => acc + g.items.length, 0)} total pages`
 );
 
-// Ensure dist directory exists
-await Bun.write(`${project.distDir}/.gitkeep`, "");
+// Ensure output directory exists
+await Bun.write(`${project.outputDir}/.gitkeep`, "");
 
-const shouldCopyPublicPath = (relativePath: string): boolean =>
-  // Do not overwrite the minified `dist/styles.css` produced by `build:css`.
+const shouldCopyAssetPath = (relativePath: string): boolean =>
+  // Do not overwrite the minified `public/styles.css` produced by `build:css`.
   relativePath !== "styles.css";
 
-const copyPublicFileToDist = async (relativePath: string): Promise<void> => {
-  const file = Bun.file(`${project.publicDir}/${relativePath}`);
+const copyAssetFileToOutput = async (relativePath: string): Promise<void> => {
+  const file = Bun.file(`${project.assetsDir}/${relativePath}`);
   if (!(await file.exists())) {
     return;
   }
-  await Bun.write(`${project.distDir}/${relativePath}`, file);
+  await Bun.write(`${project.outputDir}/${relativePath}`, file);
 };
 
-const copyPublicToDist = async (): Promise<void> => {
-  const publicFiles = new Bun.Glob("**/*").scan(project.publicDir);
-  for await (const relativePath of publicFiles) {
-    if (shouldCopyPublicPath(relativePath)) {
-      await copyPublicFileToDist(relativePath);
+const copyAssetsToOutput = async (): Promise<void> => {
+  const assetFiles = new Bun.Glob("**/*").scan(project.assetsDir);
+  for await (const relativePath of assetFiles) {
+    if (shouldCopyAssetPath(relativePath)) {
+      await copyAssetFileToOutput(relativePath);
     }
   }
 };
@@ -70,8 +70,8 @@ const writeMarkdownOutputs = async (
 ): Promise<void> => {
   const flatMarkdownPath =
     slug === "index"
-      ? `${project.distDir}/index.md`
-      : `${project.distDir}/${slug}.md`;
+      ? `${project.outputDir}/index.md`
+      : `${project.outputDir}/${slug}.md`;
 
   const expanded = await expandMarkdownForAgent(markdown, {
     currentPath: slug === "index" ? "/" : `/${slug}/`,
@@ -84,14 +84,14 @@ const writeMarkdownOutputs = async (
   console.log(`  markdown -> ${flatMarkdownPath}`);
 };
 
-await copyPublicToDist();
+await copyAssetsToOutput();
 
 const resolveCssSource = async (): Promise<string | null> => {
-  if (await Bun.file(`${project.distDir}/styles.css`).exists()) {
-    return `${project.distDir}/styles.css`;
+  if (await Bun.file(`${project.outputDir}/styles.css`).exists()) {
+    return `${project.outputDir}/styles.css`;
   }
-  if (await Bun.file(`${project.publicDir}/styles.css`).exists()) {
-    return `${project.publicDir}/styles.css`;
+  if (await Bun.file(`${project.assetsDir}/styles.css`).exists()) {
+    return `${project.assetsDir}/styles.css`;
   }
   return null;
 };
@@ -138,10 +138,10 @@ const renderStaticSearchPage = async (): Promise<string> => {
 };
 
 await Bun.write(
-  `${project.distDir}/search/index.html`,
+  `${project.outputDir}/search/index.html`,
   await renderStaticSearchPage()
 );
-console.log(`  generated ${project.distDir}/search/index.html`);
+console.log(`  generated ${project.outputDir}/search/index.html`);
 
 for (const file of contentFiles) {
   const filePath = `${project.contentDir}/${file}`;
@@ -160,11 +160,11 @@ for (const file of contentFiles) {
 
   let outPath: string;
   if (slug === "index") {
-    outPath = `${project.distDir}/index.html`;
+    outPath = `${project.outputDir}/index.html`;
   } else if (slug === "404") {
-    outPath = `${project.distDir}/404.html`;
+    outPath = `${project.outputDir}/404.html`;
   } else {
-    outPath = `${project.distDir}/${slug}/index.html`;
+    outPath = `${project.outputDir}/${slug}/index.html`;
   }
 
   await Bun.write(outPath, html);
@@ -172,24 +172,26 @@ for (const file of contentFiles) {
   await writeMarkdownOutputs(slug, markdown);
 
   if (slug === "404") {
-    const nested404Path = `${project.distDir}/404/index.html`;
+    const nested404Path = `${project.outputDir}/404/index.html`;
     await Bun.write(nested404Path, html);
     console.log(`  ${filePath} -> ${nested404Path}`);
   }
 }
 
 const llmsTxt = await generateLlmsTxt();
-await Bun.write(`${project.distDir}/llms.txt`, llmsTxt);
-console.log(`  generated ${project.distDir}/llms.txt`);
+await Bun.write(`${project.outputDir}/llms.txt`, llmsTxt);
+console.log(`  generated ${project.outputDir}/llms.txt`);
 
 const searchIndex = await generateSearchIndexFromContent({ siteConfig });
 await Bun.write(
-  `${project.distDir}/search-index.json`,
+  `${project.outputDir}/search-index.json`,
   JSON.stringify(searchIndex)
 );
-const searchIndexBytes = Bun.file(`${project.distDir}/search-index.json`).size;
+const searchIndexBytes = Bun.file(
+  `${project.outputDir}/search-index.json`
+).size;
 console.log(
-  `  generated dist/search-index.json (${(searchIndexBytes / (1024 * 1024)).toFixed(2)} MB)`
+  `  generated public/search-index.json (${(searchIndexBytes / (1024 * 1024)).toFixed(2)} MB)`
 );
 if (searchIndexBytes > MAX_INDEX_BYTES) {
   console.warn(
@@ -200,16 +202,16 @@ if (searchIndexBytes > MAX_INDEX_BYTES) {
 if (siteConfig.baseUrl) {
   const sitemapPages = await collectSitemapPagesFromContent();
   await Bun.write(
-    `${project.distDir}/sitemap.xml`,
+    `${project.outputDir}/sitemap.xml`,
     generateSitemapXml(sitemapPages, siteConfig.baseUrl)
   );
-  console.log(`  generated ${project.distDir}/sitemap.xml`);
+  console.log(`  generated ${project.outputDir}/sitemap.xml`);
 
   await Bun.write(
-    `${project.distDir}/robots.txt`,
+    `${project.outputDir}/robots.txt`,
     generateRobotsTxt(siteConfig.baseUrl)
   );
-  console.log(`  generated ${project.distDir}/robots.txt`);
+  console.log(`  generated ${project.outputDir}/robots.txt`);
 } else {
   console.log(
     "Warning: site/site.jsonc missing baseUrl; skipping sitemap.xml and robots.txt."

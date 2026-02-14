@@ -2,7 +2,7 @@ import type { RenderLayout } from "./layout";
 
 import { renderLayout as defaultRenderLayout } from "./layout";
 
-const USER_LAYOUT_PATH = "site/code/ui/layout.tsx";
+const USER_LAYOUT_PATH = "site/src/ui/layout.tsx";
 
 const loadUserLayout = async (
   filePath: string

@@ -1,7 +1,7 @@
 import { joinPath } from "./path";
 
-const RUNTIME_SOURCE_DIR = joinPath("site", "code", "runtime");
-const RUNTIME_OUTPUT_DIR = joinPath("dist", "_idcmd");
+const RUNTIME_SOURCE_DIR = joinPath("site", "src", "runtime");
+const RUNTIME_OUTPUT_DIR = joinPath("public", "_idcmd");
 
 const RUNTIME_ENTRY_FILES = [
   "live-reload.ts",

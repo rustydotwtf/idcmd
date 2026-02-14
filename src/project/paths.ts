@@ -1,18 +1,18 @@
 const DEFAULT_SITE_DIR = "site";
-const DEFAULT_DIST_DIR = "dist";
+const DEFAULT_OUTPUT_DIR = "public";
 const ASSET_PREFIX = "/_idcmd" as const;
 const CONTENT_DIR = "content";
-const PUBLIC_DIR = "assets";
+const ASSETS_DIR = "assets";
 const ICONS_DIR = "assets/icons";
-const ROUTES_DIR = "code/routes";
+const ROUTES_DIR = "src/routes";
 const SITE_CONFIG_FILE = "site.jsonc";
 
 export interface ProjectPaths {
   assetPrefix: typeof ASSET_PREFIX;
   contentDir: string;
-  distDir: string;
+  outputDir: string;
   iconsDir: string;
-  publicDir: string;
+  assetsDir: string;
   routesDir: string;
   siteConfigPath: string;
   siteDir: string | null;
@@ -20,7 +20,7 @@ export interface ProjectPaths {
 
 export interface ResolveProjectPathsOptions {
   cwd?: string;
-  distDir?: string;
+  outputDir?: string;
   siteDir?: string;
 }
 
@@ -44,16 +44,16 @@ const joinPath = (...parts: string[]): string => {
 
 const buildPaths = (args: {
   cwd: string;
-  distDirName: string;
+  outputDirName: string;
   siteDirName: string;
 }): ProjectPaths => {
   const siteRoot = joinPath(args.cwd, args.siteDirName);
   return {
     assetPrefix: ASSET_PREFIX,
+    assetsDir: joinPath(siteRoot, ASSETS_DIR),
     contentDir: joinPath(siteRoot, CONTENT_DIR),
-    distDir: joinPath(args.cwd, args.distDirName),
     iconsDir: joinPath(siteRoot, ICONS_DIR),
-    publicDir: joinPath(siteRoot, PUBLIC_DIR),
+    outputDir: joinPath(args.cwd, args.outputDirName),
     routesDir: joinPath(siteRoot, ROUTES_DIR),
     siteConfigPath: joinPath(siteRoot, SITE_CONFIG_FILE),
     siteDir: siteRoot,
@@ -64,9 +64,9 @@ export const resolveProjectPaths = (
   options: ResolveProjectPathsOptions = {}
 ): Promise<ProjectPaths> => {
   const cwd = trimTrailingSlash(options.cwd ?? process.cwd());
-  const distDirName = options.distDir ?? DEFAULT_DIST_DIR;
+  const outputDirName = options.outputDir ?? DEFAULT_OUTPUT_DIR;
   const siteDirName = options.siteDir ?? DEFAULT_SITE_DIR;
-  return Promise.resolve(buildPaths({ cwd, distDirName, siteDirName }));
+  return Promise.resolve(buildPaths({ cwd, outputDirName, siteDirName }));
 };
 
 let cached: Promise<ProjectPaths> | null = null;

@@ -9,7 +9,7 @@ const TEMPLATE_UI_DIR = joinPath(
   "templates",
   "default",
   "site",
-  "code",
+  "src",
   "ui"
 );
 const TEMPLATE_RUNTIME_DIR = joinPath(
@@ -20,12 +20,12 @@ const TEMPLATE_RUNTIME_DIR = joinPath(
   "templates",
   "default",
   "site",
-  "code",
+  "src",
   "runtime"
 );
 
-const SITE_UI_DIR = joinPath("site", "code", "ui");
-const SITE_RUNTIME_DIR = joinPath("site", "code", "runtime");
+const SITE_UI_DIR = joinPath("site", "src", "ui");
+const SITE_RUNTIME_DIR = joinPath("site", "src", "runtime");
 const SITE_CONFIG_PATH = joinPath("site", "site.jsonc");
 
 const CLIENT_PARTS = [
