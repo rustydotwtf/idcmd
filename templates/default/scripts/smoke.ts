@@ -142,6 +142,11 @@ const runSmokeChecks = async (): Promise<void> => {
   await assertApiResponse();
 };
 
+const runProjectCheck = async (): Promise<void> => {
+  const check = await runCommand([process.execPath, "run", "check"]);
+  assertCommandOk("bun run check", check);
+};
+
 const startDev = (): {
   devProc: ReturnType<typeof Bun.spawn>;
   devStderr: Promise<string>;
@@ -174,19 +179,44 @@ const logDevFailure = async (args: {
   console.error(stderr.trim() || "(empty)");
 };
 
-const main = async (): Promise<number> => {
+const toErrorMessage = (error: unknown): string => {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  return String(error);
+};
+
+const runDevSmokeFlow = async (): Promise<number> => {
   const { devProc, devStderr, devStdout } = startDev();
 
   try {
     await waitForReady();
     await runSmokeChecks();
-    return 0;
   } catch (error) {
     await logDevFailure({ error, stderr: devStderr, stdout: devStdout });
     return 1;
   } finally {
     await shutdownDev(devProc);
   }
+  return 0;
+};
+
+const runPostDevCheck = async (): Promise<number> => {
+  try {
+    await runProjectCheck();
+    return 0;
+  } catch (error) {
+    console.error(toErrorMessage(error));
+    return 1;
+  }
+};
+
+const main = async (): Promise<number> => {
+  const smokeCode = await runDevSmokeFlow();
+  if (smokeCode !== 0) {
+    return smokeCode;
+  }
+  return runPostDevCheck();
 };
 
 const code = await main();

@@ -28,6 +28,20 @@ const LINT_CONFIG_ERROR =
   "No linter configuration found. Run `bun x ultracite init` once in this project.";
 const NO_TESTS_MESSAGE = "No tests found; skipping test step.";
 const MAX_OUTPUT_LINES = 120;
+const LINT_TARGETS = [
+  "README.md",
+  "package.json",
+  "tsconfig.json",
+  "vercel.json",
+  ".oxlintrc.json",
+  ".oxfmtrc.jsonc",
+  "scripts",
+  "site/client",
+  "site/server",
+  "site/content",
+  "site/styles",
+  "site/site.jsonc",
+];
 const ROOT_TEST_FILE_PATTERNS = [
   "*.test.ts",
   "*.test.tsx",
@@ -86,7 +100,7 @@ const steps: CheckStep[] = [
     name: "Internal",
   },
   {
-    command: [process.execPath, "x", "ultracite", "check"],
+    command: [process.execPath, "x", "ultracite", "check", ...LINT_TARGETS],
     id: "lint",
     name: "Lint",
   },

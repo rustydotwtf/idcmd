@@ -191,6 +191,16 @@ const assertEndpoints = async (target: string): Promise<void> => {
   await assertApiEndpoint(target);
 };
 
+const assertCheckPasses = async (
+  target: string,
+  label = "bun run check"
+): Promise<void> => {
+  assertSuccess(
+    label,
+    await runCommand([process.execPath, "run", "check"], { cwd: target })
+  );
+};
+
 const scaffoldInstallAndCheck = async (): Promise<string> => {
   const root = await createTempDir("idcmd-default-flow-");
   const target = joinPath(root, "sample-site");
@@ -205,10 +215,7 @@ const scaffoldInstallAndCheck = async (): Promise<string> => {
     "bun install",
     await runCommand(["bun", "install"], { cwd: target })
   );
-  assertSuccess(
-    "bun run check",
-    await runCommand([process.execPath, "run", "check"], { cwd: target })
-  );
+  await assertCheckPasses(target);
 
   return target;
 };
@@ -253,5 +260,7 @@ describe("cli default flow", () => {
     } finally {
       await stopDev(dev.proc);
     }
+
+    await assertCheckPasses(target, "bun run check (post-dev)");
   }, 240_000);
 });
