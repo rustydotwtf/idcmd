@@ -123,6 +123,10 @@ export const renderDocument = async (options: {
     getRenderLayout(),
     getRightRail(),
   ]);
+  const scriptPaths = options.scriptPaths ?? [
+    `${ASSET_PREFIX}/nav-prefetch.js`,
+  ];
+
   return renderLayout({
     canonicalUrl: options.canonicalUrl,
     content: options.contentHtml,
@@ -133,7 +137,7 @@ export const renderDocument = async (options: {
     navigation: options.navigation,
     rightRail: options.rightRail,
     rightRailComponent,
-    scriptPaths: options.scriptPaths,
+    scriptPaths,
     searchQuery: options.searchQuery,
     showRightRail: options.showRightRail,
     siteName: options.siteName,
@@ -249,6 +253,7 @@ const computeScriptPaths = (options: {
   shouldShowRightRail: boolean;
   tocItems: readonly unknown[];
 }): string[] => [
+  `${ASSET_PREFIX}/nav-prefetch.js`,
   ...(options.isDev ? [`${ASSET_PREFIX}/live-reload.js`] : []),
   ...(options.shouldShowRightRail ? [`${ASSET_PREFIX}/llm-menu.js`] : []),
   ...(options.shouldShowRightRail &&

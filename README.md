@@ -26,6 +26,7 @@ idcmd client ...   # add/update local site/client implementations
 
 - `site/content/<slug>.md` -> `/<slug>/` (`index.md` -> `/`)
 - `site/client/*` is local source code (you own and edit these files)
+- `site/client/runtime/*.ts` is local browser runtime code (compiled to `site/public/_idcmd/*.js`)
 - `site/styles/tailwind.css` -> `site/public/styles.css` (dev) / `dist/styles.css` (build)
 - `site/public/` static assets
 - `site/server/routes/**` file-based server routes (dev/server-host only)
@@ -39,9 +40,11 @@ Use these commands to pull baseline UI implementations into your project:
 idcmd client add all
 idcmd client update all --dry-run
 idcmd client update layout --yes
+idcmd client update runtime --yes
 ```
 
 `add` creates missing files. `update` overwrites changed files and requires `--yes` unless `--dry-run` is used.
+Runtime files in `site/client/runtime/` are compiled automatically by `idcmd dev` and `idcmd build`.
 
 ## Example: Add A Page
 
@@ -77,6 +80,7 @@ It responds at `/api/hello`.
 `tickets/ROADMAP.md` is the source of truth. For V1, we explicitly target:
 
 - Content routes ship `0` bytes of JavaScript by default (both SSR output and built HTML).
+- Content routes ship a small, opinionated JavaScript runtime by default (prefetch + optional right-rail behavior).
 - Search index size `<= 5 MB` for `<= 2,000` pages.
 - Build completes in `<= 60s` for `<= 2,000` pages on a typical laptop.
 
@@ -104,8 +108,9 @@ It responds at `/api/hello`.
 
 ### JS policy
 
-- Content routes ship `0` bytes of JavaScript by default.
-- Allowed scripts:
+- Content routes ship lightweight runtime scripts by default.
+- Script behavior:
+  - Always: `/_idcmd/nav-prefetch.js`
   - Dev only: `/_idcmd/live-reload.js`
-  - Optional: `/_idcmd/right-rail-scrollspy.js` only when scrollspy is enabled and the computed TOC is non-empty
-- Search page is SSR-only by default (no client JS).
+  - Right rail enabled: `/_idcmd/llm-menu.js`
+  - Right rail scrollspy enabled with non-empty TOC: `/_idcmd/right-rail-scrollspy.js`

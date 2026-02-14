@@ -14,6 +14,7 @@ describe("page-renderer", () => {
     });
 
     expect(html.includes('data-toc-root="1"')).toBe(true);
+    expect(html.includes("/_idcmd/nav-prefetch.js")).toBe(true);
     expect(html.includes("/_idcmd/llm-menu.js")).toBe(true);
     expect(html.includes("/_idcmd/right-rail-scrollspy.js")).toBe(true);
   });
@@ -29,6 +30,7 @@ describe("page-renderer", () => {
     });
 
     expect(html.includes("/_idcmd/llm-menu.js")).toBe(true);
+    expect(html.includes("/_idcmd/nav-prefetch.js")).toBe(true);
     expect(html.includes("/_idcmd/right-rail-scrollspy.js")).toBe(false);
   });
 
@@ -43,6 +45,7 @@ describe("page-renderer", () => {
       },
     });
 
+    expect(html.includes("/_idcmd/nav-prefetch.js")).toBe(true);
     expect(html.includes("/_idcmd/llm-menu.js")).toBe(false);
     expect(html.includes("/_idcmd/right-rail-scrollspy.js")).toBe(false);
   });

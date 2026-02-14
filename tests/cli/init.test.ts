@@ -41,6 +41,10 @@ const assertRequiredFiles = async (target: string): Promise<void> => {
     joinPath(target, "site", "client", "layout.tsx"),
     joinPath(target, "site", "client", "right-rail.tsx"),
     joinPath(target, "site", "client", "search-page.tsx"),
+    joinPath(target, "site", "client", "runtime", "live-reload.ts"),
+    joinPath(target, "site", "client", "runtime", "llm-menu.ts"),
+    joinPath(target, "site", "client", "runtime", "nav-prefetch.ts"),
+    joinPath(target, "site", "client", "runtime", "right-rail-scrollspy.ts"),
     joinPath(target, "site", "content", "index.md"),
     joinPath(target, "site", "styles", "tailwind.css"),
     joinPath(target, "site", "public", "_idcmd", "live-reload.js"),
@@ -84,12 +88,18 @@ const assertReadme = async (target: string): Promise<void> => {
   );
 };
 
+const assertGitignore = async (target: string): Promise<void> => {
+  const gitignore = await readTextFile(joinPath(target, ".gitignore"));
+  expect(gitignore.includes("site/public/_idcmd/*.js")).toBe(true);
+};
+
 const assertScaffolded = async (target: string): Promise<void> => {
   await assertRequiredFiles(target);
   await assertPackageJson(target);
   await assertSiteConfig(target);
   await assertClientLayout(target);
   await assertReadme(target);
+  await assertGitignore(target);
 };
 
 describe("cli init", () => {

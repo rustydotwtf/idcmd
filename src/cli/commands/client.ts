@@ -11,19 +11,33 @@ const TEMPLATE_CLIENT_DIR = joinPath(
   "site",
   "client"
 );
+const TEMPLATE_RUNTIME_DIR = joinPath(TEMPLATE_CLIENT_DIR, "runtime");
 
 const SITE_CLIENT_DIR = joinPath("site", "client");
+const SITE_RUNTIME_DIR = joinPath(SITE_CLIENT_DIR, "runtime");
 const SITE_CONFIG_PATH = joinPath("site", "site.jsonc");
 
-const CLIENT_PARTS = ["layout", "right-rail", "search-page"] as const;
+const CLIENT_PARTS = [
+  "layout",
+  "right-rail",
+  "search-page",
+  "runtime",
+] as const;
 type ClientPart = (typeof CLIENT_PARTS)[number];
 type ClientAction = "add" | "update";
 
-const CLIENT_PART_TO_FILE: Record<ClientPart, string> = {
-  layout: "layout.tsx",
-  "right-rail": "right-rail.tsx",
-  "search-page": "search-page.tsx",
-};
+const RUNTIME_FILES = [
+  "live-reload.ts",
+  "llm-menu.ts",
+  "nav-prefetch.ts",
+  "right-rail-scrollspy.ts",
+] as const;
+
+interface ClientFileSpec {
+  fileName: string;
+  targetPath: string;
+  templatePath: string;
+}
 
 export interface ClientFlags {
   dryRun?: boolean;
@@ -43,6 +57,44 @@ interface FilePlan {
   shouldWrite: boolean;
   targetPath: string;
 }
+
+const getFileSpecsForPart = (part: ClientPart): ClientFileSpec[] => {
+  if (part === "layout") {
+    return [
+      {
+        fileName: "layout.tsx",
+        targetPath: joinPath(SITE_CLIENT_DIR, "layout.tsx"),
+        templatePath: joinPath(TEMPLATE_CLIENT_DIR, "layout.tsx"),
+      },
+    ];
+  }
+
+  if (part === "right-rail") {
+    return [
+      {
+        fileName: "right-rail.tsx",
+        targetPath: joinPath(SITE_CLIENT_DIR, "right-rail.tsx"),
+        templatePath: joinPath(TEMPLATE_CLIENT_DIR, "right-rail.tsx"),
+      },
+    ];
+  }
+
+  if (part === "search-page") {
+    return [
+      {
+        fileName: "search-page.tsx",
+        targetPath: joinPath(SITE_CLIENT_DIR, "search-page.tsx"),
+        templatePath: joinPath(TEMPLATE_CLIENT_DIR, "search-page.tsx"),
+      },
+    ];
+  }
+
+  return RUNTIME_FILES.map((fileName) => ({
+    fileName,
+    targetPath: joinPath(SITE_RUNTIME_DIR, fileName),
+    templatePath: joinPath(TEMPLATE_RUNTIME_DIR, fileName),
+  }));
+};
 
 const isClientAction = (value: string): value is ClientAction =>
   value === "add" || value === "update";
@@ -68,7 +120,7 @@ const parseClientArgs = (positionals: string[]): ParsedClientArgs => {
   const [actionRaw, partRaw] = positionals;
   if (!actionRaw || !isClientAction(actionRaw)) {
     throw new Error(
-      "Usage: idcmd client <add|update> <layout|right-rail|search-page|all> [--dry-run] [--yes]"
+      "Usage: idcmd client <add|update> <layout|right-rail|search-page|runtime|all> [--dry-run] [--yes]"
     );
   }
 
@@ -86,50 +138,46 @@ const ensureSiteLayout = async (): Promise<void> => {
   }
 };
 
-const readTemplateFile = async (part: ClientPart): Promise<string> => {
-  const fileName = CLIENT_PART_TO_FILE[part];
-  const path = joinPath(TEMPLATE_CLIENT_DIR, fileName);
-  const file = Bun.file(path);
+const readTemplateFile = async (spec: ClientFileSpec): Promise<string> => {
+  const file = Bun.file(spec.templatePath);
   if (!(await file.exists())) {
-    throw new Error(`Missing template file: ${path}`);
+    throw new Error(`Missing template file: ${spec.templatePath}`);
   }
   return file.text();
 };
 
 const classifyAddPlan = async (
   part: ClientPart,
+  spec: ClientFileSpec,
   nextText: string
 ): Promise<FilePlan> => {
-  const fileName = CLIENT_PART_TO_FILE[part];
-  const targetPath = joinPath(SITE_CLIENT_DIR, fileName);
-  const exists = await Bun.file(targetPath).exists();
+  const exists = await Bun.file(spec.targetPath).exists();
 
   return {
-    fileName,
+    fileName: spec.fileName,
     nextText,
     part,
     reason: exists ? "exists" : "missing",
     shouldWrite: !exists,
-    targetPath,
+    targetPath: spec.targetPath,
   };
 };
 
 const classifyUpdatePlan = async (
   part: ClientPart,
+  spec: ClientFileSpec,
   nextText: string
 ): Promise<FilePlan> => {
-  const fileName = CLIENT_PART_TO_FILE[part];
-  const targetPath = joinPath(SITE_CLIENT_DIR, fileName);
-  const file = Bun.file(targetPath);
+  const file = Bun.file(spec.targetPath);
 
   if (!(await file.exists())) {
     return {
-      fileName,
+      fileName: spec.fileName,
       nextText,
       part,
       reason: "missing",
       shouldWrite: false,
-      targetPath,
+      targetPath: spec.targetPath,
     };
   }
 
@@ -137,26 +185,29 @@ const classifyUpdatePlan = async (
   const isUpToDate = currentText === nextText;
 
   return {
-    fileName,
+    fileName: spec.fileName,
     nextText,
     part,
     reason: isUpToDate ? "up-to-date" : "changed",
     shouldWrite: !isUpToDate,
-    targetPath,
+    targetPath: spec.targetPath,
   };
 };
 
 const buildPlan = async (args: ParsedClientArgs): Promise<FilePlan[]> => {
   const entries: FilePlan[] = [];
   for (const part of args.parts) {
-    // eslint-disable-next-line no-await-in-loop
-    const nextText = await readTemplateFile(part);
-    // eslint-disable-next-line no-await-in-loop
-    const item =
-      args.action === "add"
-        ? await classifyAddPlan(part, nextText)
-        : await classifyUpdatePlan(part, nextText);
-    entries.push(item);
+    const files = getFileSpecsForPart(part);
+    for (const file of files) {
+      // eslint-disable-next-line no-await-in-loop
+      const nextText = await readTemplateFile(file);
+      // eslint-disable-next-line no-await-in-loop
+      const item =
+        args.action === "add"
+          ? await classifyAddPlan(part, file, nextText)
+          : await classifyUpdatePlan(part, file, nextText);
+      entries.push(item);
+    }
   }
   return entries;
 };

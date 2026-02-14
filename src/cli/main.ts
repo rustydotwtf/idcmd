@@ -24,7 +24,7 @@ const usage = (): string =>
     "  idcmd build",
     "  idcmd preview [--port <port>]",
     "  idcmd deploy",
-    "  idcmd client <add|update> <layout|right-rail|search-page|all> [--dry-run] [--yes]",
+    "  idcmd client <add|update> <layout|right-rail|search-page|runtime|all> [--dry-run] [--yes]",
     "",
   ].join("\n");
 

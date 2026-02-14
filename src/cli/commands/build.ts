@@ -1,3 +1,5 @@
+import { compileRuntimeAssetsOnce } from "../runtime-assets";
+
 const findTailwindInput = async (): Promise<string> => {
   const candidates = ["site/styles/tailwind.css", "content/styles.css"];
   for (const path of candidates) {
@@ -16,6 +18,11 @@ const idcmdBuildEntry = (): string =>
   Bun.fileURLToPath(new URL("../../build.ts", import.meta.url));
 
 export const buildCommand = async (): Promise<number> => {
+  const runtimeCode = await compileRuntimeAssetsOnce();
+  if (runtimeCode !== 0) {
+    return runtimeCode;
+  }
+
   const tailwindInput = await findTailwindInput();
 
   const cssProc = Bun.spawn(

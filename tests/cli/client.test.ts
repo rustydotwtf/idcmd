@@ -99,4 +99,53 @@ describe("cli client", () => {
     const updated = await readTextFile(layoutPath);
     expect(updated.includes("export const renderLayout")).toBe(true);
   });
+
+  it("adds missing runtime files from templates", async () => {
+    const target = await scaffoldProject();
+    const runtimePath = joinPath(
+      target,
+      "site",
+      "client",
+      "runtime",
+      "nav-prefetch.ts"
+    );
+
+    await deleteFile(runtimePath);
+    expect(await fileExists(runtimePath)).toBe(false);
+
+    const code = await runCli(["client", "add", "runtime"], { cwd: target });
+    expect(code).toBe(0);
+
+    expect(await fileExists(runtimePath)).toBe(true);
+    const text = await readTextFile(runtimePath);
+    expect(text.includes("data-prefetch")).toBe(true);
+  });
+
+  it("requires --yes before overwriting runtime files", async () => {
+    const target = await scaffoldProject();
+    const runtimePath = joinPath(
+      target,
+      "site",
+      "client",
+      "runtime",
+      "llm-menu.ts"
+    );
+
+    await writeTextFile(runtimePath, "// custom runtime\n");
+
+    const noConfirmCode = await runCli(["client", "update", "runtime"], {
+      cwd: target,
+    });
+    expect(noConfirmCode).toBe(1);
+    expect(await readTextFile(runtimePath)).toBe("// custom runtime\n");
+
+    const confirmedCode = await runCli(
+      ["client", "update", "runtime", "--yes"],
+      { cwd: target }
+    );
+    expect(confirmedCode).toBe(0);
+
+    const updated = await readTextFile(runtimePath);
+    expect(updated.includes("initCopyMarkdownButtons")).toBe(true);
+  });
 });

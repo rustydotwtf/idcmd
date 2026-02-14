@@ -1,4 +1,8 @@
 import { parsePort } from "../normalize";
+import {
+  compileRuntimeAssetsOnce,
+  watchRuntimeAssets,
+} from "../runtime-assets";
 
 const DEFAULT_PORT = 4000;
 
@@ -33,12 +37,11 @@ const installSignalHandlers = (shutdown: () => void): void => {
   process.on("SIGTERM", shutdown);
 };
 
-export const devCommand = async (flags: DevFlags): Promise<number> => {
-  const port = parsePort(flags.port, DEFAULT_PORT);
-  const tailwindInput = await findTailwindInput();
-  const tailwindOutput = await resolveTailwindOutput();
-
-  const cssProc = Bun.spawn(
+const spawnCssProcess = (
+  tailwindInput: string,
+  tailwindOutput: string
+): ReturnType<typeof Bun.spawn> =>
+  Bun.spawn(
     [
       "bunx",
       "@tailwindcss/cli",
@@ -52,30 +55,91 @@ export const devCommand = async (flags: DevFlags): Promise<number> => {
     { stderr: "inherit", stdout: "inherit" }
   );
 
-  const serverProc = Bun.spawn(["bun", "--hot", idcmdServerEntry()], {
+const spawnServerProcess = (port: number): ReturnType<typeof Bun.spawn> =>
+  Bun.spawn(["bun", "--hot", idcmdServerEntry()], {
     env: { ...process.env, NODE_ENV: "development", PORT: String(port) },
     stderr: "inherit",
     stdout: "inherit",
   });
 
-  const shutdown = (): void => {
-    try {
-      cssProc.kill("SIGTERM");
-    } catch {
-      // ignore
-    }
-    try {
-      serverProc.kill("SIGTERM");
-    } catch {
-      // ignore
-    }
+const ensureRuntimeAssetsReady = async (): Promise<{
+  runtimeProc: ReturnType<typeof Bun.spawn> | null;
+  runtimeSetupCode: number;
+}> => {
+  const runtimeCode = await compileRuntimeAssetsOnce();
+  if (runtimeCode !== 0) {
+    return { runtimeProc: null, runtimeSetupCode: runtimeCode };
+  }
+
+  return {
+    runtimeProc: await watchRuntimeAssets(),
+    runtimeSetupCode: 0,
   };
+};
 
-  installSignalHandlers(shutdown);
+const killProcess = (proc: ReturnType<typeof Bun.spawn> | null): void => {
+  if (!proc) {
+    return;
+  }
+  try {
+    proc.kill("SIGTERM");
+  } catch {
+    // ignore
+  }
+};
 
-  const [cssExit, serverExit] = await Promise.all([
-    cssProc.exited,
-    serverProc.exited,
+const resolveDevExitCode = (args: {
+  cssExit: number;
+  runtimeExit: number;
+  serverExit: number;
+}): number => {
+  if (args.serverExit !== 0) {
+    return args.serverExit;
+  }
+  if (args.cssExit !== 0) {
+    return args.cssExit;
+  }
+  return args.runtimeExit;
+};
+
+const installDevSignalHandlers = (args: {
+  cssProc: ReturnType<typeof Bun.spawn>;
+  runtimeProc: ReturnType<typeof Bun.spawn> | null;
+  serverProc: ReturnType<typeof Bun.spawn>;
+}): void => {
+  installSignalHandlers(() => {
+    killProcess(args.cssProc);
+    killProcess(args.serverProc);
+    killProcess(args.runtimeProc);
+  });
+};
+
+const waitForDevExit = async (args: {
+  cssProc: ReturnType<typeof Bun.spawn>;
+  runtimeProc: ReturnType<typeof Bun.spawn> | null;
+  serverProc: ReturnType<typeof Bun.spawn>;
+}): Promise<{ cssExit: number; runtimeExit: number; serverExit: number }> => {
+  const [cssExit, serverExit, runtimeExit] = await Promise.all([
+    args.cssProc.exited,
+    args.serverProc.exited,
+    args.runtimeProc?.exited ?? Promise.resolve(0),
   ]);
-  return serverExit === 0 ? cssExit : serverExit;
+  return { cssExit, runtimeExit, serverExit };
+};
+
+export const devCommand = async (flags: DevFlags): Promise<number> => {
+  const port = parsePort(flags.port, DEFAULT_PORT);
+  const { runtimeProc, runtimeSetupCode } = await ensureRuntimeAssetsReady();
+  if (runtimeSetupCode !== 0) {
+    return runtimeSetupCode;
+  }
+
+  const tailwindInput = await findTailwindInput();
+  const tailwindOutput = await resolveTailwindOutput();
+  const cssProc = spawnCssProcess(tailwindInput, tailwindOutput);
+  const serverProc = spawnServerProcess(port);
+  installDevSignalHandlers({ cssProc, runtimeProc, serverProc });
+  return resolveDevExitCode(
+    await waitForDevExit({ cssProc, runtimeProc, serverProc })
+  );
 };
