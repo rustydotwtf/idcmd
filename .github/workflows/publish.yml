@@ -13,10 +13,6 @@ on:
           - patch
           - minor
           - major
-      message:
-        description: "Release message (optional)"
-        required: false
-        type: string
       dry_run:
         description: "Dry run (skip actual publish)"
         required: false
@@ -67,7 +63,7 @@ jobs:
       - name: Bump version (workflow_dispatch)
         if: github.event_name == 'workflow_dispatch'
         run: |
-          npm version ${{ inputs.version }} -m "Release %s: ${{ inputs.message || 'No message' }}"
+          npm version ${{ inputs.version }}
           echo "NEW_VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_ENV
 
       - name: Push version bump
@@ -83,7 +79,6 @@ jobs:
         run: |
           echo "=== DRY RUN ==="
           echo "Version: ${{ env.NEW_VERSION || 'N/A (release trigger)' }}"
-          echo "Message: ${{ inputs.message || 'N/A' }}"
           echo ""
           echo "=== Package contents ==="
           npm pack --dry-run
