@@ -26,7 +26,58 @@ interface StepCounts {
 
 const LINT_CONFIG_ERROR =
   "No linter configuration found. Run `bun x ultracite init` once in this project.";
+const NO_TESTS_MESSAGE = "No tests found; skipping test step.";
 const MAX_OUTPUT_LINES = 120;
+const ROOT_TEST_FILE_PATTERNS = [
+  "*.test.ts",
+  "*.test.tsx",
+  "*.test.js",
+  "*.test.jsx",
+  "*_test_*.ts",
+  "*_test_*.tsx",
+  "*_test_*.js",
+  "*_test_*.jsx",
+  "*.spec.ts",
+  "*.spec.tsx",
+  "*.spec.js",
+  "*.spec.jsx",
+  "*_spec_*.ts",
+  "*_spec_*.tsx",
+  "*_spec_*.js",
+  "*_spec_*.jsx",
+];
+const NESTED_TEST_FILE_PATTERNS = [
+  "**/*.test.ts",
+  "**/*.test.tsx",
+  "**/*.test.js",
+  "**/*.test.jsx",
+  "**/*_test_*.ts",
+  "**/*_test_*.tsx",
+  "**/*_test_*.js",
+  "**/*_test_*.jsx",
+  "**/*.spec.ts",
+  "**/*.spec.tsx",
+  "**/*.spec.js",
+  "**/*.spec.jsx",
+  "**/*_spec_*.ts",
+  "**/*_spec_*.tsx",
+  "**/*_spec_*.js",
+  "**/*_spec_*.jsx",
+];
+const TEST_SOURCE_DIRS = ["site", "scripts", "src", "tests"];
+
+const buildScopedTestFilePatterns = (): string[] => {
+  const patterns = [...ROOT_TEST_FILE_PATTERNS];
+
+  for (const dir of TEST_SOURCE_DIRS) {
+    for (const nestedPattern of NESTED_TEST_FILE_PATTERNS) {
+      patterns.push(`${dir}/${nestedPattern}`);
+    }
+  }
+
+  return patterns;
+};
+const SCOPED_TEST_FILE_PATTERNS = buildScopedTestFilePatterns();
 
 const steps: CheckStep[] = [
   {
@@ -72,6 +123,24 @@ const hasAnyLinterConfig = async (): Promise<boolean> => {
   return false;
 };
 
+const hasAnyFilesMatching = async (pattern: string): Promise<boolean> => {
+  const glob = new Bun.Glob(pattern);
+  for await (const _path of glob.scan(".")) {
+    return true;
+  }
+  return false;
+};
+
+const hasAnyTestFiles = async (): Promise<boolean> => {
+  for (const pattern of SCOPED_TEST_FILE_PATTERNS) {
+    // eslint-disable-next-line no-await-in-loop
+    if (await hasAnyFilesMatching(pattern)) {
+      return true;
+    }
+  }
+  return false;
+};
+
 const isFailure = (result: StepResult): boolean => result.status === "fail";
 
 const runCommandStep = async (step: CheckStep): Promise<StepResult> => {
@@ -103,9 +172,19 @@ const lintConfigFailure = (step: CheckStep): StepResult => ({
   step,
 });
 
+const skippedTestsResult = (step: CheckStep): StepResult => ({
+  durationMs: 0,
+  output: NO_TESTS_MESSAGE,
+  status: "pass",
+  step,
+});
+
 const runStep = async (step: CheckStep): Promise<StepResult> => {
   if (step.id === "lint" && !(await hasAnyLinterConfig())) {
     return lintConfigFailure(step);
+  }
+  if (step.id === "tests" && !(await hasAnyTestFiles())) {
+    return skippedTestsResult(step);
   }
 
   return runCommandStep(step);

@@ -82,7 +82,8 @@ const binarySearchLastAtOrAbove = (
   // Find the first entry with y > anchorLine, then step back one.
   while (lo < hi) {
     const mid = Math.floor((lo + hi) / 2);
-    if (entries[mid].y <= anchorLine) {
+    const midY = entries[mid]?.y ?? Number.POSITIVE_INFINITY;
+    if (midY <= anchorLine) {
       lo = mid + 1;
     } else {
       hi = mid;
@@ -105,7 +106,7 @@ const parseTransformValues = (transform: string, prefix: string): number[] =>
     .map((value) => Number.parseFloat(value.trim()));
 
 const getNumberAtIndex = (values: number[], index: number): number => {
-  const [value] = values.slice(index, index + 1);
+  const value = values[index] ?? Number.NaN;
   return Number.isFinite(value) ? value : 0;
 };
 

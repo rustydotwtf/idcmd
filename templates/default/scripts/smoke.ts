@@ -1,0 +1,193 @@
+interface CommandResult {
+  code: number;
+  stderr: string;
+  stdout: string;
+}
+
+const BASE_URL = process.env.IDCMD_SMOKE_BASE_URL ?? "http://127.0.0.1:4000";
+const CURL_MAX_TIME_SECONDS = "5";
+const READY_TIMEOUT_MS = 60_000;
+const READY_INTERVAL_MS = 500;
+const SHUTDOWN_TIMEOUT_MS = 5000;
+
+const delay = (ms: number): Promise<void> => Bun.sleep(ms);
+
+const runCommand = async (command: string[]): Promise<CommandResult> => {
+  const proc = Bun.spawn(command, {
+    cwd: process.cwd(),
+    stderr: "pipe",
+    stdout: "pipe",
+  });
+  const [stdout, stderr, code] = await Promise.all([
+    new Response(proc.stdout).text(),
+    new Response(proc.stderr).text(),
+    proc.exited,
+  ]);
+  return { code, stderr, stdout };
+};
+
+const runCurl = (path: string): Promise<CommandResult> =>
+  runCommand([
+    "curl",
+    "-fsS",
+    "--max-time",
+    CURL_MAX_TIME_SECONDS,
+    `${BASE_URL}${path}`,
+  ]);
+
+const assertCommandOk = (label: string, result: CommandResult): void => {
+  if (result.code === 0) {
+    return;
+  }
+  throw new Error(
+    [
+      `${label} failed with exit code ${String(result.code)}.`,
+      "stdout:",
+      result.stdout.trim() || "(empty)",
+      "stderr:",
+      result.stderr.trim() || "(empty)",
+    ].join("\n")
+  );
+};
+
+const expectIncludes = (args: {
+  haystack: string;
+  label: string;
+  needle: string;
+}): void => {
+  if (args.haystack.includes(args.needle)) {
+    return;
+  }
+  throw new Error(`Expected ${args.label} to include ${args.needle}.`);
+};
+
+const waitForReady = async (): Promise<void> => {
+  const startedAt = Date.now();
+  let lastFailure = "(no attempts yet)";
+
+  while (Date.now() - startedAt < READY_TIMEOUT_MS) {
+    const ready = await runCurl("/");
+    if (ready.code === 0) {
+      return;
+    }
+    lastFailure = ready.stderr.trim() || ready.stdout.trim() || "curl failed";
+    await delay(READY_INTERVAL_MS);
+  }
+
+  throw new Error(
+    `dev server did not become ready within ${String(
+      READY_TIMEOUT_MS
+    )}ms. Last curl failure: ${lastFailure}`
+  );
+};
+
+const shutdownDev = async (
+  proc: ReturnType<typeof Bun.spawn>
+): Promise<void> => {
+  try {
+    proc.kill("SIGTERM");
+  } catch {
+    return;
+  }
+
+  const didExit = await Promise.race([
+    proc.exited.then(() => true),
+    delay(SHUTDOWN_TIMEOUT_MS).then(() => false),
+  ]);
+  if (!didExit) {
+    try {
+      proc.kill("SIGKILL");
+    } catch {
+      // ignore
+    }
+    await proc.exited;
+  }
+};
+
+const assertHomeResponse = async (): Promise<void> => {
+  const home = await runCurl("/");
+  assertCommandOk("curl /", home);
+  expectIncludes({ haystack: home.stdout, label: "/", needle: "<html" });
+};
+
+const assertAboutResponse = async (): Promise<void> => {
+  const about = await runCurl("/about/");
+  assertCommandOk("curl /about/", about);
+  if (!about.stdout.includes("# About") && !about.stdout.includes(">About<")) {
+    throw new Error("Expected /about/ response to include About heading.");
+  }
+};
+
+const assertLlmsResponse = async (): Promise<void> => {
+  const llms = await runCurl("/llms.txt");
+  assertCommandOk("curl /llms.txt", llms);
+  if (llms.stdout.trim().length === 0 || !llms.stdout.includes("about.md")) {
+    throw new Error("Expected /llms.txt to be non-empty and include about.md.");
+  }
+};
+
+const assertApiResponse = async (): Promise<void> => {
+  const api = await runCurl("/api/hello");
+  assertCommandOk("curl /api/hello", api);
+  const payload = JSON.parse(api.stdout) as { message?: string; ok?: boolean };
+  if (payload.ok !== true || payload.message !== "Hello from idcmd route!") {
+    throw new Error("Expected /api/hello payload to match template route.");
+  }
+};
+
+const runSmokeChecks = async (): Promise<void> => {
+  await assertHomeResponse();
+  await assertAboutResponse();
+  await assertLlmsResponse();
+  await assertApiResponse();
+};
+
+const startDev = (): {
+  devProc: ReturnType<typeof Bun.spawn>;
+  devStderr: Promise<string>;
+  devStdout: Promise<string>;
+} => {
+  const devProc = Bun.spawn([process.execPath, "run", "dev"], {
+    cwd: process.cwd(),
+    stderr: "pipe",
+    stdout: "pipe",
+  });
+  return {
+    devProc,
+    devStderr: new Response(devProc.stderr).text(),
+    devStdout: new Response(devProc.stdout).text(),
+  };
+};
+
+const logDevFailure = async (args: {
+  error: unknown;
+  stderr: Promise<string>;
+  stdout: Promise<string>;
+}): Promise<void> => {
+  const [stdout, stderr] = await Promise.all([args.stdout, args.stderr]);
+  const message =
+    args.error instanceof Error ? args.error.message : String(args.error);
+  console.error(message);
+  console.error("dev stdout:");
+  console.error(stdout.trim() || "(empty)");
+  console.error("dev stderr:");
+  console.error(stderr.trim() || "(empty)");
+};
+
+const main = async (): Promise<number> => {
+  const { devProc, devStderr, devStdout } = startDev();
+
+  try {
+    await waitForReady();
+    await runSmokeChecks();
+    return 0;
+  } catch (error) {
+    await logDevFailure({ error, stderr: devStderr, stdout: devStdout });
+    return 1;
+  } finally {
+    await shutdownDev(devProc);
+  }
+};
+
+const code = await main();
+process.exit(code);

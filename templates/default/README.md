@@ -11,6 +11,13 @@ bun install
 bun run dev
 ```
 
+## CI Smoke
+
+```bash
+bun run check
+bun run smoke
+```
+
 ## Layout
 
 - `site/content/` markdown pages (`index.md` -> `/`, `about.md` -> `/about/`)

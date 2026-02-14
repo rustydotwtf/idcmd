@@ -1,10 +1,10 @@
-import { copyDir, isDirEmpty, replaceInFile } from "../fs";
+import { copyDir, ensureDir, isDirEmpty, replaceInFile } from "../fs";
 import {
   normalizeOptionalString,
   parsePort,
   toPackageName,
 } from "../normalize";
-import { basename, joinPath } from "../path";
+import { basename, dirname, joinPath } from "../path";
 import { promptOptionalText, promptText } from "../prompt";
 import { run } from "../run";
 import { readPackageVersion } from "../version";
@@ -23,12 +23,32 @@ export interface InitFlags {
 const resolveTemplateDir = (): string =>
   joinPath(import.meta.dir, "..", "..", "..", "templates", "default");
 
-const TEMPLATE_ROOT_DOTFILES = [".gitignore"];
+const TEMPLATE_DOTPATHS = [".gitignore", ".github/workflows/ci.yml"];
 const DEFAULT_OXLINT_CONFIG = `{
   "$schema": "./node_modules/oxlint/configuration_schema.json",
   "extends": [
     "./node_modules/ultracite/config/oxlint/core/.oxlintrc.json",
     "./node_modules/ultracite/config/oxlint/react/.oxlintrc.json"
+  ],
+  "rules": {
+    "jest/require-hook": "off"
+  },
+  "overrides": [
+    {
+      "files": [
+        "**/*.test.ts",
+        "**/*.test.tsx",
+        "**/*.test.js",
+        "**/*.test.jsx",
+        "**/*.spec.ts",
+        "**/*.spec.tsx",
+        "**/*.spec.js",
+        "**/*.spec.jsx"
+      ],
+      "rules": {
+        "jest/require-hook": "error"
+      }
+    }
   ]
 }
 `;
@@ -144,21 +164,25 @@ const readInitInputs = async (
 const scaffoldFromTemplate = async (targetDir: string): Promise<void> => {
   const templateDir = resolveTemplateDir();
   await copyDir(templateDir, targetDir);
-  await copyTemplateRootDotfiles({ targetDir, templateDir });
+  await copyTemplateDotpaths({ targetDir, templateDir });
   await writeDefaultLintConfigs(targetDir);
 };
 
-const copyTemplateRootDotfiles = async (args: {
+const copyTemplateDotpaths = async (args: {
   targetDir: string;
   templateDir: string;
 }): Promise<void> => {
-  for (const fileName of TEMPLATE_ROOT_DOTFILES) {
-    const srcPath = joinPath(args.templateDir, fileName);
+  for (const relativePath of TEMPLATE_DOTPATHS) {
+    const srcPath = joinPath(args.templateDir, relativePath);
     if (!(await Bun.file(srcPath).exists())) {
       continue;
     }
+    const dstPath = joinPath(args.targetDir, relativePath);
+    // Hidden paths are not copied by glob scan; explicitly create parent dirs.
     // eslint-disable-next-line no-await-in-loop
-    await Bun.write(joinPath(args.targetDir, fileName), Bun.file(srcPath));
+    await ensureDir(dirname(dstPath));
+    // eslint-disable-next-line no-await-in-loop
+    await Bun.write(dstPath, Bun.file(srcPath));
   }
 };
 
