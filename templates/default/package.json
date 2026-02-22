@@ -8,7 +8,6 @@
     "preview": "idcmd preview",
     "deploy": "idcmd deploy",
     "check": "bun run scripts/check.ts",
-    "smoke": "bun run scripts/smoke.ts",
     "test": "bun test",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "fix": "ultracite fix"

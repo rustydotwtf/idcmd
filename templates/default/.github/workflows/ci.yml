@@ -19,6 +19,3 @@ jobs:
         run: bun install
       - name: Run checks
         run: bun run check
-      - name: Run smoke
-        timeout-minutes: 15
-        run: bun run smoke

@@ -22,6 +22,14 @@ idcmd deploy       # build + generate deploy files (Vercel/Fly/Railway)
 idcmd client ...   # add/update local src implementations
 ```
 
+For full command docs (flags, examples, side effects), use:
+
+```bash
+idcmd --help
+idcmd init --help
+idcmd deploy --help
+```
+
 ### Deploy targets
 
 ```bash
