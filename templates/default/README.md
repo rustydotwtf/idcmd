@@ -11,11 +11,10 @@ bun install
 bun run dev
 ```
 
-## CI Smoke
+## Validation
 
 ```bash
 bun run check
-bun run smoke
 ```
 
 ## Layout

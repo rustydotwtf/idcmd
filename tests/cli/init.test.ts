@@ -42,7 +42,6 @@ const assertRequiredFiles = async (target: string): Promise<void> => {
     joinPath(target, "package.json"),
     joinPath(target, "scripts", "check.ts"),
     joinPath(target, "scripts", "check-internal.ts"),
-    joinPath(target, "scripts", "smoke.ts"),
     joinPath(target, "site.jsonc"),
     joinPath(target, "src", "ui", "layout.tsx"),
     joinPath(target, "src", "ui", "right-rail.tsx"),
@@ -69,7 +68,6 @@ const assertPackageJson = async (target: string): Promise<void> => {
   expect(pkg.includes('"name": "my-docs"')).toBe(true);
   expect(pkg.includes('"dev": "idcmd dev --port 4001"')).toBe(true);
   expect(pkg.includes('"check": "bun run scripts/check.ts"')).toBe(true);
-  expect(pkg.includes('"smoke": "bun run scripts/smoke.ts"')).toBe(true);
 };
 
 const assertSiteConfig = async (target: string): Promise<void> => {

@@ -20,6 +20,6 @@ jobs:
         run: bun install
       - name: Run checks
         run: bun run check
-      - name: Run scaffold smoke flow
+      - name: Run scaffold e2e flow
         timeout-minutes: 20
         run: bun test tests/cli/default-flow.test.ts
