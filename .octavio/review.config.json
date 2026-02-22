@@ -1,0 +1,31 @@
+{
+  "defaultProfile": "balanced",
+  "profiles": {
+    "balanced": {
+      "artifactExecution": "agent",
+      "artifactSchema": {
+        "artifactDir": "artifacts",
+        "confidenceFile": "confidence.json",
+        "maxAttempts": 2,
+        "reviewFile": "review.md"
+      },
+      "instructionsPrompt": "balanced",
+      "policy": {
+        "failOn": ["new:high", "new:critical"]
+      }
+    },
+    "styling": {
+      "artifactExecution": "agent",
+      "artifactSchema": {
+        "artifactDir": "artifacts",
+        "confidenceFile": "confidence.json",
+        "maxAttempts": 2,
+        "reviewFile": "review.md"
+      },
+      "instructionsPrompt": "styling",
+      "policy": {
+        "failOn": ["new:high", "new:critical"]
+      }
+    }
+  }
+}
