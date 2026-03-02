@@ -122,7 +122,7 @@
   }
   html,
   body {
-    /* Prevent rubber-band overscroll from pulling the sticky top navbar down. */
+    /* Keep vertical overscroll behavior predictable across browsers. */
     overscroll-behavior-y: none;
   }
   body {
@@ -132,15 +132,6 @@
 
 html.smooth-scroll {
   scroll-behavior: smooth;
-}
-
-/*
-  Sticky + backdrop-filter can jitter on fast scroll in some browsers.
-  Forcing the header into its own composited layer tends to reduce jumping.
-*/
-header {
-  transform: translateZ(0);
-  will-change: transform;
 }
 
 /* ============================================

@@ -107,57 +107,6 @@ const Sidebar = ({
   </aside>
 );
 
-const SearchForm = ({ query }: { query?: string }): JSX.Element => (
-  <form
-    method="get"
-    action="/search/"
-    class="flex w-full items-center"
-    role="search"
-    novalidate
-  >
-    {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
-    <label for="site-search" class="sr-only">
-      Search pages
-    </label>
-    <input
-      id="site-search"
-      name="q"
-      type="search"
-      autocomplete="off"
-      spellcheck={false}
-      placeholder="Search..."
-      value={escapeText(query ?? "")}
-      class="w-full border-b border-input bg-transparent px-1 py-1.5 text-sm placeholder:text-muted-foreground focus:border-foreground focus:outline-none transition-colors"
-    />
-  </form>
-);
-
-const TopNavbar = ({
-  query,
-  siteName,
-}: {
-  query?: string;
-  siteName: string;
-}): JSX.Element => (
-  <header class="sticky top-0 z-30 border-b border-border bg-background/80 backdrop-blur-sm">
-    <div class="mx-auto max-w-6xl px-8 py-3">
-      <div class="flex items-center gap-4">
-        <a
-          href="/"
-          class="text-sm font-medium tracking-tight font-mono lg:hidden"
-          data-prefetch="hover"
-        >
-          <span class="text-muted-foreground">~/</span>
-          {escapeText(siteName)}
-        </a>
-        <div class="not-prose w-full max-w-xs ml-auto">
-          <SearchForm query={query} />
-        </div>
-      </div>
-    </div>
-  </header>
-);
-
 interface DocumentHeadProps {
   canonicalUrl?: string;
   description?: string;
@@ -226,7 +175,6 @@ interface DocumentBodyProps {
   rightRail: ResolvedRightRailConfig;
   scriptPaths: string[];
   scrollSpyDataset: ScrollSpyDataset;
-  searchQuery?: string;
   shouldShowRightRail: boolean;
   siteName: string;
   tocItems: TocItem[];
@@ -241,7 +189,6 @@ const DocumentBody = ({
   rightRail,
   scriptPaths,
   scrollSpyDataset,
-  searchQuery,
   shouldShowRightRail,
   siteName,
   tocItems,
@@ -259,7 +206,6 @@ const DocumentBody = ({
       currentPath={currentPath}
     />
     <div class="main-wrapper">
-      <TopNavbar query={searchQuery} siteName={siteName} />
       <main class="main-content">
         <div class="mx-auto flex w-full max-w-6xl items-start gap-10">
           <article
@@ -300,7 +246,6 @@ const Layout = ({
   currentPath,
   navigation,
   scriptPaths = [],
-  searchQuery,
   showRightRail = true,
   rightRailComponent = RightRail,
   rightRail,
@@ -330,7 +275,6 @@ const Layout = ({
         rightRail={rightRail}
         scriptPaths={scriptPaths}
         scrollSpyDataset={scrollSpyDataset}
-        searchQuery={searchQuery}
         shouldShowRightRail={shouldShowRightRail}
         siteName={siteName}
         tocItems={tocItems}

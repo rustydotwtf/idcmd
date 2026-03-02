@@ -19,6 +19,21 @@ describe("page-renderer", () => {
     expect(html.includes("/_idcmd/right-rail-scrollspy.js")).toBe(true);
   });
 
+  it("does not render top nav or search form in page layout", async () => {
+    const html = await renderMarkdownPage("# Title\n\n## Section\n\nHello", {
+      currentPath: "/about/",
+      navigation: [],
+      siteConfig: {
+        description: "Site description",
+        name: "Test Site",
+      },
+    });
+
+    expect(html.includes('id="site-search"')).toBe(false);
+    expect(html.includes('action="/search/"')).toBe(false);
+    expect(html.includes('role="search"')).toBe(false);
+  });
+
   it("does not include scrollspy script when TOC is empty", async () => {
     const html = await renderMarkdownPage("# Title\n\nHello", {
       currentPath: "/about/",

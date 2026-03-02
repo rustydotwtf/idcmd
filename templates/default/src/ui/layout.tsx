@@ -64,57 +64,6 @@ const Sidebar = ({
   </aside>
 );
 
-const SearchForm = ({ query }: { query?: string }): JSX.Element => (
-  <form
-    method="get"
-    action="/search/"
-    class="flex w-full items-center"
-    role="search"
-    novalidate
-  >
-    {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
-    <label for="site-search" class="sr-only">
-      Search pages
-    </label>
-    <input
-      id="site-search"
-      name="q"
-      type="search"
-      autocomplete="off"
-      spellcheck={false}
-      placeholder="Search..."
-      value={escapeText(query ?? "")}
-      class="w-full border-b border-input bg-transparent px-1 py-1.5 text-sm placeholder:text-muted-foreground focus:border-foreground focus:outline-none transition-colors"
-    />
-  </form>
-);
-
-const TopNavbar = ({
-  query,
-  siteName,
-}: {
-  query?: LayoutProps["searchQuery"];
-  siteName: LayoutProps["siteName"];
-}): JSX.Element => (
-  <header class="sticky top-0 z-30 border-b border-border bg-background/80 backdrop-blur-sm">
-    <div class="mx-auto max-w-6xl px-8 py-3">
-      <div class="flex items-center gap-4">
-        <a
-          href="/"
-          class="text-sm font-mono font-medium tracking-tight lg:hidden"
-          data-prefetch="hover"
-        >
-          <span class="text-muted-foreground">~/</span>
-          {escapeText(siteName)}
-        </a>
-        <div class="not-prose ml-auto w-full max-w-xs">
-          <SearchForm query={query} />
-        </div>
-      </div>
-    </div>
-  </header>
-);
-
 const buildHtmlClass = (
   smoothScroll: LayoutProps["rightRail"]["smoothScroll"]
 ): string => (smoothScroll ? "dark smooth-scroll" : "dark");
@@ -148,7 +97,6 @@ const Layout = ({
   currentPath,
   navigation,
   scriptPaths = [],
-  searchQuery,
   showRightRail = true,
   rightRail,
   tocItems,
@@ -200,7 +148,6 @@ const Layout = ({
           currentPath={currentPath}
         />
         <div class="main-wrapper">
-          <TopNavbar query={searchQuery} siteName={siteName} />
           <main class="main-content">
             <div class="mx-auto flex w-full max-w-6xl items-start gap-10">
               <article
