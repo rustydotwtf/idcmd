@@ -11,19 +11,16 @@ import {
   slugFromContentFile,
 } from "../content/paths";
 
-export const SEARCH_INDEX_VERSION = 1 as const;
-
-export interface SearchIndexDocumentV1 {
+export interface SearchIndexDocument {
   url: string;
   title: string;
   description: string;
   body: string;
 }
 
-export interface SearchIndexV1 {
-  version: typeof SEARCH_INDEX_VERSION;
+export interface SearchIndex {
   generatedAt: string;
-  documents: SearchIndexDocumentV1[];
+  documents: SearchIndexDocument[];
 }
 
 const SEARCH_INDEX_PATH = "public/search-index.json";
@@ -67,7 +64,7 @@ const isEligibleDocument = (
   hidden: boolean | undefined
 ): boolean => !hidden && slug !== "404";
 
-const sortDocuments = (documents: SearchIndexDocumentV1[]): void => {
+const sortDocuments = (documents: SearchIndexDocument[]): void => {
   documents.sort((a, b) => {
     if (a.url === "/") {
       return -1;
@@ -84,7 +81,7 @@ const buildDocumentFromFile = async (
   bodyMaxChars: number,
   contentDir: string,
   siteConfig: SiteConfig
-): Promise<SearchIndexDocumentV1 | null> => {
+): Promise<SearchIndexDocument | null> => {
   const slug = slugFromContentFile(file);
   const markdown = await Bun.file(`${contentDir}/${file}`).text();
   const parsed = parseFrontmatter(markdown);
@@ -117,11 +114,11 @@ export interface GenerateSearchIndexOptions {
 
 export const generateSearchIndexFromContent = async (
   options: GenerateSearchIndexOptions
-): Promise<SearchIndexV1> => {
+): Promise<SearchIndex> => {
   const { bodyMaxChars = DEFAULT_BODY_MAX_CHARS, siteConfig } = options;
   const generatedAt = options.generatedAt ?? new Date().toISOString();
 
-  const documents: SearchIndexDocumentV1[] = [];
+  const documents: SearchIndexDocument[] = [];
   const contentDir = await getContentDir();
 
   for await (const file of scanContentFiles()) {
@@ -141,13 +138,12 @@ export const generateSearchIndexFromContent = async (
   return {
     documents,
     generatedAt,
-    version: SEARCH_INDEX_VERSION,
   };
 };
 
-const isSearchIndexDocumentV1 = (
+const isSearchIndexDocument = (
   value: unknown
-): value is SearchIndexDocumentV1 => {
+): value is SearchIndexDocument => {
   if (!value || typeof value !== "object") {
     return false;
   }
@@ -161,28 +157,27 @@ const isSearchIndexDocumentV1 = (
   );
 };
 
-const isSearchIndexV1 = (value: unknown): value is SearchIndexV1 => {
+const isSearchIndex = (value: unknown): value is SearchIndex => {
   if (!value || typeof value !== "object") {
     return false;
   }
 
   const record = value as Record<string, unknown>;
   return (
-    record.version === SEARCH_INDEX_VERSION &&
     isNonEmptyString(record.generatedAt) &&
     Array.isArray(record.documents) &&
-    record.documents.every((doc) => isSearchIndexDocumentV1(doc))
+    record.documents.every((doc) => isSearchIndexDocument(doc))
   );
 };
 
-let indexCache: SearchIndexV1 | null = null;
+let indexCache: SearchIndex | null = null;
 
 export interface LoadSearchIndexOptions {
   forceRefresh?: boolean;
   siteConfig: SiteConfig;
 }
 
-const tryLoadSearchIndexFromDisk = async (): Promise<SearchIndexV1 | null> => {
+const tryLoadSearchIndexFromDisk = async (): Promise<SearchIndex | null> => {
   const file = Bun.file(SEARCH_INDEX_PATH);
   if (!(await file.exists())) {
     return null;
@@ -190,7 +185,7 @@ const tryLoadSearchIndexFromDisk = async (): Promise<SearchIndexV1 | null> => {
 
   try {
     const parsed = (await file.json()) as unknown;
-    return isSearchIndexV1(parsed) ? parsed : null;
+    return isSearchIndex(parsed) ? parsed : null;
   } catch {
     return null;
   }
@@ -198,7 +193,7 @@ const tryLoadSearchIndexFromDisk = async (): Promise<SearchIndexV1 | null> => {
 
 export const loadSearchIndex = async (
   options: LoadSearchIndexOptions
-): Promise<SearchIndexV1> => {
+): Promise<SearchIndex> => {
   const { forceRefresh = false, siteConfig } = options;
   if (indexCache && !forceRefresh) {
     return indexCache;
@@ -216,7 +211,7 @@ export const loadSearchIndex = async (
 };
 
 const getScopeHaystack = (
-  document: SearchIndexDocumentV1,
+  document: SearchIndexDocument,
   scope: SearchScope
 ): string => {
   if (scope === "title") {
@@ -231,7 +226,7 @@ const getScopeHaystack = (
 };
 
 const matchesAllTokens = (
-  document: SearchIndexDocumentV1,
+  document: SearchIndexDocument,
   tokens: readonly string[],
   scope: SearchScope
 ): boolean => {
@@ -239,14 +234,14 @@ const matchesAllTokens = (
   return tokens.every((token) => haystack.includes(token));
 };
 
-const toSearchResult = (document: SearchIndexDocumentV1): SearchResult => ({
+const toSearchResult = (document: SearchIndexDocument): SearchResult => ({
   description: document.description,
   slug: document.url,
   title: document.title,
 });
 
 export const search = (
-  index: SearchIndexV1,
+  index: SearchIndex,
   query: string,
   scope: SearchScope
 ): SearchResult[] => {

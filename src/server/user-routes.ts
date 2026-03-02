@@ -141,7 +141,7 @@ const loadOneRoute = async (
   const pathname = pathnameFromRouteRelativePath(relativeFile);
   if (hasUnsupportedDynamicSegment(pathname)) {
     throw new Error(
-      `Unsupported dynamic route segment in ${routesDir}/${relativeFile} (computed pathname: ${pathname}). V1 does not support [param] or :param routes.`
+      `Unsupported dynamic route segment in ${routesDir}/${relativeFile} (computed pathname: ${pathname}). Dynamic [param] and :param routes are not supported.`
     );
   }
 

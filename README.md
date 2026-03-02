@@ -44,7 +44,7 @@ idcmd deploy --vercel
 
 `idcmd init --yes` is provider-neutral by default (no provider files generated).
 
-## Layout (V1)
+## Layout
 
 - `content/<slug>.md` -> `/<slug>/` (`index.md` -> `/`)
 - `src/ui/*` is local UI source code (you own and edit these files)
@@ -88,7 +88,7 @@ This is a new page.
 
 It renders at `/hello/`.
 
-## Custom Server Routes (V1)
+## Custom Server Routes
 
 Add `src/routes/api/hello.ts`:
 
@@ -98,9 +98,9 @@ export const GET = (): Response => Response.json({ ok: true });
 
 It responds at `/api/hello`.
 
-## V1 Definition Of Done
+## Definition Of Done
 
-`tickets/ROADMAP.md` is the source of truth. For V1, we explicitly target:
+We explicitly target:
 
 - Content routes ship `0` bytes of JavaScript by default (both SSR output and built HTML).
 - Content routes ship a small, opinionated JavaScript runtime by default (prefetch + optional right-rail behavior).

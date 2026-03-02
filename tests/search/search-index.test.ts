@@ -57,14 +57,12 @@ afterEach(() => {
 });
 
 describe("search-index", () => {
-  it("generates a stable v1 index with canonical urls", async () => {
+  it("generates a stable index with canonical urls", async () => {
     await seedSiteProject();
     const index = await createIndex();
 
-    expect(index).toMatchObject({
-      generatedAt: FIXED_GENERATED_AT,
-      version: 1,
-    });
+    expect(index).toMatchObject({ generatedAt: FIXED_GENERATED_AT });
+    expect("version" in index).toBe(false);
     expect(index.documents.length > 0).toBe(true);
 
     const urls = index.documents.map((doc) => doc.url);
