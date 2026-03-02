@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
-    // JSX for Preact SSR
+    // JSX for string-rendered SSR
     "jsx": "react-jsx",
-    "jsxImportSource": "preact",
+    "jsxImportSource": "@kitajs/html",
 
     // Path aliases
     "paths": {

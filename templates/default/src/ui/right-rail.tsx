@@ -1,5 +1,8 @@
+/* eslint-disable react/jsx-key */
+
 import type { RightRailProps } from "idcmd/client";
-import type { JSX } from "preact";
+
+const escapeText = (value: string): string => Bun.escapeHTML(value);
 
 const CaretDownIcon = (): JSX.Element => (
   <svg
@@ -173,13 +176,13 @@ const OnThisPage = ({
       <div class="toc-scroll min-h-0 flex-1" data-toc-scroll-container="1">
         <ul class="space-y-2 text-sm text-muted-foreground">
           {items.map((item) => (
-            <li key={item.id} class={item.level >= 3 ? "pl-3" : ""}>
+            <li class={item.level >= 3 ? "pl-3" : ""}>
               <a
                 href={`#${encodeURIComponent(item.id)}`}
                 class="hover:text-foreground"
                 data-toc-link="1"
               >
-                {item.text}
+                {escapeText(item.text)}
               </a>
             </li>
           ))}

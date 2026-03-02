@@ -1,18 +1,15 @@
-import type { LayoutProps } from "idcmd/client";
-/* eslint-disable react/no-danger */
-import type { JSX } from "preact";
+/* eslint-disable react/jsx-key */
 
-import { render } from "preact-render-to-string";
+import type { LayoutProps } from "idcmd/client";
 
 import { RightRail } from "./right-rail";
 
 type NavItem = LayoutProps["navigation"][number]["items"][number];
 
+const escapeText = (value: string): string => Bun.escapeHTML(value);
+
 const Icon = ({ svg }: { svg: string }): JSX.Element => (
-  <span
-    class="inline-flex h-[18px] w-[18px]"
-    dangerouslySetInnerHTML={{ __html: svg }}
-  />
+  <span class="inline-flex h-[18px] w-[18px]">{svg}</span>
 );
 
 const isActiveLink = (item: NavItem, currentPath: string): boolean =>
@@ -36,19 +33,18 @@ const Sidebar = ({
         data-prefetch="hover"
       >
         <span class="text-muted-foreground">~/</span>
-        {siteName}
+        {escapeText(siteName)}
       </a>
     </div>
     <div class="sidebar-content">
       {navigation.map((group) => (
-        <div key={group.id} class="py-2">
+        <div class="py-2">
           <p class="px-3 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            {group.label}
+            {escapeText(group.label)}
           </p>
           <nav class="space-y-1">
             {group.items.map((item) => (
               <a
-                key={item.href}
                 href={item.href}
                 data-prefetch="hover"
                 class={`flex items-center gap-3 px-3 py-1.5 text-sm transition-colors hover:text-sidebar-foreground ${
@@ -58,7 +54,7 @@ const Sidebar = ({
                 }`}
               >
                 <Icon svg={item.iconSvg} />
-                <span>{item.title}</span>
+                <span>{escapeText(item.title)}</span>
               </a>
             ))}
           </nav>
@@ -74,19 +70,20 @@ const SearchForm = ({ query }: { query?: string }): JSX.Element => (
     action="/search/"
     class="flex w-full items-center"
     role="search"
-    noValidate
+    novalidate
   >
-    <label htmlFor="site-search" class="sr-only">
+    {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
+    <label for="site-search" class="sr-only">
       Search pages
     </label>
     <input
       id="site-search"
       name="q"
       type="search"
-      autoComplete="off"
+      autocomplete="off"
       spellcheck={false}
       placeholder="Search..."
-      defaultValue={query ?? ""}
+      value={escapeText(query ?? "")}
       class="w-full border-b border-input bg-transparent px-1 py-1.5 text-sm placeholder:text-muted-foreground focus:border-foreground focus:outline-none transition-colors"
     />
   </form>
@@ -108,7 +105,7 @@ const TopNavbar = ({
           data-prefetch="hover"
         >
           <span class="text-muted-foreground">~/</span>
-          {siteName}
+          {escapeText(siteName)}
         </a>
         <div class="not-prose ml-auto w-full max-w-xs">
           <SearchForm query={query} />
@@ -170,14 +167,16 @@ const Layout = ({
       <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>{title}</title>
-        {description ? <meta name="description" content={description} /> : null}
+        <title>{escapeText(title)}</title>
+        {description ? (
+          <meta name="description" content={escapeText(description)} />
+        ) : null}
         {canonicalUrl ? <link rel="canonical" href={canonicalUrl} /> : null}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
           rel="preconnect"
           href="https://fonts.gstatic.com"
-          crossOrigin="anonymous"
+          crossorigin="anonymous"
         />
         <link
           href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap"
@@ -208,8 +207,10 @@ const Layout = ({
                 class={`prose min-w-0 flex-1${
                   currentPath === "/" ? " prose-home" : ""
                 }`}
-                dangerouslySetInnerHTML={{ __html: content }}
-              />
+              >
+                {/* content is pre-rendered markdown HTML */}
+                {content}
+              </article>
               {shouldShowRightRail ? (
                 <RightRail
                   canonicalUrl={canonicalUrl}
@@ -221,12 +222,12 @@ const Layout = ({
             </div>
           </main>
           <footer class="site-footer">
-            Built with Preact SSR + Tailwind &nbsp;|&nbsp; Zero JavaScript on
+            Built with idcmd SSR + Tailwind &nbsp;|&nbsp; Zero JavaScript on
             content pages
           </footer>
         </div>
         {scriptPaths.map((scriptPath) => (
-          <script key={scriptPath} defer src={scriptPath} />
+          <script defer src={scriptPath} />
         ))}
       </body>
     </html>
@@ -234,4 +235,4 @@ const Layout = ({
 };
 
 export const renderLayout = (props: LayoutProps): string =>
-  `<!DOCTYPE html>${render(<Layout {...props} />)}`;
+  `<!DOCTYPE html>${<Layout {...props} />}`;

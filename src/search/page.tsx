@@ -1,8 +1,8 @@
-import type { JSX } from "preact";
-
-import { render as renderToString } from "preact-render-to-string";
+/* eslint-disable react/jsx-key */
 
 import type { SearchResult } from "./contract";
+
+const escapeText = (value: string): string => Bun.escapeHTML(value);
 
 export interface TopPageLink {
   href: string;
@@ -24,9 +24,11 @@ const ResultItem = ({ result }: { result: SearchResult }): JSX.Element => (
       href={result.slug}
       class="font-medium underline decoration-border underline-offset-4"
     >
-      {result.title}
+      {escapeText(result.title)}
     </a>
-    <p class="mt-1 text-sm text-muted-foreground">{result.description}</p>
+    <p class="mt-1 text-sm text-muted-foreground">
+      {escapeText(result.description)}
+    </p>
   </li>
 );
 
@@ -44,12 +46,12 @@ const EmptyState = ({
         <p class="mt-4 font-medium text-foreground">Popular pages</p>
         <ul class="mt-2 space-y-1">
           {topPages.map((page) => (
-            <li key={page.href}>
+            <li>
               <a
                 href={page.href}
                 class="underline decoration-border underline-offset-4"
               >
-                {page.title}
+                {escapeText(page.title)}
               </a>
             </li>
           ))}
@@ -74,8 +76,8 @@ const SearchPage = ({
       {showResults ? (
         <p class="mt-2 text-sm text-muted-foreground">
           {results.length === 0
-            ? `No matches for "${trimmed}".`
-            : `Found ${results.length} result(s) for "${trimmed}".`}
+            ? `No matches for "${escapeText(trimmed)}".`
+            : `Found ${results.length} result(s) for "${escapeText(trimmed)}".`}
         </p>
       ) : (
         <div class="mt-2">
@@ -86,7 +88,7 @@ const SearchPage = ({
       {showResults ? (
         <ul class="mt-4 space-y-2">
           {results.map((result) => (
-            <ResultItem key={result.slug} result={result} />
+            <ResultItem result={result} />
           ))}
         </ul>
       ) : null}
@@ -95,4 +97,4 @@ const SearchPage = ({
 };
 
 export const renderSearchPageContent: RenderSearchPageContent = (props) =>
-  renderToString(<SearchPage {...props} />);
+  `${<SearchPage {...props} />}`;

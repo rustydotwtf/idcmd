@@ -1,7 +1,4 @@
-/* eslint-disable react/no-danger */
-import type { JSX } from "preact";
-
-import { render } from "preact-render-to-string";
+/* eslint-disable react/jsx-key */
 
 import type { NavGroup, NavItem } from "../content/navigation";
 import type { ResolvedRightRailConfig } from "../site/config";
@@ -9,6 +6,8 @@ import type { RightRailComponent } from "./right-rail";
 import type { TocItem } from "./toc";
 
 import { RightRail } from "./right-rail";
+
+const escapeText = (value: string): string => Bun.escapeHTML(value);
 
 export interface LayoutProps {
   title: string;
@@ -31,10 +30,7 @@ export interface LayoutProps {
 export type RenderLayout = (props: LayoutProps) => string;
 
 const Icon = ({ svg }: { svg: string }): JSX.Element => (
-  <span
-    class="inline-flex w-[18px] h-[18px]"
-    dangerouslySetInnerHTML={{ __html: svg }}
-  />
+  <span class="inline-flex w-[18px] h-[18px]">{svg}</span>
 );
 
 const isActiveLink = (item: NavItem, currentPath: string): boolean =>
@@ -59,7 +55,7 @@ const NavLink = ({
       class={`flex items-center gap-3 px-3 py-1.5 text-sm hover:text-sidebar-foreground transition-colors ${activeClass}`}
     >
       <Icon svg={item.iconSvg} />
-      <span>{item.title}</span>
+      <span>{escapeText(item.title)}</span>
     </a>
   );
 };
@@ -73,11 +69,11 @@ const NavGroupComponent = ({
 }): JSX.Element => (
   <div class="py-2">
     <div class="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-      {group.label}
+      {escapeText(group.label)}
     </div>
     <nav class="space-y-1">
       {group.items.map((item) => (
-        <NavLink key={item.href} item={item} currentPath={currentPath} />
+        <NavLink item={item} currentPath={currentPath} />
       ))}
     </nav>
   </div>
@@ -100,16 +96,12 @@ const Sidebar = ({
         data-prefetch="hover"
       >
         <span class="text-muted-foreground">~/</span>
-        {siteName}
+        {escapeText(siteName)}
       </a>
     </div>
     <div class="sidebar-content">
       {navigation.map((group) => (
-        <NavGroupComponent
-          key={group.id}
-          group={group}
-          currentPath={currentPath}
-        />
+        <NavGroupComponent group={group} currentPath={currentPath} />
       ))}
     </div>
   </aside>
@@ -121,19 +113,20 @@ const SearchForm = ({ query }: { query?: string }): JSX.Element => (
     action="/search/"
     class="flex w-full items-center"
     role="search"
-    noValidate
+    novalidate
   >
-    <label htmlFor="site-search" class="sr-only">
+    {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
+    <label for="site-search" class="sr-only">
       Search pages
     </label>
     <input
       id="site-search"
       name="q"
       type="search"
-      autoComplete="off"
+      autocomplete="off"
       spellcheck={false}
       placeholder="Search..."
-      defaultValue={query ?? ""}
+      value={escapeText(query ?? "")}
       class="w-full border-b border-input bg-transparent px-1 py-1.5 text-sm placeholder:text-muted-foreground focus:border-foreground focus:outline-none transition-colors"
     />
   </form>
@@ -155,7 +148,7 @@ const TopNavbar = ({
           data-prefetch="hover"
         >
           <span class="text-muted-foreground">~/</span>
-          {siteName}
+          {escapeText(siteName)}
         </a>
         <div class="not-prose w-full max-w-xs ml-auto">
           <SearchForm query={query} />
@@ -183,14 +176,16 @@ const DocumentHead = ({
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{title}</title>
-    {description ? <meta name="description" content={description} /> : null}
+    <title>{escapeText(title)}</title>
+    {description ? (
+      <meta name="description" content={escapeText(description)} />
+    ) : null}
     {canonicalUrl ? <link rel="canonical" href={canonicalUrl} /> : null}
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link
       rel="preconnect"
       href="https://fonts.gstatic.com"
-      crossOrigin="anonymous"
+      crossorigin="anonymous"
     />
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap"
@@ -269,8 +264,10 @@ const DocumentBody = ({
         <div class="mx-auto flex w-full max-w-6xl items-start gap-10">
           <article
             class={`prose min-w-0 flex-1${currentPath === "/" ? " prose-home" : ""}`}
-            dangerouslySetInnerHTML={{ __html: content }}
-          />
+          >
+            {/* content is pre-rendered markdown HTML */}
+            {content}
+          </article>
           {shouldShowRightRail ? (
             <RightRailComponent
               canonicalUrl={canonicalUrl}
@@ -282,12 +279,12 @@ const DocumentBody = ({
         </div>
       </main>
       <footer class="site-footer">
-        Built with Preact SSR + Tailwind &nbsp;|&nbsp; Zero JavaScript on
-        content pages
+        Built with idcmd SSR + Tailwind &nbsp;|&nbsp; Zero JavaScript on content
+        pages
       </footer>
     </div>
     {scriptPaths.map((scriptPath) => (
-      <script key={scriptPath} defer src={scriptPath} />
+      <script defer src={scriptPath} />
     ))}
   </body>
 );
@@ -344,4 +341,4 @@ const Layout = ({
 };
 
 export const renderLayout: RenderLayout = (props) =>
-  `<!DOCTYPE html>${render(<Layout {...props} />)}`;
+  `<!DOCTYPE html>${<Layout {...props} />}`;

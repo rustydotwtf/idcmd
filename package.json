@@ -35,8 +35,7 @@
     "prepare": "lefthook install"
   },
   "dependencies": {
-    "preact": "^10.28.3",
-    "preact-render-to-string": "^6.6.5",
+    "@kitajs/html": "^4.2.13",
     "shiki": "^3.22.0",
     "zod": "^3.24.0"
   },
