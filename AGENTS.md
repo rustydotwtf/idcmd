@@ -1,4 +1,26 @@
-# Ultracite Code Standards
+# The Zen of Agentic Development
+
+- Prefer clean breaks over shimming for backwards compatibility. Build it right, document it inline, and make breaking changes easy to communicate in release notes.
+
+- Commit messages should be brief and convey intent at a glance.
+
+- As repos evolve, existing code can drift from intended patterns. Use existing code as a reference to get unstuck, but don't treat it as the source of truth.
+
+- During planning/exploration, actively look for patterns that have drifted from intent. Flag them and factor fixes into the plan.
+
+- During implementation, stay focused on the current task.
+  - If you encounter a bad pattern in code you're directly modifying, fix it as part of the change.
+  - If it's outside the scope of your current work, call it out explicitly at the end of your response so we can address it next.
+
+- The strict linting and formatting rules were chosen specifically for agentic development. It's extremely rare that we'd relax them. If you think a rule should change, propose the change to the ruleset rather than working around it.
+
+- If you hit max-lines or max-statements limits, that's your cue to refactor. Break the code into smaller, more readable files and functions.
+  - Note: max-lines ignores comments and empty lines, so don't preemptively strip those to stay under the limit.
+  - When extracting shared logic, check for existing utilities before creating new ones, and consider whether a new helper belongs as a local function or a shared utility.
+
+---
+
+# Ultracite
 
 This project uses **Ultracite**, a zero-config preset that enforces strict code quality standards through automated formatting and linting.
 
@@ -14,7 +36,7 @@ Oxlint + Oxfmt (the underlying engine) provides robust linting and formatting. M
 
 ## Core Principles
 
-Write code that is **accessible, performant, type-safe, and maintainable**. Focus on clarity and explicit intent over brevity.
+Write code that is **performant, type-safe, maintainable and accessible**. Focus on clarity and explicit intent over brevity.
 
 ### Type Safety & Explicitness
 
@@ -54,6 +76,7 @@ Write code that is **accessible, performant, type-safe, and maintainable**. Focu
   - Add labels for form inputs
   - Include keyboard event handlers alongside mouse events
   - Use semantic elements (`<button>`, `<nav>`, etc.) instead of divs with roles
+- React 19+: Use ref as a prop instead of `React.forwardRef`
 
 ### Error Handling & Debugging
 
@@ -84,22 +107,6 @@ Write code that is **accessible, performant, type-safe, and maintainable**. Focu
 - Prefer specific imports over namespace imports
 - Avoid barrel files (index files that re-export everything)
 - Use proper image components (e.g., Next.js `<Image>`) over `<img>` tags
-
-### Framework-Specific Guidance
-
-**Next.js:**
-
-- Use Next.js `<Image>` component for images
-- Use `next/head` or App Router metadata API for head elements
-- Use Server Components for async data fetching instead of async Client Components
-
-**React 19+:**
-
-- Use ref as a prop instead of `React.forwardRef`
-
-**Solid/Svelte/Vue/Qwik:**
-
-- Use `class` and `for` attributes (not `className` or `htmlFor`)
 
 ---
 
