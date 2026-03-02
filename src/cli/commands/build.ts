@@ -25,7 +25,8 @@ export const buildCommand = async (): Promise<number> => {
   const cssProc = Bun.spawn(
     [
       "bunx",
-      "@tailwindcss/cli",
+      "--no-install",
+      "tailwindcss",
       "-i",
       tailwindInput,
       "-o",

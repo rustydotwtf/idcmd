@@ -116,7 +116,7 @@ const fillPackageJson = (args: {
     .replaceAll("__IDCMD_IDCMD_VERSION__", `^${args.idcmdVersion}`)
     .replaceAll("__IDCMD_DEV_PORT__", String(args.port));
 
-const fillReadme = (args: { siteName: string; text: string }): string =>
+const fillSiteNameTokens = (args: { siteName: string; text: string }): string =>
   args.text
     .replaceAll("__IDCMD_SITE_NAME__", args.siteName)
     .replaceAll("IDCMD_SITE_NAME", args.siteName);
@@ -253,7 +253,14 @@ const applySubstitutions = async (args: {
   );
 
   await replaceInFile(joinPath(args.targetDir, "README.md"), (text) =>
-    fillReadme({
+    fillSiteNameTokens({
+      siteName: args.siteName,
+      text,
+    })
+  );
+
+  await replaceInFile(joinPath(args.targetDir, "content", "index.md"), (text) =>
+    fillSiteNameTokens({
       siteName: args.siteName,
       text,
     })
@@ -282,7 +289,9 @@ const printNextSteps = (dir: string): void => {
 const assertEmptyTargetDir = async (targetDir: string): Promise<void> => {
   const empty = await isDirEmpty(targetDir);
   if (!empty) {
-    throw new Error(`Target directory is not empty: ${targetDir}`);
+    throw new Error(
+      `Target directory is not empty: ${targetDir}\nUse an empty directory or run \`idcmd init <new-directory>\`.`
+    );
   }
 };
 

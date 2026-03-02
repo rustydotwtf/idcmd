@@ -6,11 +6,20 @@ import {
   readTextFile,
 } from "tests/test-utils";
 
+interface InitResult {
+  code: number;
+  stderr: string;
+  stdout: string;
+}
+
 const expectFile = async (path: string): Promise<void> => {
   expect(await fileExists(path)).toBe(true);
 };
 
-const runInit = (target: string, extraArgs: string[] = []): Promise<number> => {
+const runInitWithOutput = async (
+  target: string,
+  extraArgs: string[] = []
+): Promise<InitResult> => {
   const proc = Bun.spawn(
     [
       process.execPath,
@@ -30,7 +39,21 @@ const runInit = (target: string, extraArgs: string[] = []): Promise<number> => {
     { stderr: "pipe", stdout: "pipe" }
   );
 
-  return proc.exited;
+  const [stdout, stderr, code] = await Promise.all([
+    new Response(proc.stdout).text(),
+    new Response(proc.stderr).text(),
+    proc.exited,
+  ]);
+
+  return { code, stderr, stdout };
+};
+
+const runInit = async (
+  target: string,
+  extraArgs: string[] = []
+): Promise<number> => {
+  const result = await runInitWithOutput(target, extraArgs);
+  return result.code;
 };
 
 const assertRequiredFiles = async (target: string): Promise<void> => {
@@ -97,6 +120,14 @@ const assertReadme = async (target: string): Promise<void> => {
   );
 };
 
+const assertStarterContent = async (target: string): Promise<void> => {
+  const homeMarkdown = await readTextFile(
+    joinPath(target, "content", "index.md")
+  );
+  expect(homeMarkdown.includes("# **My Docs**")).toBe(true);
+  expect(homeMarkdown.includes("IDCMD_SITE_NAME")).toBe(false);
+};
+
 const assertGitignore = async (target: string): Promise<void> => {
   const gitignore = await readTextFile(joinPath(target, ".gitignore"));
   expect(gitignore.includes("public/")).toBe(true);
@@ -120,6 +151,7 @@ const assertScaffolded = async (target: string): Promise<void> => {
   await assertSiteConfig(target);
   await assertClientLayout(target);
   await assertReadme(target);
+  await assertStarterContent(target);
   await assertGitignore(target);
   await assertNoLegacySiteDir(target);
   await assertNoProviderFiles(target);
@@ -161,5 +193,17 @@ describe("cli init", () => {
     await expectFile(joinPath(target, "railway.json"));
     await expectFile(joinPath(target, "Dockerfile"));
     await expectFile(joinPath(target, ".dockerignore"));
+  });
+
+  it("fails with guidance when target directory is not empty", async () => {
+    const target = await createTempDir("idcmd-init-non-empty-");
+    await Bun.write(joinPath(target, "keep.txt"), "do not overwrite");
+
+    const result = await runInitWithOutput(target);
+    expect(result.code).toBe(1);
+
+    const output = `${result.stdout}\n${result.stderr}`;
+    expect(output.includes("Target directory is not empty")).toBe(true);
+    expect(output.includes("idcmd init <new-directory>")).toBe(true);
   });
 });

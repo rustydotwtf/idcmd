@@ -38,7 +38,8 @@ const spawnCssProcess = (
   Bun.spawn(
     [
       "bunx",
-      "@tailwindcss/cli",
+      "--no-install",
+      "tailwindcss",
       "-i",
       tailwindInput,
       "-o",
