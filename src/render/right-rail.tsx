@@ -215,8 +215,8 @@ const getPanelClass = (
   placement: ResolvedRightRailConfig["placement"]
 ): string =>
   placement === "viewport"
-    ? "fixed top-24 bottom-0 right-8 z-20 w-64 flex flex-col gap-6 min-h-0"
-    : "sticky top-24 h-[calc(100vh-6rem)] flex flex-col gap-6 min-h-0";
+    ? "fixed top-8 bottom-0 right-8 z-20 w-64 flex flex-col gap-6 min-h-0"
+    : "sticky top-8 h-[calc(100vh-2rem)] flex flex-col gap-6 min-h-0";
 
 export interface RightRailProps {
   canonicalUrl?: string;
